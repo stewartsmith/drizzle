@@ -24,23 +24,50 @@ The SYSBENCH command also requires installation of the drizzle-sysbench program,
     $> cd drizzle-sysbench
     $> ./autogen.sh && ./configure && make && sudo make install
 
-Make sure sysbench is then in your path
+Make sure sysbench is in your path
 
 
 sysbench / kewpie tests
 =======================
 
-A sysbench test defines a run for a particular concurrency.  There are suites for readonly and readwrite.
-They are currently broken down this way as an experiment - we are open to other ways of organizing these tests::
+The sysbench test suite consists of python unittests that encapsulate / automate sysbench oltp runs for readonly and readwrite.
 
-    [test_info]
-    comment = 16 threads
+The tests are written in Python and are rather straightforward to modify.
 
-    [test_command]
-    command = sysbench --max-time=240 --max-requests=0 --test=oltp --db-ps-mode=disable --drizzle-table-engine=innodb --oltp-read-only=on --oltp-table-size=1000000 --drizzle-mysql=on --drizzle-user=root --drizzle-db=test --drizzle-port=$MASTER_MYPORT --drizzle-host=localhost --db-driver=drizzle --num-threads=16
+Changing server options:
 
-    [test_servers]
-    servers = [[innodb.buffer-pool-size=256M innodb.log-file-size=64M innodb.log-buffer-size=8M innodb.thread-concurrency=0 innodb.additional-mem-pool-size=16M table-open-cache=4096 table-definition-cache=4096 mysql-protocol.max-connections=2048]]
+::
+
+    #drizzle options
+    server_requirements = [['innodb.buffer-pool-size=256M innodb.log-file-size=64M innodb.log-buffer-size=8M innodb.thread-concurrency=0 innodb.additional-mem-pool-size=16M table-open-cache=4096 table-definition-cache=4096 mysql-protocol.max-connections=2048']]
+
+    #mysql options
+    server_requirements = [['innodb_buffer_pool_size=256M innodb_log_file_size=64M innodb_log_buffer_size=8M innodb_thread_concurrency=0 innodb_additional_mem_pool_size=16M table_open_cache=4096 table_definition_cache=4096 max_connections=2048']]
+
+
+Altering concurrencies tested:
+
+The concurrencies for the tests are specified in the /tests/lib/util/sysbenchTestCase.py file. The concurrencies can be changed by directly editing them in the file mentioned. ( The tests are straightforward to modify / flexible )
+
+::
+
+    #various concurrencies to use with sysbench
+    self.concurrencies = [ 16, 32, 64, 128, 256, 512, 1024 ]    
+
+This line can be modified according to the need
+
+
+Altering iterations:
+
+By default, the tests will execute 3 iterations of each concurrency tested.  This is to help achieve some consistency for performance analysis. However, the number of iterations can be varied, by editing them in the file /tests/lib/util/sysbenchTestCase.py
+
+::
+  
+    #how many times to run sysbench at each concurrency
+    self.iterations = 3
+
+This line can be modified according to the need
+   
 
 Running tests
 =============
@@ -52,72 +79,98 @@ will stop execution upon encountering the first failing test.
 :option:`kewpie.py --force` is recommended if you are running several tests
 - it will allow you to view all successes and failures in one run.
 
-Running individual tests
+Running tests
 ------------------------
 If one only wants to run a few, specific tests, they may do so this way::
 
-    ./kewpie --mode=sysbench [OPTIONS] test1 [test2 ... testN]
+    ./kewpie --suite=sysbench [OPTIONS] sysbench_readonly_test | sysbench_readwrite_test 
 
-Running all tests within a suite
---------------------------------
-Many of the tests supplied with Drizzle are organized into suites.  
+.. note:: Calling tests using <suitename>.<testname> currently does not work.  One must specify the test suite via the :option:`kewpie.py --suite` option.
 
-The tests within drizzle/tests/randgen_tests/main are considered the 'main' suite.  
-Other suites are also subdirectories of drizzle/tests/randgen_tests.
+Results database
+------------------
+The Drizzle team has ported drizzle-automation functionality for sysbench.
+This means that a user can run a Drizzle / MySQL database and use it to
+store sysbench run data and to compare runs against historic data.
 
-To run the tests in a specific suite::
+The SQL to create the required tables are in tests/std_data/sysbench_db.sql
 
-    ./kewpie --mode=sysbench [OPTIONS] --suite=SUITENAME
+This will create 3 tables:
 
-Running specific tests within a suite
---------------------------------------
-To run a specific set of tests within a suite::
+    * bench_config
+    * bench_runs
+    * sysbench_run_iterations
 
-    ./kewpie --mode=sysbench [OPTIONS] --suite=SUITENAME TEST1 [TEST2..TESTN]
+This emulates drizzle-automation's historic behavior.
 
-Calling tests using <suitename>.<testname> currently does not work.  One must
-specify the test suite via the :option:`kewpie.py --suite` option.
+Once the tables have been created, add the following option to the kewpie call:
+--results-db-dsn='host_ip:user:user_pass:drizzle_stats:port'
 
 
-Running all available tests
----------------------------
-One would currently have to name all suites, but the majority of the working tests live in the main suite
-Other suites utilize more exotic server combinations and we are currently tweaking them to better integrate with the 
-kewpie system.  The slave-plugin suite does currently have a good config file for setting up simple replication setups for testing.
-To execute several suites' worth of tests::
+Reporting test result
+---------------------
+Once the benchmark test(s) get(s) completed, a report is generated. 
 
-    ./kewpie --mode=sysbench [OPTIONS] --suite=SUITE1, SUITE2, ...SUITEN
+Given below is an example of the test report
 
-Interpreting test results
-=========================
-The output of the test runner is quite simple.  Every test should pass.
-In the event of a test failure, please take the time to file a bug here:
-*https://bugs.launchpad.net/drizzle*
+::
 
-During a run, the program will provide the user with:
-  * test name (suite + name)
-  * test status (pass/fail/skipped)
-  * time spent executing each test
+    ====================================================================================================
+    SYSBENCH BENCHMARK REPORT 
+    ====================================================================================================
+    MACHINE:  erlking
+    RUN ID:   19
+    RUN DATE: 2012-08-15T18:16:12.596937
+    WORKLOAD: sysbench
+    SERVER:   drizzle
+    VERSION:  staging
+    REVISION: 2595
+    COMMENT:  2595: Ported this reporting capability! 
+    ====================================================================================================
+    
+    TRENDING OVER LAST 5 runs 
+    Conc   TPS     % Diff from Avg   Diff       Min        Max        Avg        STD       
+    ====================================================================================================
+    128    218.72       +0.58%       1.26     192.64     232.90     217.46      13.02
+    256    223.71       +6.85%      14.34     192.28     227.73     209.37      14.07
+    512    223.40       +7.47%      15.53     192.70     228.93     207.87      12.76
+    ====================================================================================================
 
-Example output::
+    TRENDING OVER Last 20 runs 
 
-    20110601-191706  ===============================================================
-    20110601-191706  TEST NAME                                  [ RESULT ] TIME (ms)
-    20110601-191706  ===============================================================
-    20110601-191706  readonly.concurrency_16                    [ pass ]   240019
-    20110601-191706  max_req_lat_ms: 21.44
-    20110601-191706  rwreqps: 4208.2
-    20110601-191706  min_req_lat_ms: 6.31
-    20110601-191706  deadlocksps: 0.0
-    20110601-191706  tps: 150.29
-    20110601-191706  avg_req_lat_ms: 6.65
-    20110601-191706  95p_req_lat_ms: 7.02
-    20110601-191706  ===============================================================
-    20110601-191706 INFO Test execution complete in 275 seconds
-    20110601-191706 INFO Summary report:
-    20110601-191706 INFO Executed 1/1 test cases, 100.00 percent
-    20110601-191706 INFO STATUS: PASS, 1/1 test cases, 100.00 percent executed
-    20110601-191706 INFO Spent 240 / 275 seconds on: TEST(s)
-    20110601-191706 INFO Test execution complete
-    20110601-191706 INFO Stopping all running servers...
+    Conc   TPS     % Diff from Avg   Diff       Min        Max        Avg        STD       
+    ====================================================================================================
+    128    218.72       +2.95%       6.26     188.42     232.90     212.45      15.27
+    256    223.71       +7.92%      16.42     189.18     232.99     207.29      14.94
+    512    223.40       +8.46%      17.42     191.35     232.79     205.98      14.09
+    ====================================================================================================
+
+    TRENDING OVER ALL runs 
+
+    Conc   TPS     % Diff from Avg   Diff       Min        Max        Avg        STD       
+    ====================================================================================================
+    128    218.72       +2.95%       6.26     188.42     232.90     212.45      15.27
+    256    223.71       +7.92%      16.42     189.18     232.99     207.29      14.94
+    512    223.40       +8.46%      17.42     191.35     232.79     205.98      14.09
+    ====================================================================================================
+    20120815-184028  sysbench.sysbench_readonly_test            [ pass ]  1455879
+    20120815-184028  ===============================================================
+
+Email test report
+-----------------
+
+Another drizzle-automation functionality that is ported to kewpie's sysbench is emailing test report to the specified email ID.
+
+::
+    
+    ./kewpie --suite=sysbench --email-report-tgt=foo@bar.com
+
+The output, after including the mailing option:
+
+::
+    
+    20120815-184028 Mailing report...
+    20120815-184028 To: foo@bar.com
+    20120815-184028 From: smtplibpython@gmail.com
+    20120815-184028 Report successfully sent...
 

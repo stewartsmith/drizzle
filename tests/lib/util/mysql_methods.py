@@ -207,14 +207,24 @@ def filter_data(input_data, filter_text ):
     return return_data
 
 def execute_query( query
-                 , server
+                 , server = None
                  , server_host = '127.0.0.1'
-                 , schema='test'):
+                 , schema='test'
+                 , dsn_string = None):
     try:
-        conn = MySQLdb.connect( host = server_host
-                              , port = server.master_port
-                              , user = 'root'
-                              , db = schema)
+        if dsn_string:
+            #getting the connection parameters from dsn_string
+            connect_param=dsn_string.split(":")
+            conn = MySQLdb.connect( host=connect_param[0]
+                                  , user=connect_param[1]
+                                  , passwd=connect_param[2]
+                                  , db=connect_param[3]
+                                  , port=int(connect_param[4]))
+        else:
+            conn = MySQLdb.connect( host = server_host
+                                  , port = server.master_port
+                                  , user = 'root'
+                                  , db = schema)
         cursor = conn.cursor()
         cursor.execute(query)
         result_set =  cursor.fetchall()

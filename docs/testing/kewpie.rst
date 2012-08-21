@@ -59,6 +59,7 @@ Provided test suites
 
     * crashme - sql-bench's crashme suite (may take some time to run)
     * sqlbench - sql-bench comprehensive suite.  (may take ~45 min. to execute)
+    * sysbench - SysBench database server performance (OLTP benchmark)
 
 
 Running tests
@@ -75,7 +76,7 @@ Running individual tests
 ------------------------
 If one only wants to run a few, specific tests, they may do so this way::
 
-    ./kewpie.py [OPTIONS] test1 [test2 ... testN]
+    ./kewpie.py [OPTIONS] test1 [test2 [test3 [...] ] ]
 
 Running all tests within a suite
 --------------------------------
@@ -94,7 +95,7 @@ Running specific tests within a suite
 --------------------------------------
 To run a specific set of tests within a suite::
 
-    ./kewpie.py [OPTIONS] --suite=SUITENAME TEST1 [TEST2..TESTN]
+    ./kewpie.py [OPTIONS] --suite=SUITENAME test1 [test2 [test3 [...] ] ]
 
 Calling tests using <suitename>.<testname> currently does not work.  One must
 specify the test suite via the :option:`kewpie.py --suite` option.
@@ -107,7 +108,7 @@ to use 'make test-kewpie' from the drizzle root.
 
 Otherwise, one should simply name all suites::
 
-    ./kewpie.py [OPTIONS] --suite=SUITE1, SUITE2, ...SUITEN
+    ./kewpie.py [OPTIONS] --suite=SUITE1, SUITE2, ..., SUITEn
 
 Interpreting test results
 =========================
@@ -239,20 +240,24 @@ Options
 
 .. program:: kewpie.py
 
+.. option:: --version
+
+   show program's version number and exit
+
 .. option:: -h, --help
  
    show this help message and exit
 
 Configuration controls - kewpie can read config files with certain options pre-set:
----------------------------------------------------------------------------------------------------
+-----------------------------------------------------------------------------------
 
 .. option:: --sys_config_file=SYSCONFIGFILEPATH
     
    The file that specifies system configuration specs for
    kewpie to execute tests (not yet implemented)
 
-Options for the test-runner itself
-----------------------------------
+Options for the test-runner itself - defining the system under test and how to execute tests:
+---------------------------------------------------------------------------------------------
 
 .. program:: kewpie.py
 
@@ -293,6 +298,19 @@ Options for the test-runner itself
    (currently just a placeholder) [False]
 
 
+Options for controlling how tests are executed
+----------------------------------------------
+
+.. program:: kewpie.py
+
+.. option:: --test-debug
+
+   Toggle to control any debugging / helper output with unittest test cases [False]
+
+.. option:: --randgen-seed=RANDGENSEED
+
+   Alter the seed value provided to the random query generator to vary test runs. (string) [1]
+
 Options for controlling which tests are executed
 ------------------------------------------------
 
@@ -331,6 +349,10 @@ Options for controlling which tests are executed
     a given sequence, the first test will be run n times,
     then the second, etc [1]
 
+.. option:: --email-report-tgt=EMAILREPORTTGT
+
+   Used to send report mails. Sends the report to the specified email-ID
+
 Options for defining the code that will be under test
 -----------------------------------------------------
 
@@ -343,6 +365,11 @@ Options for defining the code that will be under test
    We automatically set a number of variables 
    relative to the argument (client-bindir, 
    serverdir, testdir) [../]
+
+.. option:: --default-server-type=DEFAULTSERVERTYPE
+
+   Defines what we consider to be the default server type.
+   We assume a server is default type unless specified otherwise [drizzle]
 
 .. option:: --serverdir=SERVERPATH
 
@@ -420,15 +447,28 @@ Options for defining the testing environment
             
    The path the xtrabackup binary to be tested
 
+.. option:: --tar4ibd-path=TAR4IBDPATH
+
+   The path to the tar4ibd binary that will be used for any applicable tests
+
 .. option:: --wsrep-provider-path=WSREPPROVIDER
            
    The path to a wsrep provider library for use with
    mysql
+
+.. option:: --cluster-cnf=CLUSTERCNF
+
+   The path to a config file defining a running cluster (node info)
    
 .. option:: --subunit-outfile=SUBUNITOUTFILE
 
    File path where subunit output will be logged 
    [/kewpie/workdir/test_results.subunit]
+
+.. option:: --results-db-dsn=RESULTSDBDSN
+
+   Specifies the database connection Default string:
+   127.0.0.1:root::results_db:3306
 
 Options to pass options on to the server
 -----------------------------------------
