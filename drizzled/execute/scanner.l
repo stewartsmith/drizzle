@@ -40,6 +40,7 @@
 %top{
 
 #include <config.h>
+#include <unistd.h>
 #include <drizzled/execute/parser.h>  
 #include <drizzled/execute/context.h>
 #include <drizzled/execute/symbol.h>
