@@ -24,6 +24,8 @@ import subprocess
 
 from lib.util.sqlbench_methods import execute_sqlbench
 from lib.util.mysqlBaseTestCase import mysqlBaseTestCase
+from lib.util.mailing_report import kewpieSendMail
+from lib.opts.test_run_options import parse_qp_options
 
 server_requirements = [[]]
 servers = []
@@ -38,6 +40,10 @@ class basicTest(mysqlBaseTestCase):
         test_status, retcode, output = execute_sqlbench(test_cmd, test_executor, servers)
         self.assertEqual(retcode, 0, msg = output)
         self.assertEqual(test_status, 'pass', msg = output)
+
+        # sending test report via mail
+        if mail_tgt:
+            kewpieSendMail(test_executor,mail_tgt,test_status)
 
     def tearDown(self):
             server_manager.reset_servers(test_executor.name)

@@ -104,6 +104,7 @@ class systemManager:
                                                            ))
 
         self.wsrep_provider_path = variables['wsrepprovider']
+        self.variables = variables
 
         # we use this to preface commands in order to run valgrind and such
         self.cmd_prefix = '' 

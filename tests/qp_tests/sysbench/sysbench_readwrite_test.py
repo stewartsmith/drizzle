@@ -60,14 +60,15 @@ class basicTest(sysbenchTestCase):
                    , "--test=oltp"
                    , "--db-ps-mode=disable"
                    , "--%s-table-engine=innodb" %master_server.type
-                   , "--oltp-read-only=on"
+                   , "--oltp-read-only=off"
                    , "--oltp-table-size=1000000"
                    , "--%s-user=root" %master_server.type
                    , "--%s-db=test" %master_server.type
                    , "--%s-port=%d" %(master_server.type, master_server.master_port)
                    , "--%s-host=localhost" %master_server.type
                    , "--db-driver=%s" %master_server.type
-                   ]
+                   ] 
+
         if master_server.type == 'drizzle':
             test_cmd.append("--drizzle-mysql=on")
         if master_server.type == 'mysql':
