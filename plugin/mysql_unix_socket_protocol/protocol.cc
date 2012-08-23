@@ -31,6 +31,8 @@
 #include <boost/filesystem.hpp>
 #include <drizzled/module/option_map.h>
 
+#include <sys/stat.h>
+
 #include <sys/un.h>
 
 #include <plugin/mysql_unix_socket_protocol/protocol.h>
@@ -160,6 +162,8 @@ bool Protocol::getFileDescriptors(std::vector<int> &fds)
   }
 
   fds.push_back(unix_sock);
+
+  chmod(_unix_socket_path.file_string().c_str(),0777);
 
   return false;
 }
