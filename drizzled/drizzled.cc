@@ -410,6 +410,12 @@ extern "C" {
 /**
   Create file to store pid number.
 */
+
+#ifndef O_CLOEXEC
+#define O_CLOEXEC 0
+#define DEFINED_O_CLOEXEC
+#endif
+
 static void create_pid_file()
 {
   int file;
@@ -433,6 +439,10 @@ static void create_pid_file()
 
   unireg_abort << "Can't start server, was unable to create PID file: " <<  pid_file.file_string();
 }
+
+#ifdef DEFINED_O_CLOEXEC
+#undef O_CLOEXEC
+#endif
 
 /****************************************************************************
 ** Code to end drizzled
