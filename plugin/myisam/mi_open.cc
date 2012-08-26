@@ -114,7 +114,7 @@ MI_INFO *mi_open(const drizzled::identifier::Table &identifier, int mode, uint32
   {
         internal::my_load_path(name_buff,org_name, NULL);
   }  else {
-  	if (stlen(rp_buff)>=FN_REFLEN) rp_buff[FN_REFLEN-1]= '\0';
+  	if (strlen(rp_buff)>=FN_REFLEN) rp_buff[FN_REFLEN-1]= '\0';
   	strcpy(name_buff,rp_buff);
 	free(rp_buff);
   }
