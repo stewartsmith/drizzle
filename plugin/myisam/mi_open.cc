@@ -84,7 +84,8 @@ MI_INFO *mi_open(const drizzled::identifier::Table &identifier, int mode, uint32
   uint32_t i,j,len,errpos,head_length,base_pos,offset,info_length,keys,
     key_parts,unique_key_parts,uniques;
   char name_buff[FN_REFLEN], org_name[FN_REFLEN], index_name[FN_REFLEN],
-       data_name[FN_REFLEN], rp_buff[PATH_MAX];
+       data_name[FN_REFLEN];
+  char *rp_buff = NULL;
   unsigned char *disk_cache= NULL;
   unsigned char *disk_pos, *end_pos;
   MI_INFO info,*m_info,*old_info;
@@ -107,10 +108,17 @@ MI_INFO *mi_open(const drizzled::identifier::Table &identifier, int mode, uint32
                             "",
                             MI_NAME_IEXT,
                             MY_UNPACK_FILENAME);
-  if (!realpath(org_name,rp_buff))
-    internal::my_load_path(rp_buff,org_name, NULL);
-  rp_buff[FN_REFLEN-1]= '\0';
-  strcpy(name_buff,rp_buff);
+
+  rp_buff = realpath(org_name,NULL);
+  if (!rp_buff)
+  {
+        internal::my_load_path(name_buff,org_name, NULL);
+  }  else {
+  	rp_buff[FN_REFLEN-1]= '\0';
+  	strcpy(name_buff,rp_buff);
+	free(rp_buff);
+  }
+
   THR_LOCK_myisam.lock();
   if (!(old_info=test_if_reopen(name_buff)))
   {
