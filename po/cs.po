@@ -8,15 +8,15 @@ msgstr ""
 "Project-Id-Version: drizzle\n"
 "Report-Msgid-Bugs-To: http://translations.launchpad.net/drizzle\n"
 "POT-Creation-Date: 2010-07-20 16:06+0000\n"
-"PO-Revision-Date: 2012-08-15 21:01+0000\n"
+"PO-Revision-Date: 2012-08-23 20:17+0000\n"
 "Last-Translator: Zbyněk Schwarz <Unknown>\n"
 "Language-Team: Czech <cs@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=3; plural=(n==1) ? 0 : (n>=2 && n<=4) ? 1 : 2;\n"
-"X-Launchpad-Export-Date: 2012-08-16 04:40+0000\n"
-"X-Generator: Launchpad (build 15810)\n"
+"X-Launchpad-Export-Date: 2012-08-28 05:47+0000\n"
+"X-Generator: Launchpad (build 15864)\n"
 
 msgid "Synonym for `help'."
 msgstr "Synonymum pro `nápověda'."
@@ -666,224 +666,257 @@ msgid ""
 "This software comes with ABSOLUTELY NO WARRANTY. This is free software,\n"
 "and you are welcome to modify and redistribute it under the GPL license\n"
 msgstr ""
+"Tento software je NAPROSTO BEZ ZÁRUKY. Toto je volný\n"
+"software a můžete ho měnit a znovu šířit s licencí GPL\n"
 
 msgid "Dumps definitions and data from a Drizzle database server"
-msgstr ""
+msgstr "Vypíše definice a data z databázového serveru Drizzle"
 
 #, c-format
 msgid "Illegal use of option --ignore-table=<database>.<table>\n"
-msgstr ""
+msgstr "Neplatné použití volby --ignore-table=<databáze>.<tabulka>\n"
 
 #, c-format
 msgid "Invalid mode to --compatible: %s\n"
-msgstr ""
+msgstr "Neplatné režim pro --compatible: %s\n"
 
 msgid "Error: Invalid Value for opt_max_connect_retries"
-msgstr ""
+msgstr "Chyba: Neplatná hodnota pro opt_max_connect_retries"
 
 msgid "Error: Invalid Value for opt_tail_lines"
-msgstr ""
+msgstr "Chyba: Neplatná hodnota pro opt_tail_lines"
 
 msgid "Error: Invalid Value for opt_sleep"
-msgstr ""
+msgstr "Chyba: Neplatná hodnota pro opt_sleep"
 
 #, c-format
 msgid "Could not open '%s' for reading: errno = %d"
-msgstr ""
+msgstr "Nelze otevřít '%s' pro čtení: errno = %d"
 
 #, c-format
 msgid "Out of memory"
-msgstr ""
+msgstr "Nedostatek paměti"
 
 msgid "Aborting\n"
-msgstr ""
+msgstr "Ukončování\n"
 
 msgid "One can only use the --user switch if running as root\n"
-msgstr ""
+msgstr "Přepínač --user lze použít pouze při spouštění jako root\n"
 
 msgid ""
 "Fatal error: Please read \"Security\" section of the manual to find out how "
 "to run drizzled as root!\n"
 msgstr ""
+"Závažná chyba: Prosím přečtěte si část \"Security\" v příručce o tom, jak "
+"Drizzle spouštět jako root!\n"
 
 #, c-format
 msgid ""
 "Fatal error: Can't change to run as user '%s' ;  Please check that the user "
 "exists!\n"
 msgstr ""
+"Závažná chyba: Nelze spouštět pomocí uživatele '%s' ; Zkontrolujte prosím, "
+"že uživatel existuje!\n"
 
 #, c-format
 msgid "gethostname failed, using '%s' as hostname"
-msgstr ""
+msgstr "gethostname selhalo, '%s' je použit jako název hostitele"
 
 #, c-format
 msgid "Unknown locale: '%s'"
-msgstr ""
+msgstr "Neznámý jazyk: '%s'"
 
 msgid "Can't create thread-keys"
-msgstr ""
+msgstr "Nelze vytvořit klíče vláken"
 
 msgid "Failed to initialize plugins."
-msgstr ""
+msgstr "Nelze zavést zásuvné moduly."
 
 #, c-format
 msgid ""
 "%s: Too many arguments (first extra is '%s').\n"
 "Use --verbose --help to get a list of available options\n"
-msgstr ""
+msgstr "%s: Příliš mnoho argumentů (první dodatečný je '%s').\n"
 
 msgid "No scheduler found, cannot continue!\n"
-msgstr ""
+msgstr "Nenalezen plánovač, nelze pokračovat!\n"
 
 #, c-format
 msgid "Unknown/unsupported storage engine: %s"
-msgstr ""
+msgstr "Neznámé/nepodporované jádro databáze: %s"
 
 msgid "Display this help and exit."
 msgstr "Zobrazit tuto nápovědu a odejít."
 
 msgid "Display this help and exit after initializing plugins."
-msgstr ""
+msgstr "Zobrazit tuto nápovědu a ukončit po zavedení zásuvných modulů."
 
 msgid "Auto-increment columns are incremented by this"
-msgstr ""
+msgstr "Automaticky zvyšované sloupce se zvyšují o toto"
 
 msgid ""
 "Offset added to Auto-increment columns. Used when auto-increment-increment "
 "!= 1"
 msgstr ""
+"Odchylka přidaná k automaticky zvyšovaným sloupcům. Použito, když nejsou "
+"zvyšovány o 1"
 
 msgid ""
 "Path to installation directory. All paths are usually resolved relative to "
 "this."
 msgstr ""
+"Cesta k instalačnímu adresáři. Všechny cesty jsou většinou zobrazovány "
+"relativně k této."
 
 msgid "Chroot drizzled daemon during startup."
-msgstr ""
+msgstr "Chroot daemona drizzle během spuštění."
 
 msgid "Set the default collation."
-msgstr ""
+msgstr "Nastavit výchozí umístění."
 
 msgid "Default completion type."
-msgstr ""
+msgstr "Výchozí typ dokončení"
 
 msgid "Write core on errors."
-msgstr ""
+msgstr "Vypisovat jádro při chybách"
 
 msgid "Path to the database root."
-msgstr ""
+msgstr "Cesta ke kořeni databáze."
 
 msgid "Set the default storage engine (table type) for tables."
-msgstr ""
+msgstr "Nastavit výchozí jádro databáze (typ tabulky) pro tabulky."
 
 msgid "Set the default time zone."
-msgstr ""
+msgstr "Nastavit výchozí časovou zónu"
 
 msgid "Used for debugging;  Use at your own risk!"
-msgstr ""
+msgstr "Použito pro ladění; Pouze na vlastní riziko!"
 
 msgid "Set up signals usable for debugging"
-msgstr ""
+msgstr "Nastavit signály použitelné pro ladění"
 
 msgid "(IGNORED)"
-msgstr ""
+msgstr "(IGNOROVÁNO)"
 
 msgid "Set the language used for the month names and the days of the week."
-msgstr ""
+msgstr "Nastavit jazyk použitý pro názvy měsíců a dnů v týdnu."
 
 msgid "Log some not critical warnings to the log file."
-msgstr ""
+msgstr "Zaznamenat některá nekritická varování do souboru."
 
 msgid "Pid file used by safe_mysqld."
-msgstr ""
+msgstr "Soubor pid použitý pro safe_mysqld."
 
 msgid ""
 "Maximum time in seconds to wait for the port to become free. (Default: no "
 "wait)"
 msgstr ""
+"Maximální doba ve vteřinách po kterou čekat na uvolnění portu. (Výchozí:bez "
+"čekání)"
 
 msgid ""
 "Limit LOAD DATA, SELECT ... OUTFILE, and LOAD_FILE() to files within "
 "specified directory"
 msgstr ""
+"Omezit LOAD DATA, SELECT ... OUTFILE, a LOAD_FILE() na souboru uvnitř "
+"zadaného adresáře"
 
 msgid ""
 "Uniquely identifies the server instance in the community of replication "
 "partners."
 msgstr ""
+"Jedinečně identifikuje instanci serveru v komunitě replikačních partnerů."
 
 msgid "Don't print a stack trace on failure."
-msgstr ""
+msgstr "Nevypisovat sledování zásobníku při chybě."
 
 msgid "Enable symbolic link support."
-msgstr ""
+msgstr "Povolit podporu symbolických odkazů."
 
 msgid ""
 "Specify whether to time mutexes (only InnoDB mutexes are currently supported)"
 msgstr ""
+"Zadejte zdali časovat mutexy (V současnosti jsou podporovány pouze mutexy "
+"InnoDB)"
 
 msgid "Path for temporary files."
-msgstr ""
+msgstr "Cesta k dočasným souborům."
 
 msgid "Default transaction isolation level."
-msgstr ""
+msgstr "Výchozí úroveň izolace transakcí."
 
 msgid "Run drizzled daemon as user."
-msgstr ""
+msgstr "Spustit daemona drizzle jako uživatel."
 
 msgid ""
 "The number of outstanding connection requests Drizzle can have. This comes "
 "into play when the main Drizzle thread gets very many connection requests in "
 "a very short time."
 msgstr ""
+"Počet nevyřízených požadavků na připojení, které Drizzle může mít. Toto se "
+"projeví, když hlavní vlákno Drizzle dostane mnoho požadavků na připojení ve "
+"velmi krátkém čase."
 
 msgid ""
 "Size of tree cache used in bulk insert optimization. Note that this is a "
 "limit per thread!"
 msgstr ""
+"Velikost mezipaměti stromu v optimalizacích hromadného přidání. Nezapomeňte, "
+"že toto je omezení pro vlákno!"
 
 msgid ""
 "Precision of the result of '/' operator will be increased on that value."
-msgstr ""
+msgstr "Přesnost výsledku operátoru '/' bude zvýšena o tuto hodnotu."
 
 msgid "The maximum length of the result of function  group_concat."
-msgstr ""
+msgstr "Maximální délka výsledku function group_concat."
 
 msgid "The size of the buffer that is used for full joins."
-msgstr ""
+msgstr "Velikost mezipaměti která je použita pro úplná spojení."
 
 msgid "Max packetlength to send/receive from to server."
-msgstr ""
+msgstr "Max délka paketu pro odeslání/přijetí ze serveru."
 
 msgid ""
 "If there is more than this number of interrupted connections from a host "
 "this host will be blocked from further connections."
 msgstr ""
+"Pokud je počet přerušených spojení od hostitele větší než toto číslo, pak mu "
+"budou další připojení zablokována."
 
 msgid "Max number of errors/warnings to store for a statement."
-msgstr ""
+msgstr "Max počet chyb/varování které ukládat pro výkaz."
 
 msgid "Don't allow creation of heap tables bigger than this."
-msgstr ""
+msgstr "Neumožňovat vytvářet tabulky haldy, které jsou větší než toto."
 
 msgid ""
 "Joins that are probably going to read more than max_join_size records return "
 "an error."
 msgstr ""
+"Spojení, která pravděpodobně budou číst více záznamů než je v max_join_size, "
+"vrací chybu."
 
 msgid "Max number of bytes in sorted records."
-msgstr ""
+msgstr "Max počet bajtů v seřazených záznamech."
 
 msgid "Limit assumed max number of seeks when looking up rows based on a key"
 msgstr ""
+"Omezit předpokládaný max počet hledání, při vyhledávání řádků na základě "
+"klíče"
 
 msgid ""
 "The number of bytes to use when sorting BLOB or TEXT values (only the first "
 "max_sort_length bytes of each value are used; the rest are ignored)."
 msgstr ""
+"Počet bajtů, které budou použity při seřazování hodnot BLOB nebo TEXT (jsou "
+"použity pouze první bajty v max_sort_length z každé hodnoty; zbytek je "
+"ignorován)."
 
 msgid "After this many write locks, allow some read locks to run in between."
 msgstr ""
+"Po tolika zámcích proti zápisu, povolit i některé zámky proti čtení mezi "
+"nimi."
 
 msgid ""
 "Don't log queries which examine less than min_examined_row_limit rows to "

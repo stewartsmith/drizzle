@@ -8,15 +8,15 @@ msgstr ""
 "Project-Id-Version: drizzle\n"
 "Report-Msgid-Bugs-To: http://translations.launchpad.net/drizzle\n"
 "POT-Creation-Date: 2010-07-20 16:06+0000\n"
-"PO-Revision-Date: 2012-06-08 05:12+0000\n"
-"Last-Translator: Launchpad Translations Administrators <Unknown>\n"
+"PO-Revision-Date: 2012-08-22 16:48+0000\n"
+"Last-Translator: coldtobi <Unknown>\n"
 "Language-Team: German <de@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
-"X-Launchpad-Export-Date: 2012-06-09 05:35+0000\n"
-"X-Generator: Launchpad (build 15376)\n"
+"X-Launchpad-Export-Date: 2012-08-28 05:47+0000\n"
+"X-Generator: Launchpad (build 15864)\n"
 
 msgid "Synonym for `help'."
 msgstr "Hilfe"
@@ -63,7 +63,7 @@ msgid "Change your drizzle prompt."
 msgstr "Ändert Ihre drizzle Eingabeaufforderung."
 
 msgid "Quit drizzle."
-msgstr "Drizzle beenden"
+msgstr "Drizzle beenden."
 
 msgid "Rebuild completion hash."
 msgstr "Vervollständigungshash neu erzeugen."
@@ -97,13 +97,13 @@ msgid "Error: Invalid Value for max_input_line"
 msgstr "Fehler: Ungültiger Wert für max_input_line"
 
 msgid "Displays this help and exit."
-msgstr "Zeigt diese Hilfe an und beendet das Programm"
+msgstr "Zeigt diese Hilfe an und beendet das Programm."
 
 msgid ""
 "Don't use history file. Disable interactive behavior. (Enables --silent)"
 msgstr ""
-"Die Verlaufdatei nicht verwenden. Interaktives Verhalten abschalten "
-"(schaltet --still ein)"
+"Die Verlaufdatei nicht verwenden. Interaktives Verhalten abschalten. "
+"(schaltet --silent ein)"
 
 msgid "Display column type information."
 msgstr "Spaltentypinformationen anzeigen"
@@ -116,7 +116,7 @@ msgstr ""
 "comments (verwerfe Kommentare). Mit --comments wieder aktivierbar."
 
 msgid "Use compression in server/client protocol."
-msgstr "Benutze kompression im Server-/Client-Protokoll."
+msgstr "Benutze Kompression im Server-/Client-Protokoll."
 
 msgid "Print the output of a query (rows) vertically."
 msgstr "Gibt die Ergebnisse einer Abrfage (Zeilen) vertikal aus."
@@ -130,11 +130,11 @@ msgid ""
 "line of the query, otherwise only from the first line, before an enter. "
 "Disable with --disable-named-commands. This option is disabled by default."
 msgstr ""
-"Benannte Befehle aktivieren. Benannte Befehle stellen die internen Befehle "
-"dieses Programms dar; siehe auch drizzle> Hilfe. Falls aktiviert, können die "
-"benannten Befehle von jeder Zeile der Abfrage benutzt werden, anderweitig "
-"nur von der ersten Zeile, vor einer Eingabe. Deaktivieren mit --disable-"
-"named-commands. Diese Einstellung ist Standardmässig deaktiviert."
+"Benannte Befehle aktivieren. Benannte Befehle meint die internen Befehle "
+"dieses Programms; siehe auch drizzle> Hilfe. Falls aktiviert, können die "
+"benannten Befehle in jeder Zeile der Abfrage benutzt werden, ansonsten nur "
+"von der ersten Zeile und zwar vor einer Eingabe. Deaktivieren mit --disable-"
+"named-commands. Diese Einstellung ist standardmäßig deaktiviert."
 
 msgid ""
 "Named commands are disabled. Use \\* form only, or use named commands only "
@@ -147,8 +147,8 @@ msgstr ""
 "verwende benannte Befehle nur am Anfang der Zeile die mit einem Semikolon "
 "(;) beendet wird. Seit Version 10.9 ist diese Option beim start des Clients "
 "AKTIVIERT! Die Option kann mit '-G' deaktiviert werden. Lange Befehle "
-"arbeiten immer noch von der ersten Zeile. WARNUNG: Option verworfen. "
-"Verwenden Sie --disable-named-command statt dessen."
+"arbeiten immer noch von der ersten Zeile. WARNUNG: Option veraltert. "
+"Verwenden Sie --disable-named-command stattdessen."
 
 msgid "Ignore space after function names."
 msgstr "Leerzeichen hinter Funktionsnamen ignorieren."
@@ -164,7 +164,7 @@ msgid ""
 "version of this option instead."
 msgstr ""
 "Keine Zeilennummern für Fehler ausgeben. WARNUNG: -L ist veraltet, nutzen "
-"Sie statt dessen die Langform dieser Option."
+"Sie stattdessen die Langform dieser Option."
 
 msgid "Write column names in results."
 msgstr "Spaltennamen in Ergebnissen ausgeben."
@@ -174,14 +174,14 @@ msgid ""
 "version of this options instead."
 msgstr ""
 "Keine Spaltennamen im Ergebnis ausgeben. WARNUNG: -N ist veraltet, benutzten "
-"Sie statt dessen die Langform der Option."
+"Sie stattdessen die Langform der Option."
 
 msgid ""
 "Change the value of a variable. Please note that this option is deprecated; "
 "you can set variables directly with --variable-name=value."
 msgstr ""
-"Den Wert der Variable verändern. Diese Option is unterdrückt; Man kann den "
-"Wert einer Variable dierekt mit --variablen-name=Wert setzen"
+"Den Wert der Variable verändern. Diese Option ist veraltert; Man kann den "
+"Wert einer Variable direkt mit --variablen-name=Wert setzen."
 
 msgid "Output in table format."
 msgstr "Ausgabe im Tabellenformat."
@@ -203,8 +203,8 @@ msgstr "Versionsinformation ausgeben und beenden."
 msgid ""
 "Refuse client connecting to server if it uses old (pre-4.1.1) protocol"
 msgstr ""
-"Verbiete Clientverbindungen zum Server unter Verwendung eines alten (vor "
-"4.1.1) Protokolls"
+"Lehne Clientverbindungen zum Server unter Verwendung eines zu alten (vor "
+"4.1.1) Protokolls ab"
 
 msgid "Number of lines before each import progress report."
 msgstr "Anzahl der Zeilen vor jedem Importverlauf-Report."
@@ -245,23 +245,23 @@ msgstr ""
 "breiter als die Terminalbreite ist."
 
 msgid "Database to use."
-msgstr "Zu benutzende Datenbank"
+msgstr "Zu benutzende Datenbank."
 
 msgid "(not used)"
 msgstr "(nicht verwendet)"
 
 msgid "Delimiter to be used."
-msgstr "Zu benutzendes Trennzeichen"
+msgstr "Zu benutzendes Trennzeichen."
 
 msgid "Execute command and quit. (Disables --force and history file)"
 msgstr ""
-"Führe Anweisungen aus und beende. (Deaktiviert --forche und Verlaufsdatei)"
+"Führe Anweisungen aus und beende. (Deaktiviert --force und Verlaufsdatei)"
 
 msgid "Enable/disable LOAD DATA LOCAL INFILE."
 msgstr "LOAD DATA LOCAL INFILE aktivieren oder deaktivieren."
 
 msgid "Flush buffer after each query."
-msgstr "Den Puffer nach jeder Anweisung leeren"
+msgstr "Den Puffer nach jeder Anweisung leeren."
 
 msgid "Ignore SIGINT (CTRL-C)"
 msgstr "SIGINT Signal (Strg-C) ignorieren"
@@ -286,12 +286,11 @@ msgstr ""
 "verwendet. Gültige Pager sind less, more, cat [>Dateiname], etc. Verwenden "
 "Sie die interactive Hilfe (\\h). Diese Option funktioniert nicht im "
 "Batchmodus. Kann mit --disable-pager deaktiviert werden. Diese Option ist "
-"als Voreinstellung deaktiviert."
+"standardmässig deaktiviert."
 
 msgid "Disable pager and print to stdout. See interactive help (\\h) also."
 msgstr ""
-"Pager deaktivieren und in stdout ausgeben. Siehe auch unter interaktive "
-"Hilfe (\\h)"
+"Pager deaktivieren und in stdout ausgeben. Siehe auch interaktive Hilfe (\\h)"
 
 msgid "Set the drizzle prompt to this value."
 msgstr "Benutze diesen Wert als drizzle Eingabeanforderung."
@@ -339,7 +338,7 @@ msgid "Wait and retry if connection is down."
 msgstr "Warten und erneut versuchen, falls die Verbindung getrennt wurde."
 
 msgid "Number of seconds before connection timeout."
-msgstr "Anzahl der sekunden bevor Verbindung zeitlich überschritten wird."
+msgstr "Anzahl der Sekunden bevor Verbindung zeitlich überschritten wird."
 
 msgid "Max length of input line"
 msgstr "Maximale Länge der Eingabezeile"
@@ -353,7 +352,7 @@ msgstr ""
 "updates benutzt wird"
 
 msgid "Use MySQL Protocol."
-msgstr "Verwende das MySQL Protokoll"
+msgstr "Verwende das MySQL Protokoll."
 
 msgid "Connect to host"
 msgstr "Zum Host verbinden"
@@ -374,7 +373,7 @@ msgstr ""
 "$DRIZZLE_TCP_PORT, eingebauter Standardports"
 
 msgid "User for login if not current user."
-msgstr "Nutzer zum einloggen falls es nicht der aktuelle nutzer ist."
+msgstr "Nutzer zum Einloggen falls es nicht der aktuelle Nutzer ist."
 
 msgid "The protocol of connection (tcp,socket,pipe,memory)."
 msgstr "Verbindungsprotokoll (tcp,socket,pipe,memory)."
@@ -396,6 +395,7 @@ msgstr "Fehler: Wert %<PRIu32> ist für Port nicht gültig.\n"
 #, c-format
 msgid "drizzle  Ver %s Distrib %s, for %s-%s (%s) using readline %s\n"
 msgstr ""
+"Drizzle Ver. %s Distribution %s, für %s-%s (%s) mittels readline %s\n"
 
 #, c-format
 msgid ""
@@ -412,14 +412,14 @@ msgid "Usage: drizzle [OPTIONS] [database]\n"
 msgstr "Benutzung: drizzle [OPTIONEN] [datenbank]\n"
 
 msgid "Welcome to the Drizzle client..  Commands end with ; or \\g."
-msgstr "Willkommen im drizzle Klienten. Befehle enden mit ; oder \\g."
+msgstr "Willkommen im Drizzle Client. Befehle enden mit ; oder \\g."
 
 #, c-format
 msgid ""
 "Your Drizzle connection id is %u\n"
 "Server version: %s\n"
 msgstr ""
-"Ihre drizzle-Verbindungsnummer ist %u\n"
+"Ihre Drizzle-Verbindungsnummer ist %u\n"
 "Serverversion: %s\n"
 
 #, c-format
@@ -428,7 +428,7 @@ msgstr "Lese verlaufsdatei %s\n"
 
 #, c-format
 msgid "Couldn't allocate memory for temp histfile!\n"
-msgstr "Konnte keinen Speicher für temporäre Histdatei reservieren.\n"
+msgstr "Konnte keinen Speicher für temporäre Histdatei reservieren!\n"
 
 msgid "Type 'help;' or '\\h' for help. Type '\\c' to clear the buffer.\n"
 msgstr ""
@@ -2872,7 +2872,7 @@ msgstr ""
 
 #, c-format
 msgid "Not allowed to return a result set from a %s"
-msgstr ""
+msgstr "Die Rückgabe eines Abfrageergebnis von %s ist nicht erlaubt"
 
 msgid "Cannot get geometry object from data you send to the GEOMETRY field"
 msgstr ""
@@ -3173,6 +3173,8 @@ msgstr ""
 msgid ""
 "Table storage engine '%-.64s' does not support the create option '%.64s'"
 msgstr ""
+"Die Tabellen-Speicher-Engine »%-.64s« unterstützt die Create-Option »%.64s« "
+"nicht"
 
 #, c-format
 msgid ""
@@ -4173,7 +4175,7 @@ msgstr "Befehl kann nicht verarbeitet werden. Fehler erhalten: %s.\n"
 
 #, c-format
 msgid "Checksum failed. Wanted %<PRIu32> got %<PRIu32>\n"
-msgstr ""
+msgstr "Prüfsummenfehler. Sollwert: %<PRIu32> Erhaltener Wert: %<PRIu32>\n"
 
 #, c-format
 msgid "Usage: %s TRANSACTION_LOG\n"
@@ -4195,7 +4197,7 @@ msgstr ""
 
 #, c-format
 msgid "Couldn't load plugin named '%s'.\n"
-msgstr ""
+msgstr "Plugin '%s' konnte nicht geladen werden.\n"
 
 msgid "Out of memory."
 msgstr "Nicht genügend Speicher."
@@ -4220,7 +4222,7 @@ msgstr ""
 
 #, c-format
 msgid "Out of memory for plugin '%s'."
-msgstr ""
+msgstr "Kein Speicher für Plugin '%s' verfügbar."
 
 #, c-format
 msgid "Bad options for plugin '%s'."
@@ -4379,23 +4381,23 @@ msgstr ""
 
 #, c-format
 msgid "logging '%s' pre() failed"
-msgstr ""
+msgstr "loggen von '%s' pre() fehlgeschlagen"
 
 #, c-format
 msgid "logging '%s' post() failed"
-msgstr ""
+msgstr "loggen von '%s' post() fehlgeschlagen"
 
 #, c-format
 msgid "logging '%s' postEnd() failed"
-msgstr ""
+msgstr "loggen von '%s' postEnd() fehlgeschlagen"
 
 #, c-format
 msgid "qcache plugin '%s' try_fetch_and_send() failed"
-msgstr ""
+msgstr "QCache Plugin '%s' try_fetch_and_send() fehlgeschlagen"
 
 #, c-format
 msgid "qcache plugin '%s' set() failed"
-msgstr ""
+msgstr "QCache Plugin '%s' set() fehlgeschlagen"
 
 #, c-format
 msgid "qcache plugin '%s' invalidateTable() failed"
@@ -4591,7 +4593,7 @@ msgid "Invalid value for connect_timeout\n"
 msgstr ""
 
 msgid "Invalid value for read_timeout\n"
-msgstr ""
+msgstr "Ungültiger Wert für read_timeout\n"
 
 msgid "Invalid value for write_timeout\n"
 msgstr "Unzulässiger Wert für write_timeout\n"
@@ -4889,10 +4891,10 @@ msgid "Invalid value for threshold-slow"
 msgstr "Unzulässiger Wert für threshold-slow"
 
 msgid "Invalid value for threshold-big-resultset"
-msgstr ""
+msgstr "Ungültiger Wert für threshold-big-resultset"
 
 msgid "Invalid value for threshold-big-examined"
-msgstr ""
+msgstr "Ungültiger Wert für threshold-big-examined"
 
 msgid "Enable logging to CSV file"
 msgstr "Protokollieren in CSV Datei"
@@ -5174,7 +5176,7 @@ msgid "Tablespace not empty"
 msgstr "Tablespace ist nicht leer"
 
 msgid "Invalid value for retry_count"
-msgstr ""
+msgstr "Ungültiger Wert für retry_count"
 
 msgid ""
 "Port number to use for connection or 0 for default to with MySQL protocol."
@@ -5191,7 +5193,7 @@ msgstr "syslog facility \"%s\" nicht bekannt, verwende \"local0\""
 
 #, c-format
 msgid "syslog priority \"%s\" not known, using \"warn\""
-msgstr ""
+msgstr "Unbekannte Syslog-Priorität \"%s\", nutze \"warn\""
 
 #, c-format
 msgid "syslog priority \"%s\" not known, using \"info\""
