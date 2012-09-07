@@ -75,6 +75,7 @@ class basicTest(sysbenchTestCase):
             test_cmd.append("--mysql-socket=%s" %master_server.socket_file)
 
         # preparing sysbench_readonly test
+        time.sleep(20)
         self.prepareSysbench(test_cmd,test_executor,servers)
 
         # start the test!

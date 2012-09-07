@@ -70,8 +70,8 @@ class sysbenchTestCase(mysqlBaseTestCase):
         # how many times to run sysbench at each concurrency
         self.iterations = 3 
         # various concurrencies to use with sysbench
-        # self.concurrencies = [16, 32, 64, 128, 256, 512, 1024 ]
-        self.concurrencies = [ 128, 256, 512 ]
+        self.concurrencies = [16, 32, 64, 128, 256, 512, 1024 ]
+        # self.concurrencies = [ 128, 256, 512 ]
         
         # we setup once.  This is a readonly test and we don't
         # alter the test bed once it is created
