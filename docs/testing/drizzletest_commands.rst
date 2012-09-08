@@ -1,9 +1,11 @@
 Drizzletest Commands
 ====================
 
-The commands that are endorsed in Drizzletest are delineated in the following documentation. Examples are given for the commands. Browse **tests/t** for more examples.
+The commands that are endorsed in Drizzletest are delineated in the following documentation. Examples are given for the commands. Browse **tests/t** for more examples. 
 
-.. note:: The commands are not case sensitive
+.. note:: 
+          The commands are not case sensitive.
+          All commands must end with semi-colon.
 
 List of commands
 ----------------
@@ -92,10 +94,40 @@ append_file
 :Syntax: 
 
 :program:`append_file file_name [terminator]`
+
+:program:`append_file` command is used to append / add data to the end of an existing file. In case, the specified file does not exist, it is created and the data is written on it. The end of data, that is to be appended, is marked by the terminator. 
+
+.. note:: The default terminator is EOF
+
+The ``file_name`` can be substituted via variables.
    
 :Example:
 
-.. code-block:: python
+:: 
+  
+    let $MY_FILE = ~/foo/bar.txt;
+
+    append_file $MY_FILE;
+    writing text...
+    EOF
+
+    append_file $MY_FILE;
+    appending text with default terminator...
+    EOF
+
+    append_file $MY_FILE stop
+    appending text with `stop` terminator...
+    stop
+
+:Output:
+
+::
+    
+    ~/foo/bar.txt:
+    writing text...
+    appending text with default terminator...
+    appending text with `stop` terminator...
+
 
 .. _cat_file:
 
@@ -118,6 +150,8 @@ change_user
 :Syntax: 
 
 :program:`change_user [user_name], [password], [db_name]`
+
+
 
 :Example:
 
