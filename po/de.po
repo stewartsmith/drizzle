@@ -8,15 +8,15 @@ msgstr ""
 "Project-Id-Version: drizzle\n"
 "Report-Msgid-Bugs-To: http://translations.launchpad.net/drizzle\n"
 "POT-Creation-Date: 2010-07-20 16:06+0000\n"
-"PO-Revision-Date: 2012-08-22 16:48+0000\n"
-"Last-Translator: coldtobi <Unknown>\n"
+"PO-Revision-Date: 2012-09-08 14:57+0000\n"
+"Last-Translator: Raimund Grün <rmund@gmx.net>\n"
 "Language-Team: German <de@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
-"X-Launchpad-Export-Date: 2012-08-28 05:47+0000\n"
-"X-Generator: Launchpad (build 15864)\n"
+"X-Launchpad-Export-Date: 2012-09-09 04:52+0000\n"
+"X-Generator: Launchpad (build 15914)\n"
 
 msgid "Synonym for `help'."
 msgstr "Hilfe"
@@ -404,8 +404,9 @@ msgid ""
 "and you are welcome to modify and redistribute it under the GPL license\n"
 msgstr ""
 "Copyright (C) 2008 Sun Microsystems\n"
-"Diese Software hat absolut keine Garantie. Dies ist freie Software,\n"
-"und Sie dazu eingeladen, diese unter der GPL Lizenz zu modifizieren\n"
+"Für dieses Programm besteht KEINERLEI GARANTIE; Dies ist freie Software, \n"
+"die Sie unter den Bedingungen der GPL Lizenz verändern und weitergeben "
+"dürfen.\n"
 
 #, c-format
 msgid "Usage: drizzle [OPTIONS] [database]\n"
@@ -1517,6 +1518,7 @@ msgstr "Datensätze: %ld  Duplikate: %ld  Warnungen: %ld"
 #, c-format
 msgid "You can't specify target table '%-.192s' for update in FROM clause"
 msgstr ""
+"Tabelle '%-.192s' kann nicht im FROM Teil der Abfrage angegeben werden."
 
 #, c-format
 msgid "Unknown thread id: %lu"
@@ -1760,6 +1762,8 @@ msgid ""
 "%-.16s command denied to user '%-.48s'@'%-.64s' for column '%-.192s' in "
 "table '%-.192s'"
 msgstr ""
+"Befehl %-.16s für Benutzer '%-.48s'@'%-.64s' auf Spalte '%-.192s' in Tabelle "
+"'%-.192s' nicht erlaubt."
 
 msgid ""
 "Illegal GRANT/REVOKE command; please consult the manual to see which "
@@ -1780,6 +1784,8 @@ msgid ""
 "There is no such grant defined for user '%-.48s' on host '%-.64s' on table "
 "'%-.192s'"
 msgstr ""
+"Eine Zugriffserlaubnis (GRANT) auf dem Rechner '%-.64s', Tabelle '%-.192s' "
+"wurde für den Benutzer  '%-.48s' nicht definiert."
 
 msgid "The used command is not allowed with this Drizzle version"
 msgstr "Das benutzte Kommando ist in dieser Drizzle Version nicht gestattet"
@@ -1794,6 +1800,8 @@ msgstr ""
 #, c-format
 msgid "Delayed insert thread couldn't get requested lock for table %-.192s"
 msgstr ""
+"Verzögertes Einfügen konnte keine exklusiven Zugriff auf die Tabelle %-.192s "
+"bekommen."
 
 msgid "Too many delayed threads in use"
 msgstr "Es werden zu viele verzögerte Threads benutzt"
@@ -1865,11 +1873,15 @@ msgstr ""
 #, c-format
 msgid "Can't write, because of unique constraint, to table '%-.192s'"
 msgstr ""
+"Kann nicht schreiben, da eine auf der Tabelle '%-.192s' definierte "
+"Eindeutigkeit verletzt würde."
 
 #, c-format
 msgid ""
 "BLOB/TEXT column '%-.192s' used in key specification without a key length"
 msgstr ""
+"BLOB/TEXT Spalte '%-.192s' wurde in der Spezifikation eines Schlüssels ohne "
+"die Angabe einer Länge des Schlüssels verwendet"
 
 msgid ""
 "All parts of a PRIMARY KEY must be NOT NULL; if you need NULL in a key, use "
@@ -1927,6 +1939,8 @@ msgid ""
 "Aborted connection %<PRIi64> to db: '%-.192s' user: '%-.48s' host: '%-.64s' "
 "(%-.64s)"
 msgstr ""
+"Verbindungsabbruch %<PRIi64> zu db: '%-.192s' Benutzer: '%-.48s' Rechner: '%-"
+".64s' (%-.64s)"
 
 msgid "The storage engine for the table does not support binary table dump"
 msgstr "Das Einlagern von Tabellen unterstützt keinen binären Tabellen Dump"
@@ -1966,11 +1980,15 @@ msgstr "Unbekannte Systemvariable '%-.64s'"
 #, c-format
 msgid "Table '%-.192s' is marked as crashed and should be repaired"
 msgstr ""
+"Tabelle '%-.192s' ist als beschädigt markiert worden und sollte repariert "
+"werden"
 
 #, c-format
 msgid ""
 "Table '%-.192s' is marked as crashed and last (automatic?) repair failed"
 msgstr ""
+"Tabelle '%-.192s' ist als beschädigt markiert worden und der letzte "
+"(automatische?) Reparaturversuch ist fehlgeschlagen"
 
 msgid "Some non-transactional changed tables couldn't be rolled back"
 msgstr ""
@@ -2059,9 +2077,13 @@ msgstr "Foreign Key Constraint kann nicht hinzugefügt werden"
 
 msgid "Cannot add or update a child row: a foreign key constraint fails"
 msgstr ""
+"Kann Kind-Zeile nicht hinzufügen oder aktualisieren: Foreign-Key "
+"Beschränkung fehlgeschlagen."
 
 msgid "Cannot delete or update a parent row: a foreign key constraint fails"
 msgstr ""
+"Kann  Eltern-Zeile nicht löschen oder aktualisieren: Foreign-Key "
+"Beschränkung fehlgeschlagen."
 
 #, c-format
 msgid "Error connecting to master: %-.128s"
@@ -2170,7 +2192,7 @@ msgstr "Schlüssel Refferenzen und Tabellen Refferenzen stimmen nicht überein"
 
 #, c-format
 msgid "Operand should contain %d column(s)"
-msgstr ""
+msgstr "Operant sollte %d Spalte(n) enthalten"
 
 msgid "Subquery returns more than 1 row"
 msgstr "Unterabfrage gibt mehr als eine Zeile zurück"
@@ -2208,6 +2230,8 @@ msgid ""
 "Client does not support authentication protocol requested by server; "
 "consider upgrading Drizzle client"
 msgstr ""
+"Der Client unterstützt das vom Server gefordeten Authentifizierungsprotokoll "
+"nicht; eventuell den Drizzle Client aktualisieren"
 
 msgid "All parts of a SPATIAL index must be NOT NULL"
 msgstr "Alle Teile eines SPATIAL Index müssen als NOT NULL definiert sein"
@@ -2260,6 +2284,8 @@ msgstr ""
 msgid ""
 "Column set to default value; NULL supplied to NOT NULL column '%s' at row %ld"
 msgstr ""
+"Spalte auf Defaultwert gesetzt; NULL bei einer NOT NULL Spalte '%s' in Reihe "
+"%ld angegeben"
 
 #, c-format
 msgid "Out of range value for column '%s' at row %ld"
@@ -3974,7 +4000,7 @@ msgid "Constant expression in virtual column function is not allowed."
 msgstr ""
 
 msgid "Encountered an unknown temporal type."
-msgstr ""
+msgstr "Eine Zeitangabe unbekannter Art wurde festgestellt."
 
 #, c-format
 msgid "Received an invalid string format '%s' for a date value."
@@ -5236,6 +5262,7 @@ msgstr "Verzeichnispfad für die Transaktionslog Datei"
 
 msgid "Name of the replicator plugin to use (default='default_replicator')"
 msgstr ""
+"Name des zu nutzenden Repliaktor-Plugins (Default ist 'default_replicator')"
 
 msgid "Enable CRC32 Checksumming of each written transaction log entry"
 msgstr "CRC32 Prüfsummen für jeden Transaktionslog Eintrag aktivieren"
