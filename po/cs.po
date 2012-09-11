@@ -8,15 +8,15 @@ msgstr ""
 "Project-Id-Version: drizzle\n"
 "Report-Msgid-Bugs-To: http://translations.launchpad.net/drizzle\n"
 "POT-Creation-Date: 2010-07-20 16:06+0000\n"
-"PO-Revision-Date: 2012-08-23 20:17+0000\n"
+"PO-Revision-Date: 2012-09-10 21:40+0000\n"
 "Last-Translator: Zbyněk Schwarz <Unknown>\n"
 "Language-Team: Czech <cs@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=3; plural=(n==1) ? 0 : (n>=2 && n<=4) ? 1 : 2;\n"
-"X-Launchpad-Export-Date: 2012-08-28 05:47+0000\n"
-"X-Generator: Launchpad (build 15864)\n"
+"X-Launchpad-Export-Date: 2012-09-11 04:50+0000\n"
+"X-Generator: Launchpad (build 15924)\n"
 
 msgid "Synonym for `help'."
 msgstr "Synonymum pro `nápověda'."
@@ -922,6 +922,8 @@ msgid ""
 "Don't log queries which examine less than min_examined_row_limit rows to "
 "file."
 msgstr ""
+"Nezaznamenávat do souboru dotazy, které zkoumají méně než "
+"min_examined_row_limit řádků."
 
 msgid ""
 "Controls the heuristic(s) applied during query optimization to prune less-"
@@ -929,6 +931,10 @@ msgid ""
 "not apply any heuristic, thus perform exhaustive search; true - prune plans "
 "based on number of retrieved rows."
 msgstr ""
+"Ovládá heuristiky použité během optimalizace dotazu které odstraňují méně "
+"slibné částečné plány z prostoru hledání optimalizátora. Význam: false - "
+"nepoužívat žádnou heuristiku, čímž bude prováděno důkladné vyhledávání; true "
+"- odstraňovat plány na základě počtu získaných řádků."
 
 msgid ""
 "Maximum depth of search performed by the query optimizer. Values larger than "
@@ -939,74 +945,103 @@ msgid ""
 "if set to MAX_TABLES+2, the optimizer will switch to the original find_best "
 "(used for testing/comparison)."
 msgstr ""
+"Maximální hloubka hledání prováděná optimalizátorem dotazu. Hodnoty větší "
+"než počet vztahů ve výsledku dotazu vedou v lepší plány dotazu, ale déle "
+"trvá jejich sestavení. Menší hodnoty než je počet tabulek ve vztahu umožňují "
+"rychlejší optimalizaci, ale mohou z nich vznikat velmi špatné plány dotazu. "
+"Pokud nastaveno na 0, systém automaticky vybere rozumnou hodnotu; pokud "
+"nastaveno na MAX_TABLES+2, optimalizátor přejde na původní  find_best "
+"(použito pro testování/porovnávání)."
 
 msgid "Directory for plugins."
-msgstr ""
+msgstr "Adresář pro zásuvné moduly."
 
 msgid ""
 "Optional comma separated list of plugins to load at startup in addition to "
 "the default list of plugins. [for example: --plugin_add=crc32,logger_gearman]"
 msgstr ""
+"Nepovinný čárou oddělený seznam zásuvných modulů, které nahrát při spuštění "
+"spolu se seznamem výchozích modulů. [například: --"
+"plugin_add=crc32,logger_gearman]"
 
 msgid ""
 "Optional comma separated list of plugins to not load at startup. Effectively "
 "removes a plugin from the list of plugins to be loaded. [for example: --"
 "plugin_remove=crc32,logger_gearman]"
 msgstr ""
+"Nepovinný čárou oddělený seznam zásuvných modulů, které nenahrávat při "
+"spuštění. Tímto je modul odstraněn ze seznamu modulů k načtení. [například: -"
+"-plugin_remove=crc32,logger_gearman]"
 
 msgid ""
 "Optional comma separated list of plugins to load at starup instead of the "
 "default plugin load list. [for example: --plugin_load=crc32,logger_gearman]"
 msgstr ""
+"Nepovinný čárou oddělený seznam zásuvných modulů, které nahrát při spuštění "
+"místo výchozího seznamu. [například: --plugin_load=crc32,logger_gearman]"
 
 msgid "The size of the buffer that is allocated when preloading indexes"
 msgstr ""
+"Velikost vyrovnávací paměti, která je přidělena při přednahrávání indexů."
 
 msgid "Allocation block size for query parsing and execution"
-msgstr ""
+msgstr "Velikost bolu přidělení pro zpracování dotazu a spuštění"
 
 msgid "Persistent buffer for query parsing and execution"
-msgstr ""
+msgstr "Trvalá vyrovnávací paměť pro zpracování dotazu a spuštění"
 
 msgid "Allocation block size for storing ranges during optimization"
-msgstr ""
+msgstr "Velikost bloku přidělení pro ukládání rozsahů během optimalizace"
 
 msgid ""
 "Each thread that does a sequential scan allocates a buffer of this size for "
 "each table it scans. If you do many sequential scans, you may want to "
 "increase this value."
 msgstr ""
+"Každé vlákno, které provádí sekvenční snímání si přiděluje vyrovnávací paměť "
+"této velikosti pro každou tabulku, kterou snímá. Pokud provádíte mnoho "
+"snímání, tuto hodnotu byste měli zvýšit."
 
 msgid ""
 "When reading rows in sorted order after a sort, the rows are read through "
 "this buffer to avoid a disk seeks. If not set, then it's set to the value of "
 "record_buffer."
 msgstr ""
+"Při čtení řádků po seřazení, jsou čteny z této vyrovnávací paměti, aby se "
+"zabránilo hledání na disku. Pokud není nastaveno, pak je to hodnota  "
+"record_buffer."
 
 msgid "Select scheduler to be used (by default multi-thread)."
-msgstr ""
+msgstr "Vybrat plánovač který bude použit (standardně vícevláknový)."
 
 msgid "Each thread that needs to do a sort allocates a buffer of this size."
 msgstr ""
+"Každé vlákno které potřebuje provést seřazení vyhradí vyrovnávací paměť o "
+"této velikosti."
 
 msgid "The number of cached table definitions."
-msgstr ""
+msgstr "Počet definic tabulek v mezipaměti."
 
 msgid "The number of cached open tables."
-msgstr ""
+msgstr "Počet otevřených tabulek v mezipaměti."
 
 msgid ""
 "Timeout in seconds to wait for a table level lock before returning an error. "
 "Used only if the connection has active cursors."
 msgstr ""
+"Časový limit ve vteřinách, po kterých se bude čekat na zámek v úrovni "
+"tabulky, než bude zobrazena chyba. Použito pouze pokud připojení má aktivní "
+"kurzory."
 
 msgid "The stack size for each thread."
-msgstr ""
+msgstr "Velikost zásobníku pro každé vlákno."
 
 msgid ""
 "If an internal in-memory temporary table exceeds this size, Drizzle will "
 "automatically convert it to an on-disk MyISAM table."
 msgstr ""
+"Pokud dočasná tabulka ve vnitřní paměti  překročí tuto velikost, Drizzle ji "
+"automaticky převede na tabulku MyISAM na disku."
 
 msgid ""
 "Copyright (C) 2008 Sun Microsystems\n"
@@ -1015,267 +1050,280 @@ msgid ""
 "\n"
 "Starts the Drizzle database server\n"
 msgstr ""
+"Všechna práva vyhrazena (C) 2008 Sun Microsystems\n"
+"Tento software je NAPROSTO BEZ ZÁRUKY. Toto je volný\n"
+"software a můžete ho měnit a znovu šířit s licencí GPL.\n"
+"\n"
+"Spustit databázový server Drizzle\n"
 
 #, c-format
 msgid "Usage: %s [OPTIONS]\n"
-msgstr ""
+msgstr "Použití: %s [VOLBY]\n"
 
 #, c-format
 msgid ""
 "Ignoring user change to '%s' because the user was set to '%s' earlier on the "
 "command line\n"
 msgstr ""
+"Ignorování uživatelské změny na '%s' protože uživatel byl dříve v příkazovém "
+"řádku nastavena na '%s'\n"
 
 msgid "Can't start server: cannot resolve hostname!"
-msgstr ""
+msgstr "Nelze spustit server: nelze rozpoznat název hostitele!"
 
 msgid "Can't start server: bind-address refers to multiple interfaces!"
-msgstr ""
+msgstr "Nelze spustit server: bind-address odkazuje na více rozhraní!"
 
 #, c-format
 msgid "Unknown error %d"
-msgstr ""
+msgstr "Neznámá chyba %d"
 
 msgid "NO"
-msgstr ""
+msgstr "NE"
 
 msgid "YES"
-msgstr ""
+msgstr "ANO"
 
 #, c-format
 msgid "Can't create file '%-.200s' (errno: %d)"
-msgstr ""
+msgstr "Nelze vytvořit soubor '%-.200s' (č. chyby: %d)"
 
 #, c-format
 msgid "Can't create table '%-.200s' (errno: %d)"
-msgstr ""
+msgstr "Nelze vytvořit tabulku '%-.200s' (č. chyby: %d)"
 
 #, c-format
 msgid "Can't create database '%-.192s' (errno: %d)"
-msgstr ""
+msgstr "Nelze vytvořit databázi '%-.192s' (č. chyby: %d)"
 
 #, c-format
 msgid "Can't create database '%-.192s'; database exists"
-msgstr ""
+msgstr "Nelze vytvořit databázi '%-.192s'; databáze existuje"
 
 #, c-format
 msgid "Can't drop database '%-.192s'; database doesn't exist"
-msgstr ""
+msgstr "Nelze zahodit databázi  '%-.192s'; databáze neexistuje"
 
 #, c-format
 msgid "Error dropping database (can't delete '%-.192s', errno: %d)"
-msgstr ""
+msgstr "Chyba při zahazování databáze (nelze smazat '%-.192s', č. chyby: %d)"
 
 #, c-format
 msgid "Error dropping database (can't rmdir '%-.192s', errno: %d)"
-msgstr ""
+msgstr "Chyba při zahazování databáze (nelze rmdir '%-.192s', č. chyby: %d)"
 
 #, c-format
 msgid "Error on delete of '%-.192s' (errno: %d)"
-msgstr ""
+msgstr "Chyba při mazání '%-.192s' (č. chyby: %d)"
 
 msgid "Can't read record in system table"
-msgstr ""
+msgstr "Nelze přečíst záznam v systémové tabulce"
 
 #, c-format
 msgid "Can't get status of '%-.200s' (errno: %d)"
-msgstr ""
+msgstr "Nelze získat stav '%-.200s' (č. chyby: %d)"
 
 #, c-format
 msgid "Can't get working directory (errno: %d)"
-msgstr ""
+msgstr "Nelze získat pracovní adresář (č. chyby: %d)"
 
 #, c-format
 msgid "Can't lock file (errno: %d)"
-msgstr ""
+msgstr "Nelze zamknout soubor (č. chyby: %d)"
 
 #, c-format
 msgid "Can't open file: '%-.200s' (errno: %d)"
-msgstr ""
+msgstr "Nelze otevřít soubor '%-.200s' (č. chyby: %d)"
 
 #, c-format
 msgid "Can't find file: '%-.200s' (errno: %d)"
-msgstr ""
+msgstr "Nelze nalézt soubor '%-.200s' (č. chyby: %d)"
 
 #, c-format
 msgid "Can't read dir of '%-.192s' (errno: %d)"
-msgstr ""
+msgstr "Nelze přečíst adresář z '%-.192s' (č. chyby: %d)"
 
 #, c-format
 msgid "Can't change dir to '%-.192s' (errno: %d)"
-msgstr ""
+msgstr "Nelze změnit adresář '%-.192s' (č. chyby: %d)"
 
 #, c-format
 msgid "Record has changed since last read in table '%-.192s'"
-msgstr ""
+msgstr "Záznam byl od posledního čtení z tabulky změněn '%-.192s'"
 
 #, c-format
 msgid "Disk full (%s); waiting for someone to free some space..."
-msgstr ""
+msgstr "Disk je zaplněn (%s); čekání až se uvolní místo..."
 
 #, c-format
 msgid "Can't write; duplicate key in table '%-.192s'"
-msgstr ""
+msgstr "Nelze zapisovat; v tabulce '%-.192s' je stejný klíč"
 
 #, c-format
 msgid "Error on close of '%-.192s' (errno: %d)"
-msgstr ""
+msgstr "Chyba při uzavírání '%-.192s' (č. chyby: %d)"
 
 #, c-format
 msgid "Error reading file '%-.200s' (errno: %d)"
-msgstr ""
+msgstr "Chyba při čtení souboru '%-.200s' (č. chyby: %d)"
 
 #, c-format
 msgid "Error on rename of '%-.150s' to '%-.150s' (errno: %d)"
-msgstr ""
+msgstr "Chyba při přejmenování '%-.150s' na '%-.150s' (č. chyby: %d)"
 
 #, c-format
 msgid "Error writing file '%-.200s' (errno: %d)"
-msgstr ""
+msgstr "Chyba při zápisu souboru '%-.200s' (č. chyby: %d)"
 
 #, c-format
 msgid "'%-.192s' is locked against change"
-msgstr ""
+msgstr "'%-.192s' je uzamčen proti změnám"
 
 msgid "Sort aborted"
-msgstr ""
+msgstr "Seřazování přerušeno"
 
 #, c-format
 msgid "View '%-.192s' doesn't exist for '%-.192s'"
-msgstr ""
+msgstr "Zobrazení '%-.192s' pro '%-.192s' neexistuje"
 
 #, c-format
 msgid "Got error %d from storage engine"
-msgstr ""
+msgstr "Od jádra databáze obdržena chyb %d"
 
 #, c-format
 msgid "Table storage engine for '%-.192s' doesn't have this option"
-msgstr ""
+msgstr "Jádro databáze tabulky pro '%-.192s' tuto volbu nemá"
 
 #, c-format
 msgid "Can't find record in '%-.192s'"
-msgstr ""
+msgstr "Nelze najít záznam v '%-.192s'"
 
 #, c-format
 msgid "Incorrect information in file: '%-.200s'"
-msgstr ""
+msgstr "Nesprávně informace v souboru: '%-.200s'"
 
 #, c-format
 msgid "Incorrect key file for table '%-.200s'; try to repair it"
-msgstr ""
+msgstr "Nesprávný soubor klíče pro tabulku  '%-.200s'; zkuste ji opravit"
 
 #, c-format
 msgid "Old key file for table '%-.192s'; repair it!"
-msgstr ""
+msgstr "Starý soubor klíče pro tabulku '%-.200s'; opravte ho!"
 
 #, c-format
 msgid "Table '%-.192s' is read only"
-msgstr ""
+msgstr "Tabulka '%-.192s' je pouze pro čtení"
 
 #, c-format
 msgid "Out of memory; restart server and try again (needed %lu bytes)"
 msgstr ""
+"Nedostatek paměti; restartujte server a zkuste to znovu (je třeba %lu bajtů)"
 
 msgid "Out of sort memory; increase server sort buffer size"
 msgstr ""
+"Nedostatek paměti pro seřazení; zvyšte velikost vyrovnávací paměti serveru"
 
 #, c-format
 msgid "Unexpected EOF found when reading file '%-.192s' (errno: %d)"
-msgstr ""
+msgstr "Nalezen neočekávaný konec souboru při čtení '%-.192s' (č. chyby: %d)"
 
 msgid "Too many connections"
-msgstr ""
+msgstr "Příliš mnoho spojení"
 
 msgid ""
 "Out of memory; check if drizzled or some other process uses all available "
 "memory; if not, you may have to use 'ulimit' to allow drizzled to use more "
 "memory or you can add more swap space"
 msgstr ""
+"Nedostatek paměti; zkontrolujte zda drizzled nebo jiný proces nevyužívají "
+"celou dostupnou paměť; Pokud ne, pak možná budete muset použít 'ulimit', "
+"abyste umožnili drizzled použít více paměti, nebo můžete přidat další "
+"stránkovací prostor"
 
 msgid "Can't get hostname for your address"
-msgstr ""
+msgstr "Nelze získat název hostitele pro vaší adresu"
 
 msgid "Bad handshake"
-msgstr ""
+msgstr "Špatné uahájení spojení"
 
 #, c-format
 msgid "Access denied for user '%-.48s'@'%-.64s' to database '%-.192s'"
-msgstr ""
+msgstr "Přístup uživatele  '%-.48s'@'%-.64s' do databáze '%-.192s' zamítnut"
 
 #, c-format
 msgid "Access denied for user '%-.48s'@'%-.64s' (using password: %s)"
-msgstr ""
+msgstr "Přístup pro uživatele '%-.48s'@'%-.64s' zamítnut (použito heslo: %s)"
 
 msgid "No database selected"
-msgstr ""
+msgstr "Žádná databáze nebyla vybrána"
 
 msgid "Unknown command"
-msgstr ""
+msgstr "Neznámý příkaz"
 
 #, c-format
 msgid "Column '%-.192s' cannot be null"
-msgstr ""
+msgstr "Sloupec '%-.192s' nemůže být prázdný"
 
 #, c-format
 msgid "Unknown database '%-.192s'"
-msgstr ""
+msgstr "Neznámá databáze '%-.192s'"
 
 #, c-format
 msgid "Table '%-.192s' already exists"
-msgstr ""
+msgstr "Tabulka '%-.192s' již existuje"
 
 #, c-format
 msgid "Unknown table '%-.100s'"
-msgstr ""
+msgstr "Neznámá tabulka  '%-.100s'"
 
 #, c-format
 msgid "Column '%-.192s' in %-.192s is ambiguous"
-msgstr ""
+msgstr "Sloupec '%-.192s' v %-.192s je nejednoznačný"
 
 msgid "Server shutdown in progress"
-msgstr ""
+msgstr "Probíhá vypínání serveru"
 
 #, c-format
 msgid "Unknown column '%-.192s' in '%-.192s'"
-msgstr ""
+msgstr "Neznámý sloupec '%-.192s' v '%-.192s'"
 
 #, c-format
 msgid "'%-.192s' isn't in GROUP BY"
-msgstr ""
+msgstr "'%-.192s' není v GROUP BY"
 
 #, c-format
 msgid "Can't group on '%-.192s'"
-msgstr ""
+msgstr "Nelze sekupit v '%-.192s'"
 
 msgid "Statement has sum functions and columns in same statement"
-msgstr ""
+msgstr "Výraz má funkce součtu a sloupce ve stejném údaji"
 
 msgid "Column count doesn't match value count"
-msgstr ""
+msgstr "Počet sloupců se neshoduje s počtem hodnot"
 
 #, c-format
 msgid "Identifier name '%-.100s' is too long"
-msgstr ""
+msgstr "Název identifikátoru  '%-.100s' je příliš dlouhý"
 
 #, c-format
 msgid "Duplicate column name '%-.192s'"
-msgstr ""
+msgstr "Zdvojený název sloupce '%-.192s'"
 
 #, c-format
 msgid "Duplicate key name '%-.192s'"
-msgstr ""
+msgstr "Zdvojený název klíče '%-.192s'"
 
 #, c-format
 msgid "Duplicate entry '%-.192s' for key %d"
-msgstr ""
+msgstr "Zdvojená položka  '%-.192s' pro klíč %d"
 
 #, c-format
 msgid "Incorrect column specifier for column '%-.192s'"
-msgstr ""
+msgstr "Nesprávný specifikátor sloupce ve sloupci '%-.192s'"
 
 #, c-format
 msgid "%s near '%-.80s' at line %d"
-msgstr ""
+msgstr "%s blízko '%-.80s' na řádku %d"
 
 msgid "Query was empty"
 msgstr ""
