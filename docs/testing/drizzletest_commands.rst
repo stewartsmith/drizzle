@@ -95,7 +95,7 @@ append_file
 
 :program:`append_file file_name [terminator]`
 
-:program:`append_file` command is used to append / add data to the end of an existing file. In case, the specified file does not exist, it is created and the data is written on it. The end of data, that is to be appended, is marked by the terminator. 
+:program:`append_file` command is used to append / add data to the end of an existing file. It is similar to :ref:`write_file`. In case, the specified file does not exist, it is created and the data is written on it. The end of data, that is to be appended, is marked by the terminator. 
 
 .. note:: The default terminator is EOF
 
@@ -1052,8 +1052,45 @@ write_file
 
 :program:`write_file file_name [terminator]`
 
+:program:`write_file` command is write data to the file specified by ``file_name``. When this command is issued, a file with the name as ``file_name`` is created and data is written to it. The end of the data, that is to be written, is marked by the terminator.
+
+.. note:: If the file exists, it is not considered as error / the test will not fail. Instead, the contents of the file will be replaced by the data that is to be written.
+
+The ``file_name`` can be substituted via variables. 
+
 :Example:
 
-.. code-block:: python
- 
+::
+
+   let $MY_FILE = ~/foo/bar.txt
+   
+   write_file $MY_FILE;
+   testing...
+   EOF
+
+:Output:
+
+::
+
+   ~/foo/bar.txt:
+   testing...
+
+:Example:
+
+::
+
+   let $MY_FILE = ~/foo/bar.txt
+
+   write_file $MY_FILE stop;
+   testing with test-run...
+   stop
+  
+:Output:
+
+::
+
+   ~/foo/bar.txt:
+   testing with test-run...
+
+.. note:: In the above example, the contents present previously are overwritten
    
