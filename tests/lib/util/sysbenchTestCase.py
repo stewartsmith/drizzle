@@ -54,7 +54,7 @@ class sysbenchTestCase(mysqlBaseTestCase):
  
         # data for results database / regression analysis
         self.test_data['run_date']= datetime.datetime.now().isoformat()
-        self.test_data['test_machine'] = socket.gethostname()
+        self.test_data['test_machine'] = socket.gethostname()[0:20]
         self.test_data['test_server_type'] = self.master_server.type
         self.test_data['test_server_revno'], self.test_data['test_server_comment'] = self.master_server.get_bzr_info()
         self.test_data['config_name'] = self.config_name
