@@ -53,7 +53,7 @@ class basicTest(sysbenchTestCase):
 
         # defining the test command
         master_server = servers[0]
-        self.config_name = 'innodb_1000K_readonly'
+        self.config_name = 'innodb_1000K_readwrite'
         test_cmd = [ "sysbench"
                    , "--max-time=240"
                    , "--max-requests=0"
@@ -75,6 +75,7 @@ class basicTest(sysbenchTestCase):
             test_cmd.append("--mysql-socket=%s" %master_server.socket_file)
 
         # preparing sysbench_readonly test
+        time.sleep(20)
         self.prepareSysbench(test_cmd,test_executor,servers)
 
         # start the test!

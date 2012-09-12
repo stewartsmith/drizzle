@@ -54,7 +54,7 @@ class sysbenchTestCase(mysqlBaseTestCase):
  
         # data for results database / regression analysis
         self.test_data['run_date']= datetime.datetime.now().isoformat()
-        self.test_data['test_machine'] = socket.gethostname()
+        self.test_data['test_machine'] = socket.gethostname()[0:20]
         self.test_data['test_server_type'] = self.master_server.type
         self.test_data['test_server_revno'], self.test_data['test_server_comment'] = self.master_server.get_bzr_info()
         self.test_data['config_name'] = self.config_name
@@ -70,8 +70,8 @@ class sysbenchTestCase(mysqlBaseTestCase):
         # how many times to run sysbench at each concurrency
         self.iterations = 3 
         # various concurrencies to use with sysbench
-        # self.concurrencies = [16, 32, 64, 128, 256, 512, 1024 ]
-        self.concurrencies = [ 128, 256, 512 ]
+        self.concurrencies = [16, 32, 64, 128, 256, 512 ] #, 1024 ]
+        # self.concurrencies = [ 128, 256, 512 ]
         
         # we setup once.  This is a readonly test and we don't
         # alter the test bed once it is created
