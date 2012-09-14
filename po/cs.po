@@ -8,15 +8,15 @@ msgstr ""
 "Project-Id-Version: drizzle\n"
 "Report-Msgid-Bugs-To: http://translations.launchpad.net/drizzle\n"
 "POT-Creation-Date: 2010-07-20 16:06+0000\n"
-"PO-Revision-Date: 2012-09-10 21:40+0000\n"
+"PO-Revision-Date: 2012-09-13 21:33+0000\n"
 "Last-Translator: Zbyněk Schwarz <Unknown>\n"
 "Language-Team: Czech <cs@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=3; plural=(n==1) ? 0 : (n>=2 && n<=4) ? 1 : 2;\n"
-"X-Launchpad-Export-Date: 2012-09-11 04:50+0000\n"
-"X-Generator: Launchpad (build 15924)\n"
+"X-Launchpad-Export-Date: 2012-09-14 04:35+0000\n"
+"X-Generator: Launchpad (build 15944)\n"
 
 msgid "Synonym for `help'."
 msgstr "Synonymum pro `nápověda'."
@@ -1326,453 +1326,516 @@ msgid "%s near '%-.80s' at line %d"
 msgstr "%s blízko '%-.80s' na řádku %d"
 
 msgid "Query was empty"
-msgstr ""
+msgstr "Dotaz byl prázdný"
 
 #, c-format
 msgid "Not unique table/alias: '%-.192s'"
-msgstr ""
+msgstr "Není jedinečná tabulka/přezdívka: '%-.192s'"
 
 #, c-format
 msgid "Invalid default value for '%-.192s'"
-msgstr ""
+msgstr "Neplatná výchozí hodnota pro '%-.192s'"
 
 msgid "Multiple primary key defined"
-msgstr ""
+msgstr "Zadáno více hlavních klíčů"
 
 #, c-format
 msgid "Too many keys specified; max %d keys allowed"
-msgstr ""
+msgstr "Zadáno příliš mnoho klíčů; je povoleno max %d klíčů"
 
 #, c-format
 msgid "Too many key parts specified; max %d parts allowed"
-msgstr ""
+msgstr "Zadáno příliš mnoho částí klíče; povoleno max %d částí"
 
 #, c-format
 msgid "Specified key was too long; max key length is %d bytes"
-msgstr ""
+msgstr "Zadaný klíč byl příliš dlouhý; max délka klíče je %d bajtů"
 
 #, c-format
 msgid "Key column '%-.192s' doesn't exist in table"
-msgstr ""
+msgstr "Sloupec klíče '%-.192s' v tabulcd neexistuje"
 
 #, c-format
 msgid ""
 "BLOB column '%-.192s' can't be used in key specification with the used table "
 "type"
 msgstr ""
+"Sloupec BLOB '%-.192s' nemůže být použit v zadání klíče se zadaným typem "
+"tabulky"
 
 #, c-format
 msgid ""
 "Column length too big for column '%-.192s' (max = %d); use BLOB or TEXT "
 "instead"
 msgstr ""
+"Délka sloupce je příliš dlouhá pro sloupec '%-.192s' (max = %d); místo toho "
+"použijte BLOB nebo TEXT"
 
 msgid ""
 "Incorrect table definition; there can be only one auto column and it must be "
 "defined as a key"
 msgstr ""
+"Nesprávné zadání tabulky; může být pouze jeden automatický sloupec a musí "
+"být zadán jako klíč"
 
 #, c-format
 msgid ""
 "%s: ready for connections.\n"
 "Version: '%s'  socket: '%s'  port: %u\n"
 msgstr ""
+"%s: připraven na připojení.\n"
+"Verze:¨'%s' soket: '%s' port: %u\n"
 
 #, c-format
 msgid "%s: Normal shutdown\n"
-msgstr ""
+msgstr "%s: Normální ukončení\n"
 
 #, c-format
 msgid "%s: Got signal %d. Aborting!\n"
-msgstr ""
+msgstr "%s: Obdržen signál %d. Ukončování!\n"
 
 #, c-format
 msgid "%s: Shutdown complete\n"
-msgstr ""
+msgstr "%s: Ukončení dokončeno\n"
 
 #, c-format
 msgid "%s: Forcing close of thread %<PRIu64> user: '%-.48s'\n"
-msgstr ""
+msgstr "%s: Vynuceno uzavření vlákna %<PRIu64> uživatel: '%-.48s'\n"
 
 msgid "Can't create IP socket"
-msgstr ""
+msgstr "Nelze vytvořit IP soket"
 
 #, c-format
 msgid ""
 "Table '%-.192s' has no index like the one used in CREATE INDEX; recreate the "
 "table"
 msgstr ""
+"Tabulka '%-.192s' nemá soubor indexu, který byl použit v CREATE INDEX; znovu "
+"vytvořte tabulku"
 
 #, c-format
 msgid ""
 "Field separator argument '%-.32s' with length '%d' is not what is expected; "
 "check the manual"
 msgstr ""
+"Argument oddělovače pole '%-.32s' s délkou '%d' není to co bylo očekáváno; "
+"prohlédněte si manuál"
 
 msgid ""
 "You can't use fixed rowlength with BLOBs; please use 'fields terminated by'"
 msgstr ""
+"Nemůžete použít pevnou délku řádku s BLOB; prosím použijte 'fields "
+"terminated by'"
 
 #, c-format
 msgid ""
 "The file '%-.128s' must be in the database directory or be readable by all"
 msgstr ""
+"Soubor '%-.128s' musí být v adresáři databáze nebo všichni musí mít možnost "
+"ho číst"
 
 #, c-format
 msgid "File '%-.200s' already exists"
-msgstr ""
+msgstr "Soubor '%-.200s' již existuje"
 
 #, c-format
 msgid "Records: %ld  Deleted: %ld  Skipped: %ld  Warnings: %ld"
-msgstr ""
+msgstr "Záznamů: %ld Smazáno: %ld Přeskočeno: %ld Varování: %ld"
 
 #, c-format
 msgid "Records: %ld  Duplicates: %ld"
-msgstr ""
+msgstr "Záznamů: %ld  Duplikátů: %ld"
 
 msgid ""
 "Incorrect prefix key; the used key part isn't a string, the used length is "
 "longer than the key part, or the storage engine doesn't support unique "
 "prefix keys"
 msgstr ""
+"Nesprávná předpona klíče; používaná část klíče není řetězec, použití délka "
+"je delší než část klíče, nebo jádro databáze nepodporuje jedinečné předpony "
+"klíčů"
 
 msgid "You can't delete all columns with ALTER TABLE; use DROP TABLE instead"
 msgstr ""
+"Nemůžete smazat všechny sloupce pomocí ALTER TABLE; použijte místo toho DROP "
+"TABLE"
 
 #, c-format
 msgid "Can't DROP '%-.192s'; check that column/key exists"
-msgstr ""
+msgstr "Nelze odstranit '%-.192s'; zkontrolujte, že sloupec/klíč existuje"
 
 #, c-format
 msgid "Records: %ld  Duplicates: %ld  Warnings: %ld"
-msgstr ""
+msgstr "Záznamů: %ld Duplikátů: %ld Varování: %ld"
 
 #, c-format
 msgid "You can't specify target table '%-.192s' for update in FROM clause"
-msgstr ""
+msgstr "Nemůžete zadat aktualizaci cílové tabulky '%-.192s' z příkazu FROM"
 
 #, c-format
 msgid "Unknown thread id: %lu"
-msgstr ""
+msgstr "Neznámé id vlákna: %lu"
 
 #, c-format
 msgid "You are not owner of thread %lu"
-msgstr ""
+msgstr "Nejste vlastníkem vlákna %lu"
 
 msgid "No tables used"
-msgstr ""
+msgstr "Nepoužity žádné tabulky"
 
 #, c-format
 msgid "Too many strings for column %-.192s and SET"
-msgstr ""
+msgstr "Příliš mnoho řetězců pro sloupec %-.192s a SET"
 
 #, c-format
 msgid "Can't generate a unique log-filename %-.200s.(1-999)\n"
-msgstr ""
+msgstr "Nelze vytvořit jedinečný název souboru záznamu %-.200s.(1-999)\n"
 
 #, c-format
 msgid "Table '%-.192s' was locked with a READ lock and can't be updated"
 msgstr ""
+"Tabulka '%-.192s' byla uzamčena pro zabránění čtení a nemůže být "
+"aktualizována"
 
 #, c-format
 msgid "Table '%-.192s' was not locked with LOCK TABLES"
-msgstr ""
+msgstr "Tabulka '%-.192s' nebyla uzamčena pomocí LOCK TABLES"
 
 #, c-format
 msgid "BLOB/TEXT column '%-.192s' can't have a default value"
-msgstr ""
+msgstr "Sloupec BLOB/TEXT '%-.192s' nemůže mít výchozí hodnotu"
 
 #, c-format
 msgid "Incorrect database name '%-.100s'"
-msgstr ""
+msgstr "Nesprávný název databáze '%-.100s'"
 
 #, c-format
 msgid "Incorrect table name '%-.100s'"
-msgstr ""
+msgstr "Nesprávný název tabulky '%-.100s'"
 
 msgid ""
 "The SELECT would examine more than MAX_JOIN_SIZE rows; check your WHERE and "
 "use SET SQL_BIG_SELECTS=1 or SET MAX_JOIN_SIZE=# if the SELECT is okay"
 msgstr ""
+"SELECT by prozkoumal více řádků než MAX_JOIN_SIZE; zkontrolujte Váš WHERE a "
+"pokud je SELECT v pořádku, pak použijte SET SQL_BIG_SELECTS=1 nebo SET "
+"MAX_JOIN_SIZE=#"
 
 msgid "Unknown error"
-msgstr ""
+msgstr "Neznámá chyba"
 
 #, c-format
 msgid "Unknown procedure '%-.192s'"
-msgstr ""
+msgstr "Neznámá procedura  '%-.192s'"
 
 #, c-format
 msgid "Incorrect parameter count to procedure '%-.192s'"
-msgstr ""
+msgstr "Nesprávný počet parametrů pro proceduru '%-.192s'"
 
 #, c-format
 msgid "Incorrect parameters to procedure '%-.192s'"
-msgstr ""
+msgstr "Nesprávné parametry pro proceduru '%-.192s'"
 
 #, c-format
 msgid "Unknown table '%-.192s' in %-.32s"
-msgstr ""
+msgstr "Neznámá tabulka '%-.192s' v %-.32s"
 
 #, c-format
 msgid "Column '%-.192s' specified twice"
-msgstr ""
+msgstr "Sloupec '%-.192s' zadán dvakrát"
 
 msgid "Invalid use of group function"
-msgstr ""
+msgstr "Neplatné použití funkce seskupení"
 
 #, c-format
 msgid ""
 "Table '%-.192s' uses an extension that doesn't exist in this Drizzle version"
 msgstr ""
+"Tabulka '%-.192s' používá rozšíření, která neexistují v této verzi Drizzle"
 
 msgid "A table must have at least 1 column"
-msgstr ""
+msgstr "Tabulka musí obsagovat alespoň jeden sloupec"
 
 #, c-format
 msgid "The table '%-.192s' is full"
-msgstr ""
+msgstr "Tabulka '%-.192s' je plná"
 
 #, c-format
 msgid "Unknown character set: '%-.64s'"
-msgstr ""
+msgstr "Neznámá sada znaků: '%-.64s'"
 
 #, c-format
 msgid "Too many tables; Drizzle can only use %d tables in a join"
 msgstr ""
+"Příliš mnoho tabulek; Drizzle může při sjednocení použít pouze %d tabulek"
 
 msgid "Too many columns"
-msgstr ""
+msgstr "Příliš mnoho sloupců"
 
 #, c-format
 msgid ""
 "Row size too large. The maximum row size for the used table type, not "
 "counting BLOBs, is %ld. You have to change some columns to TEXT or BLOBs"
 msgstr ""
+"Velikost řádku je příliš velká. Maximální velikost řádku pro použitý typ "
+"tabulky, mimo BLOB, je %ld. Některé sloupce musíte změnit na TEXT nebo BLOB"
 
 #, c-format
 msgid ""
 "Thread stack overrun:  Used: %ld of a %ld stack.  Use 'drizzled -O "
 "thread_stack=#' to specify a bigger stack if needed"
 msgstr ""
+"Přetečení zásobníku vláken: Používáno: %ld ze zásobníku %ld. Použijte "
+"'drizzled -O thread_stack=#' pro zadání většího zásobníku, pokud je třeba"
 
 msgid "Cross dependency found in OUTER JOIN; examine your ON conditions"
 msgstr ""
+"V OUTER JOIN nalezena křížová závislost; zkontrolujte vaše podmínky ON"
 
 #, c-format
 msgid ""
 "Table handler doesn't support NULL in given index. Please change column '%-"
 ".192s' to be NOT NULL or use another handler"
 msgstr ""
+"Obslužná rutina tabulky nepodporuje NULL v daném indexu. Prosím změňte "
+"sloupec '%-.192s' na NOT NULL nebo použijte jinou rutinu"
 
 #, c-format
 msgid "Can't load function '%-.192s'"
-msgstr ""
+msgstr "Nelze načíst funkci '%-.192s'"
 
 #, c-format
 msgid "Can't initialize function '%-.192s'; %-.80s"
-msgstr ""
+msgstr "Nelze zavést funkci '%-.192s'; %-.80s"
 
 msgid "No paths allowed for plugin library"
-msgstr ""
+msgstr "V knihovně zásuvných modulů nejsou povoleny cesty"
 
 #, c-format
 msgid "Plugin '%-.192s' already exists"
-msgstr ""
+msgstr "Zásuvný modul '%-.192s' již existuje"
 
 #, c-format
 msgid "Can't open shared library '%-.192s' (errno: %d %-.128s)"
-msgstr ""
+msgstr "Nelze otevřít sdílenou knihovnu '%-.192s' (č. chyby: %d %-.128s)"
 
 #, c-format
 msgid "Can't find symbol '%-.128s' in library '%-.128s'"
-msgstr ""
+msgstr "Nelze najít symbol '%-.128s' v knihovně '%-.128s'"
 
 #, c-format
 msgid "Function '%-.192s' is not defined"
-msgstr ""
+msgstr "Funkce '%-.192s' není zavedena"
 
 #, c-format
 msgid ""
 "Host '%-.64s' is blocked because of many connection errors; unblock with "
 "'drizzleadmin flush-hosts'"
 msgstr ""
+"Hostitel '%-.64s' je blokován kvůli mnoha chybám v připojení; odblokujte ho "
+"pomocí 'drizzleadmin flush-hosts'"
 
 #, c-format
 msgid "Host '%-.64s' is not allowed to connect to this Drizzle server"
-msgstr ""
+msgstr "Hostiteli '%-.64s' není umožněno se připojit na tento server Drizzle"
 
 msgid ""
 "You are using Drizzle as an anonymous user and anonymous users are not "
 "allowed to change passwords"
 msgstr ""
+"Používáte Drizzle jako anonymní uživatel a toto uživatelé nemají oprávnění "
+"měnit si hesla"
 
 msgid ""
 "You must have privileges to update tables in the drizzle database to be able "
 "to change passwords for others"
 msgstr ""
+"Musíte mít oprávnění aktualizovat tabulky v databázi drizzle, abyste mohli "
+"měnit hesla ostatních"
 
 msgid "Can't find any matching row in the user table"
-msgstr ""
+msgstr "Nelze najít odpovídající řádek v tabulce uživatelů"
 
 #, c-format
 msgid "Rows matched: %ld  Changed: %ld  Warnings: %ld"
-msgstr ""
+msgstr "Odpovídajících řádků: %ld Změněno: %ld Varování: %ld"
 
 #, c-format
 msgid ""
 "Can't create a new thread (errno %d); if you are not out of available "
 "memory, you can consult the manual for a possible OS-dependent bug"
 msgstr ""
+"Nelze vytvořit nové vlákno (č. chyby %d); pokud příčinou není nedostatek "
+"paměti, můžete si prohlédnout manuál pro možnou chybu v OS"
 
 #, c-format
 msgid "Column count doesn't match value count at row %ld"
-msgstr ""
+msgstr "Počet sloupců neodpovídá hodnotě počtu na řádku %ld"
 
 #, c-format
 msgid "Can't reopen table: '%-.192s'"
-msgstr ""
+msgstr "Nelze znovu otevřít tabulku: '%-.192s'"
 
 msgid "Invalid use of NULL value"
-msgstr ""
+msgstr "Neplatné použití hodnoty NULL"
 
 #, c-format
 msgid "Got error '%-.64s' from regexp"
-msgstr ""
+msgstr "Od regulárního výrazu obdržena chyba '%-.64s'"
 
 msgid ""
 "Mixing of GROUP columns (MIN(),MAX(),COUNT(),...) with no GROUP columns is "
 "illegal if there is no GROUP BY clause"
 msgstr ""
+"Míchání sloupců GROUP (MIN(),MAX(),COUNT(),...) s sloupci mimo GROUP není "
+"platné, pokud není použit příkaz GROUP BY"
 
 #, c-format
 msgid "There is no such grant defined for user '%-.48s' on host '%-.64s'"
 msgstr ""
+"Pro uživatele '%-.48s' na hostiteli '%-.64s' není určeno takové udělení"
 
 #, c-format
 msgid "%-.16s command denied to user '%-.48s'@'%-.64s' for table '%-.192s'"
 msgstr ""
+"Příkaz %-.16s zamítnut pro uživatele '%-.48s'@'%-.64s' v tabulce '%-.192s'"
 
 #, c-format
 msgid ""
 "%-.16s command denied to user '%-.48s'@'%-.64s' for column '%-.192s' in "
 "table '%-.192s'"
 msgstr ""
+"Příkaz %-.16s zamítnut pro uživatele '%-.48s'@'%-.64s' ve sloupci '%-.192s' "
+"v tabulce '%-.192s'"
 
 msgid ""
 "Illegal GRANT/REVOKE command; please consult the manual to see which "
 "privileges can be used"
 msgstr ""
+"Neplatný příkaz GRANT/REVOKE; prosím prohlédněte si manuál pro přehled "
+"výsad, které můžete udělit"
 
 msgid "The host or user argument to GRANT is too long"
-msgstr ""
+msgstr "Argumenty hostitele nebo uživatele pro GRANT jsou příliš dlouhé"
 
 #, c-format
 msgid "Table '%-.192s.%-.192s' doesn't exist"
-msgstr ""
+msgstr "Tabulka '%-.192s.%-.192s'  neexistuje"
 
 #, c-format
 msgid ""
 "There is no such grant defined for user '%-.48s' on host '%-.64s' on table "
 "'%-.192s'"
 msgstr ""
+"Pro uživatele '%-.48s' na hostiteli '%-.64s' není v tabulce '%-.192s' určena "
+"žádná taková výsada"
 
 msgid "The used command is not allowed with this Drizzle version"
-msgstr ""
+msgstr "Použitý příkaz není povolen v tomto systému Drizzle"
 
 msgid ""
 "You have an error in your SQL syntax; check the manual that corresponds to "
 "your Drizzle server version for the right syntax to use"
 msgstr ""
+"Ve vaší syntaxi SQL máte chybu; prohlédněte si příručku, která odpovídá "
+"verzi vašeho serveru Drizzle, abyste zjistili správnou syntaxi"
 
 #, c-format
 msgid "Delayed insert thread couldn't get requested lock for table %-.192s"
 msgstr ""
+"Oddálené vložení vlákna nemohlo získat požadovaný zámek pro tabulku %-.192s"
 
 msgid "Too many delayed threads in use"
-msgstr ""
+msgstr "Je používáno přiliš mnoho oddálených vláken"
 
 #, c-format
 msgid "Aborted connection %ld to db: '%-.192s' user: '%-.48s' (%-.64s)"
 msgstr ""
+"Ukončeno připojení %ld pro db: '%-.192s' uživateler: '%-.48s' (%-.64s)"
 
 msgid "Got a packet bigger than 'max_allowed_packet' bytes"
-msgstr ""
+msgstr "Obdržen paket větší než bajtů v 'max_allowed_packet'"
 
 msgid "Got a read error from the connection pipe"
-msgstr ""
+msgstr "Obdržena chyba čtení v trubce připojení"
 
 msgid "Got an error from fcntl()"
-msgstr ""
+msgstr "Obdržena chyba od fcntl()"
 
 msgid "Got packets out of order"
-msgstr ""
+msgstr "Obdrženy pakety v nepořádku"
 
 msgid "Couldn't uncompress communication packet"
-msgstr ""
+msgstr "Nelze dekomprimovat komunikační paket"
 
 msgid "Got an error reading communication packets"
-msgstr ""
+msgstr "Při čtení komunikačních paketů obdržena chyba"
 
 msgid "Got timeout reading communication packets"
-msgstr ""
+msgstr "Při čtění komunikačních paketů vypršel časový limit"
 
 msgid "Got an error writing communication packets"
-msgstr ""
+msgstr "Při zápisu komunikačních paketů obdržena chyba"
 
 msgid "Got timeout writing communication packets"
-msgstr ""
+msgstr "Při zápisu komunikačních paketů vypršel časový limit"
 
 msgid "Result string is longer than 'max_allowed_packet' bytes"
-msgstr ""
+msgstr "Výsledný řetězec je delší než bajtů v 'max_allowed_packet'"
 
 msgid "The used table type doesn't support BLOB/TEXT columns"
-msgstr ""
+msgstr "Použitý typ tabulky nepodporuje sloupce BLOB/TEXT"
 
 msgid "The used table type doesn't support AUTO_INCREMENT columns"
-msgstr ""
+msgstr "Použitý typ tabulky nepodporuje sloupce AUTO_INCREMENT"
 
 #, c-format
 msgid ""
 "INSERT DELAYED can't be used with table '%-.192s' because it is locked with "
 "LOCK TABLES"
 msgstr ""
+"INSERT DELAYED nemůže být použito s tabulkou '%-.192s' protože je uzamčena "
+"pomocí LOCK TABLES"
 
 #, c-format
 msgid "Incorrect column name '%-.100s'"
-msgstr ""
+msgstr "Nesprávný název sloupce '%-.100s'"
 
 #, c-format
 msgid "The used storage engine can't index column '%-.192s'"
-msgstr ""
+msgstr "Použité jádro databáze nemůže indexovat sloupec '%-.192s'"
 
 msgid ""
 "Unable to open underlying table which is differently defined or of non-"
 "MyISAM type or doesn't exist"
 msgstr ""
+"Nelze otevřít podkladovou tabulku, která je jinak zadána, nebo je jiného "
+"typu než MyISAM, nebo neexistuje"
 
 #, c-format
 msgid "Can't write, because of unique constraint, to table '%-.192s'"
-msgstr ""
+msgstr "Nelze zapisovat, kvůli jedinečnému omezení pro tabulku '%-.192s'"
 
 #, c-format
 msgid ""
 "BLOB/TEXT column '%-.192s' used in key specification without a key length"
-msgstr ""
+msgstr "V zadání klíče použit sloupec BLOB/TEXT '%-.192s' bez jeho délky"
 
 msgid ""
 "All parts of a PRIMARY KEY must be NOT NULL; if you need NULL in a key, use "
 "UNIQUE instead"
 msgstr ""
+"Všechny části PRIMARY KEY musí být NOT NULL; pokud v klíči potřebujete NULL, "
+"použijte místo toho UNIQUE"
 
 msgid "Result consisted of more than one row"
-msgstr ""
+msgstr "Výsledek se skládal z více než jednoho řádku"
 
 msgid "This table type requires a primary key"
-msgstr ""
+msgstr "Tento typu tabulky vyžaduje hlavní klíč"
 
 msgid "This version of Drizzle is not compiled with RAID support"
-msgstr ""
+msgstr "Tato verze Drizzle není sestavena s podporou RAID"
 
 msgid ""
 "You are using safe update mode and you tried to update a table without a "
