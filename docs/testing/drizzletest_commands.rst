@@ -1063,9 +1063,44 @@ while
 
 :program:`while(expr)`
 
+:program:`while()` defines an action block which gets executed over a loop. The while command expects a value / variable (expr) which decides whether or not the next iteration has to be carried out. If the value is 0, it is considered as ``false`` and the loop terminates. The body of the while block, which contains the set of statements to be executed repeatedly, should be enclosed within curly braces ``{`` and ``}``.
+
+.. note:: Any non-zero value, positive / negative is treated as a true, and the loop gets executed. The expression expr does not support boolean expressions. 
+
 :Example:
 
-.. code-block:: python
+::
+   
+   /tests/t/testname.test:
+   let $test=3;
+   let $iteration=1;
+   while($test)
+   {
+     echo test iteration $iteration;
+     SELECT 1;
+     dec $test;
+     inc $iteration;
+   }
+
+:Output:
+
+::
+
+   /tests/r/testname.result:
+   test iteration 1
+   SELECT 1;
+   1
+   1
+   test iteration 2
+   SELECT 1;
+   1
+   1
+   test iteration 3
+   SELECT 1;
+   1
+   1
+
+.. note:: Ensure that, the expr value becomes zero at some point of time. Else, the loop gets executed infinitely and the test gets stalled. 
 
 .. _write_file:
 
