@@ -1,9 +1,11 @@
 Drizzletest Commands
 ====================
 
-The commands that are endorsed in Drizzletest are delineated in the following documentation. Examples are given for the commands. Browse **tests/t** for more examples.
+The commands that are endorsed in Drizzletest are delineated in the following documentation. Examples are given for the commands. Browse **tests/t** for more examples. 
 
-.. note:: The commands are not case sensitive
+.. note:: 
+          The commands are not case sensitive.
+          All commands must end with semi-colon.
 
 List of commands
 ----------------
@@ -92,10 +94,40 @@ append_file
 :Syntax: 
 
 :program:`append_file file_name [terminator]`
+
+:program:`append_file` command is used to append / add data to the end of an existing file. It is similar to :ref:`write_file`. In case, the specified file does not exist, it is created and the data is written on it. The end of data, that is to be appended, is marked by the terminator. 
+
+.. note:: The default terminator is EOF
+
+The ``file_name`` can be substituted via variables.
    
 :Example:
 
-.. code-block:: python
+:: 
+  
+    let $MY_FILE = ~/foo/bar.txt;
+
+    append_file $MY_FILE;
+    writing text...
+    EOF
+
+    append_file $MY_FILE;
+    appending text with default terminator...
+    EOF
+
+    append_file $MY_FILE stop
+    appending text with `stop` terminator...
+    stop
+
+:Output:
+
+::
+    
+    ~/foo/bar.txt:
+    writing text...
+    appending text with default terminator...
+    appending text with `stop` terminator...
+
 
 .. _cat_file:
 
@@ -105,10 +137,34 @@ cat_file
 :Syntax: 
 
 :program:`cat_file file_name`
+
+:program:`cat_file` is similar to the unix ``cat`` command. cat_file expects only one argument. The ``cat_file`` command reads the file given as its argument and writes its contents to the `test_name`.result file. 
    
+.. note:: If extra argument is passed to cat_file command, the following error is displayed. testname: At line N: Extra argument '/path/to/file/file_name' passed to 'cat_file'
+
 :Example:
 
-.. code-block:: python
+::
+
+    /foo/log.txt:
+    The test produced the following results:
+
+    /tests/t/test_name.test:
+    let $LOG_RESULT = /foo;
+    cat_file $LOG_RESULT/log.txt
+    SELECT 1;
+
+:Output:
+
+::
+
+    /tests/r/test_name.result:
+    The test produced the following results:
+    SELECT 1;
+    1
+    1
+
+.. note:: The file_name can be specified via variables. In the example above, we have used LOG_RESULT as variable. We can also specify it as "let $LOG_RESULT = /foo/log.txt" and use it as "cat_file $LOG_RESULT".
 
 .. _change_user:
 
@@ -118,6 +174,8 @@ change_user
 :Syntax: 
 
 :program:`change_user [user_name], [password], [db_name]`
+
+
 
 :Example:
 
@@ -1005,9 +1063,44 @@ while
 
 :program:`while(expr)`
 
+:program:`while()` defines an action block which gets executed over a loop. The while command expects a value / variable (expr) which decides whether or not the next iteration has to be carried out. If the value is 0, it is considered as ``false`` and the loop terminates. The body of the while block, which contains the set of statements to be executed repeatedly, should be enclosed within curly braces ``{`` and ``}``.
+
+.. note:: Any non-zero value, positive / negative is treated as a true, and the loop gets executed. The expression expr does not support boolean expressions. 
+
 :Example:
 
-.. code-block:: python
+::
+   
+   /tests/t/testname.test:
+   let $test=3;
+   let $iteration=1;
+   while($test)
+   {
+     echo test iteration $iteration;
+     SELECT 1;
+     dec $test;
+     inc $iteration;
+   }
+
+:Output:
+
+::
+
+   /tests/r/testname.result:
+   test iteration 1
+   SELECT 1;
+   1
+   1
+   test iteration 2
+   SELECT 1;
+   1
+   1
+   test iteration 3
+   SELECT 1;
+   1
+   1
+
+.. note:: Ensure that, the expr value becomes zero at some point of time. Else, the loop gets executed infinitely and the test gets stalled. 
 
 .. _write_file:
 
@@ -1018,8 +1111,45 @@ write_file
 
 :program:`write_file file_name [terminator]`
 
+:program:`write_file` command is write data to the file specified by ``file_name``. When this command is issued, a file with the name as ``file_name`` is created and data is written to it. The end of the data, that is to be written, is marked by the terminator.
+
+.. note:: If the file exists, it is not considered as error / the test will not fail. Instead, the contents of the file will be replaced by the data that is to be written.
+
+The ``file_name`` can be substituted via variables. 
+
 :Example:
 
-.. code-block:: python
- 
+::
+
+   let $MY_FILE = ~/foo/bar.txt
+   
+   write_file $MY_FILE;
+   testing...
+   EOF
+
+:Output:
+
+::
+
+   ~/foo/bar.txt:
+   testing...
+
+:Example:
+
+::
+
+   let $MY_FILE = ~/foo/bar.txt
+
+   write_file $MY_FILE stop;
+   testing with test-run...
+   stop
+  
+:Output:
+
+::
+
+   ~/foo/bar.txt:
+   testing with test-run...
+
+.. note:: In the above example, the contents present previously in bar.txt are overwritten
    
