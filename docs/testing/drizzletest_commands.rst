@@ -137,10 +137,34 @@ cat_file
 :Syntax: 
 
 :program:`cat_file file_name`
+
+:program:`cat_file` is similar to the unix ``cat`` command. cat_file expects only one argument. The ``cat_file`` command reads the file given as its argument and writes its contents to the `test_name`.result file. 
    
+.. note:: If extra argument is passed to cat_file command, the following error is displayed. testname: At line N: Extra argument '/path/to/file/file_name' passed to 'cat_file'
+
 :Example:
 
-.. code-block:: python
+::
+
+    /foo/log.txt:
+    The test produced the following results:
+
+    /tests/t/test_name.test:
+    let $LOG_RESULT = /foo;
+    cat_file $LOG_RESULT/log.txt
+    SELECT 1;
+
+:Output:
+
+::
+
+    /tests/r/test_name.result:
+    The test produced the following results:
+    SELECT 1;
+    1
+    1
+
+.. note:: The file_name can be specified via variables. In the example above, we have used LOG_RESULT as variable. We can also specify it as "let $LOG_RESULT = /foo/log.txt" and use it as "cat_file $LOG_RESULT".
 
 .. _change_user:
 
@@ -1092,5 +1116,5 @@ The ``file_name`` can be substituted via variables.
    ~/foo/bar.txt:
    testing with test-run...
 
-.. note:: In the above example, the contents present previously are overwritten
+.. note:: In the above example, the contents present previously in bar.txt are overwritten
    
