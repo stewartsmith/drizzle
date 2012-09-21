@@ -255,9 +255,51 @@ dec
 
 :program:`dec $variable_name`
 
+:program:`dec` takes in exactly one argument. The argument should be a ``variable``. The ``dec`` decrements the value of the variable by 1. This command takes two forms. :program:`dec $variable_name;` and :program:`- -dec $variable_name`. This command is the reverse of :ref:`inc` 
+
+.. note:: If a constant is given as argument, the following error is thrown. ERROR:The argument to dec must be a variable (start with $)
+
+.. note:: If two arguments are given, the following error is thrown ERROR:End of line junk detected
+
 :Example:
 
-.. code-block:: python
+::
+
+    /tests/t/testname.test:
+    let $foo = 5;
+    echo $foo;
+    dec $foo;
+    echo $foo;
+
+:Output:
+
+::
+
+    /tests/r/testname.result:
+    5
+    4
+
+.. note:: If a string is stored in the variable, then it is not considered as an error. Decrementing such a variable will store -1 in the variable. 
+
+:Example:
+
+::
+  
+    /tests/t/testname.test:
+    let $foo = 5;
+    echo $foo;
+    --dec $foo
+    echo $foo;
+
+:Output:
+
+::
+
+    /tests/r/testname.result:
+    5
+    4
+
+.. note:: In the second form, the ``;`` is not required as a delimiter.
     
 .. _delimiter:
 
@@ -590,9 +632,51 @@ inc
 
 :program:`inc $var_name`
 
+:program:`inc` takes in exactly one argument. The argument should be a ``variable``. The ``inc`` increments the value of the variable by 1. This command takes two forms. :program:`inc $variable_name;` and :program:`- -inc $variable_name`. This command is the reverse of :ref:`dec`
+
+.. note:: If a constant is given as argument, the following error is thrown. ERROR:The argument to dec must be a variable (start with $)
+
+.. note:: If two arguments are given, the following error is thrown ERROR:End of line junk detected
+
 :Example:
 
-.. code-block:: python
+::
+
+    /tests/t/testname.test:
+    let $foo = 5;
+    echo $foo;
+    inc $foo;
+    echo $foo;
+
+:Output:
+
+::
+
+    /tests/r/testname.result:
+    5
+    6
+
+.. note:: If a string is stored in the variable, then it is not considered as an error. Decrementing such a variable will store 1 in the variable. 
+
+:Example:
+
+::
+  
+    /tests/t/testname.test:
+    let $foo = 5;
+    echo $foo;
+    --inc $foo
+    echo $foo;
+
+:Output:
+
+::
+
+    /tests/r/testname.result:
+    5
+    6
+
+.. note:: In the second form, the ``;`` is not required as a delimiter.
 
 .. _let:
 
