@@ -31,14 +31,94 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-if test -f configure; then make clean; make merge-clean; make distclean; fi;
+die() { echo "$@"; exit 1; }
 
-rm -r -f autom4te.cache/ config.h config.log config.status 
-./config/autorun.sh
-if [ $(uname) = "Darwin" ];
+run() {
+  echo "\`$@' $ARGS"
+  $@ $ARGS
+} 
+
+# -Werror
+AUTORECONF_ERROR_FLAGS="--install --force --verbose -Wall"
+
+if [ -d .git ]
 then
-  ./configure CC=clang CXX=clang++ --enable-assert
+  AUTORECONF_FLAGS=$AUTORECONF_ERROR_FLAGS
+elif [ -d .bzr ]
+then
+  AUTORECONF_FLAGS=$AUTORECONF_ERROR_FLAGS
+elif [ -d .svn ]
+then
+  AUTORECONF_FLAGS=$AUTORECONF_ERROR_FLAGS
+elif [ -d .hg ]
+then
+  AUTORECONF_FLAGS=$AUTORECONF_ERROR_FLAGS
 else
-  ./configure --enable-assert
+  AUTORECONF_FLAGS="--install --force --verbose -Wall"
 fi
-make
+
+LIBTOOLIZE_FLAGS="--force --verbose"
+
+if [ $(uname) = "Darwin" ]
+then
+  LIBTOOLIZE=glibtoolize
+elif [ -z "$LIBTOOLIZE" ]
+then 
+  LIBTOOLIZE=libtoolize
+fi
+
+AUTORECONF=autoreconf
+
+# Set ENV DEBUG in order to enable debugging
+if [ -n "$DEBUG" ]
+then 
+  DEBUG="--enable-debug"
+fi
+
+# Set ENV ASSERT in order to enable assert
+if [ -n "$ASSERT" ]
+then 
+  ASSERT="--enable-assert"
+fi
+
+# Set ENV MAKE in order to override "make"
+if [ -z "$MAKE" ]
+then 
+  MAKE="make"
+fi
+
+# Set ENV MAKE_J in order to override "-j2"
+if [ -z "$MAKE_J" ]
+then
+  MAKE_J="-j2"
+fi
+
+# Set ENV PREFIX in order to set --prefix for ./configure
+if [ -n "$PREFIX" ]
+then 
+  PREFIX="--prefix=$PREFIX"
+fi
+
+if [ -f Makefile ]
+then
+  $MAKE $MAKE_J distclean
+fi
+
+run $LIBTOOLIZE $LIBTOOLIZE_FLAGS || die "Can't execute $LIBTOOLIZE"
+run $AUTORECONF $AUTORECONF_FLAGS || die "Can't execute $AUTORECONF"
+
+# If we are executing on OSX use CLANG, otherwise only use it if we find it in the ENV
+if [ $(uname) = "Darwin" ]
+then
+  CC=clang CXX=clang++ ./configure $DEBUG $ASSERT $PREFIX || die "configure failed to run"
+else
+  ./configure $DEBUG $ASSERT $PREFIX || die "configure failed to run"
+fi
+
+# Set ENV MAKE_TARGET in order to override default of "all"
+if [ -z "$MAKE_TARGET" ]
+then 
+  MAKE_TARGET="all"
+fi
+
+run $MAKE $MAKE_J $MAKE_TARGET || die "Can't execute make"
