@@ -772,7 +772,7 @@ inc
 
 :program:`inc` takes in exactly one argument. The argument should be a ``variable``. The ``inc`` increments the value of the variable by 1. This command takes two forms. :program:`inc $variable_name;` and :program:`- -inc $variable_name`. This command is the reverse of :ref:`dec`
 
-.. note:: If a constant is given as argument, the following error is thrown. ERROR:The argument to dec must be a variable (start with $)
+.. note:: If a constant is given as argument, the following error is thrown. ERROR:The argument to inc must be a variable (start with $)
 
 .. note:: If two arguments are given, the following error is thrown ERROR:End of line junk detected
 
