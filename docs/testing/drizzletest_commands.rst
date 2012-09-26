@@ -794,7 +794,7 @@ inc
     5
     6
 
-.. note:: If a string is stored in the variable, then it is not considered as an error. Decrementing such a variable will store 1 in the variable. 
+.. note:: If a string is stored in the variable, then it is not considered as an error. Incrementing such a variable will store 1 in the variable. 
 
 :Example:
 
