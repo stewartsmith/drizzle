@@ -310,9 +310,73 @@ delimiter
 
 :program:`delimiter string`
 
+:program:`delimiter` is used to change the default delimiter ``;`` to the one specified by the argument ``string``. The default delimiter is ``;`` (semi-colon). This command takes two forms. :program:`delimiter string` and :program:`- -delimiter string`. 
+
+.. note:: The string argument can have space in between. In such cases, the entire string (with the space) should be used as delimiter 
+
 :Example:
 
-.. code-block:: python
+::
+
+   /tests/t/testname.test:
+   SELECT 1;
+   delimiter stop;
+   SELECT 1 stop
+
+:Output:
+
+::
+
+   /tests/r/testname.result:
+   SELECT 1;
+   1
+   1
+   SELECT 1 stop
+   1
+   1
+
+.. note:: The strings are case sensitive. For example, if the delimiter is set to ``stop``, then ``Stop`` or ``STOP`` cannot be considered as delimiter. 
+
+:Example:
+
+::
+
+   tests/t/testname.test:
+   SELECT 1;
+   --delimiter END OF LINE
+   SELECT 1 END OF LINE
+
+:Output:
+
+::
+
+   tests/r/testname.result:
+   SELECT 1;
+   1
+   1
+   SELECT 1 END OF LINE
+   1
+   1
+
+.. note:: In the above example, note the usage of ``--delimiter`` form. Also note the string with spaces in them.
+
+When a string is set as delimiter, make sure that, the string is not used anywhere else. It should be unique. A common mistake that can be left unnoticed is given in the following example.
+
+:Example:
+
+::
+
+   tests/t/testname.test:
+   CREATE TABLE test (id INT, start FLOAT, end FLOAT);
+   INSERT INTO test VALUES (1,10,12);
+   delimiter end;
+   SELECT start,end FROM test;
+
+.. note:: We get the following error. At line 4: query 'select start,' failed: 1064: You have an error in your SQL syntax;
+
+This test seems to be correct. However not that, the ``end`` in line 4 is treated as delimiter, and not as a field.
+
+.. note:: To set the delimiter again to another one, ``delimiter new_delimiter`` should be followed by the old_delimiter
 
 .. _die:
 
@@ -323,9 +387,32 @@ die
 
 :program:`die [message]`
 
+:program:`die` is used to terminate the test. This command takes in a ``message`` ( string ) as argument. When this line is executed, the test fails, and the message is printed as the reason for aborting the test. This is similar to :ref:`exit`.
+
 :Example:
 
-.. code-block:: python
+::
+
+   tests/t/testname.test:
+   let $i=3;
+   while($i)
+   {
+      die INFINITE LOOP ENCONTERED;
+   }
+   
+:Output:
+
+::
+
+   ================================================================================
+   DEFAULT STORAGE ENGINE: innodb
+   TEST                                                         RESULT    TIME (ms)
+   --------------------------------------------------------------------------------
+
+   main.testname                                               [ fail ]
+   testname: At line 4: INFINITE LOOP ENCOUNTERED
+
+.. note:: This is often used within a conditional statement such as ``if``. That is, if a particular condition is reached, and the test will here after produce a fail result, then there is no need to carry out the remaining tests. Hence a die statement with the appropriate message can be used.
 
 .. _diff_files:
 
@@ -514,9 +601,38 @@ echo
 
 :program:`echo text`
 
+:program:`echo` is used to display ``text`` in the test.result file. This is often used for giving a verbose explanation about the test in the test.result file. 
+
+.. note:: If no text is provided, then a blank line is printed in the test.result file.
+
+A good test file should echo all the important comments, so that, they are displayed into the test.result file for more clarity to the readers
+
 :Example:
 
-.. code-block:: python
+::
+
+   tests/t/testname.test:
+   echo testing select statement...
+   --echo #test1
+   SELECT 1;
+   --echo #test2
+   SELECT 2;
+
+:Output:
+
+::
+  
+   test started...
+   #test1
+   SELECT 1;
+   1
+   1
+   #test2
+   SELECT 2;
+   2
+   2
+
+In the above example, we can see that, comments ``test1`` and ``test2`` are echoed into the testname.result file. This gives a better understanding and clarity for the readers while tracing through the testname.result file.
 
 .. _end:
 
@@ -583,6 +699,28 @@ exit
 :Syntax:
 
 :program:`exit`
+
+:program:`exit` command is used to terminate the test. It is similar to :ref:`die`. However, here the test is not considered to have failed. 
+
+:Example:
+
+::
+
+   tests/t/testname.test:
+   SELECT 1;
+   exit
+   SELECT 2;
+   
+:Output:
+
+::
+
+   tests/r/testname.result:
+   SELECT 1;
+   1
+   1
+
+.. note:: In the above example, the test for ``select 2`` is not executed. Often this statement is used with a conditional statement such as ``if``. That is, if a particular condition is satisfied, and the test has not yet failed so far, and needs no more testing, this exit statement can be used.
 
 .. _file_exists:
 
