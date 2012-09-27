@@ -143,7 +143,7 @@ tests/qp: tests/var/drizzle
 # will then calculate the various port numbers it needs from this,
 # making sure each user use different ports.
 
-test: html tests/var/drizzle check
+test: html tests/var/drizzle
 
 # Please keep the list of tests in alphabetical order for ease of
 # maintenance and verification
@@ -162,10 +162,10 @@ test-drizzle: tests/var/drizzle
 gdb-drizzled: tests/var/drizzle
 	./libtool --mode=execute gdb ./drizzled/drizzled
 
-test-valgrind: tests/var/drizzle check
+test-valgrind: tests/var/drizzle all
 	$(TEST_RUN) $(TEST_RUN_EXTRA_OPTIONS) --valgrind --force --suite=$(NORMAL_TESTS) && python tests/strip-valgrind
 
-test-valgrind-suppressions: tests/var/drizzle check
+test-valgrind-suppressions: tests/var/drizzle all
 	$(TEST_RUN) $(TEST_RUN_EXTRA_OPTIONS) --valgrind --valgrind-option='--gen-suppressions=all' --valgrind-option='--show-reachable=yes' --force --suite=$(NORMAL_TESTS) && python tests/strip-valgrind)
 
 test-junitxml: tests/var/drizzle
