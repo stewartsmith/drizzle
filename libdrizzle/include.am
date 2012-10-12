@@ -4,10 +4,9 @@ nobase_include_HEADERS+= libdrizzle/drizzle.h
 nobase_include_HEADERS+= libdrizzle/drizzle_client.h
 
 
-noinst_HEADERS+= \
-		 libdrizzle/common.h \
-		 libdrizzle/drizzle_local.h \
-		 libdrizzle/conn_local.h \
-		 libdrizzle/pack.h \
-		 libdrizzle/state.h \
-		 libdrizzle/sha1.h
+noinst_HEADERS+= libdrizzle/common.h
+noinst_HEADERS+= libdrizzle/drizzle_local.h
+noinst_HEADERS+= libdrizzle/conn_local.h
+noinst_HEADERS+= libdrizzle/pack.h
+noinst_HEADERS+= libdrizzle/state.h
+noinst_HEADERS+= libdrizzle/sha1.h
