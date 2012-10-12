@@ -59,7 +59,7 @@ int main(void)
 {
   close(STDOUT_FILENO);
 
-  if (bool(getenv("TESTS_ENVIRONMENT")) and strstr(getenv("TESTS_ENVIRONMENT"), "valgrind"))
+  if (getenv("TESTS_ENVIRONMENT") and strstr(getenv("TESTS_ENVIRONMENT"), "valgrind"))
   {
     return EXIT_SUCCESS;
   }
