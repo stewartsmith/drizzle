@@ -1,7 +1,6 @@
 # vim:ft=automake
 
-noinst_HEADERS+= \
-		 libdrizzle-1.0/t/common.h
+noinst_HEADERS+= libdrizzle-1.0/t/common.h
 
 # Test linking with C application
 libdrizzle_1_0_t_c_test_SOURCES= libdrizzle-1.0/t/c_test.c

@@ -59,6 +59,11 @@ int main(void)
 {
   close(STDOUT_FILENO);
 
+  if (getenv("TESTS_ENVIRONMENT") && strstr(getenv("TESTS_ENVIRONMENT"), "valgrind"))
+  {
+    return EXIT_SUCCESS;
+  }
+
   drizzle_verbose_t verbose;
   drizzle_st *drizzle;
   drizzle_st drizzle_buffer;
