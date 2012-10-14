@@ -38,14 +38,19 @@ command_exists () {
 }
 
 determine_target_platform () {
-  if [ $(uname) = "Darwin" ]; then
+  if [[ $(uname) = "Darwin" ]]; then
     PLATFORM="darwin"
   elif [[ -f "/etc/fedora-release" ]]; then 
+    AUTOCONF_TARGET_PLATFORM="yes"
     PLATFORM="fedora"
+  elif [[ -f "/etc/redhat-release" ]]; then 
+    rhel_version=`cat /etc/lsb-release | grep DISTRIB_CODENAME | awk -F= ' { print $2 } '`
+    PLATFORM="rhel-$rhel_version"
   elif [[ -f "/etc/lsb-release" ]]; then 
     debian_version=`cat /etc/lsb-release | grep DISTRIB_CODENAME | awk -F= ' { print $2 } '`
     case $debian_version in
       precise)
+        AUTOCONF_TARGET_PLATFORM="yes"
         PLATFORM="precise"
         ;;
       *)
@@ -55,7 +60,7 @@ determine_target_platform () {
 
   PLATFORM_VERSION=`uname -r`
 
-  if [ "$PLATFORM" == "unknown" ]; then 
+  if [[ "$PLATFORM" = "unknown" ]]; then 
     PLATFORM=`uname -s`
   fi
 
@@ -67,6 +72,9 @@ configure_target_platform () {
   case $TARGET_PLATFORM in
     darwin-*)
       CC=clang CXX=clang++ ./configure $DEBUG_ARG $ASSERT_ARG $PREFIX_ARG || die "Cannot execute CC=clang CXX=clang++ configure $DEBUG_ARG $ASSERT_ARG $PREFIX_ARG"
+      ;;
+    rhel-5*)
+      CC=gcc44 CXX=gcc44 ./configure $DEBUG_ARG $ASSERT_ARG $PREFIX_ARG || die "Cannot execute CC=gcc44 CXX=gcc44 configure $DEBUG_ARG $ASSERT_ARG $PREFIX_ARG"
       ;;
     *)
       ./configure $DEBUG_ARG $ASSERT_ARG $PREFIX_ARG || die "Cannot execute configure $DEBUG_ARG $ASSERT_ARG $PREFIX_ARG"
@@ -90,18 +98,18 @@ setup_valgrind_command () {
 }
 
 make_valgrind () {
-  if [ "$PLATFORM" = "darwin" ]; then
+  if [[ "$PLATFORM" = "darwin" ]]; then
     make_darwin_malloc
   else
     if command_exists valgrind; then
 
-      if [ -n "$TESTS_ENVIRONMENT" ]; then
+      if [[ -n "$TESTS_ENVIRONMENT" ]]; then
         OLD_TESTS_ENVIRONMENT=$TESTS_ENVIRONMENT
         export -n TESTS_ENVIRONMENT
       fi
 
       # Set ENV VALGRIND_COMMAND
-      if [ -z "$VALGRIND_COMMAND" ]; then
+      if [[ -z "$VALGRIND_COMMAND" ]]; then
         setup_valgrind_command
       fi
 
@@ -116,7 +124,7 @@ make_valgrind () {
       make_target check
       export -n TESTS_ENVIRONMENT
 
-      if [ -n "$OLD_TESTS_ENVIRONMENT" ]; then
+      if [[ -n "$OLD_TESTS_ENVIRONMENT" ]]; then
         TESTS_ENVIRONMENT=$OLD_TESTS_ENVIRONMENT
         export TESTS_ENVIRONMENT
       fi
@@ -133,7 +141,7 @@ make_install_system () {
 
   configure_target_platform
 
-  if [ -n "$TESTS_ENVIRONMENT" ]; then
+  if [[ -n "$TESTS_ENVIRONMENT" ]]; then
     OLD_TESTS_ENVIRONMENT=$TESTS_ENVIRONMENT
     export -n TESTS_ENVIRONMENT
   fi
@@ -148,7 +156,7 @@ make_install_system () {
 
   export -n TESTS_ENVIRONMENT
 
-  if [ -n "$OLD_TESTS_ENVIRONMENT" ]; then
+  if [[ -n "$OLD_TESTS_ENVIRONMENT" ]]; then
     TESTS_ENVIRONMENT=$OLD_TESTS_ENVIRONMENT
     export TESTS_ENVIRONMENT
   fi
@@ -181,7 +189,7 @@ make_target_platform () {
   case $TARGET_PLATFORM in
     fedora-*)
       # make rpm includes "make distcheck"
-      if [ -f rpm.am ]; then
+      if [[ -f rpm.am ]]; then
         make_rpm
       else
         make_distcheck
@@ -208,13 +216,13 @@ make_target_platform () {
 make_gdb () {
   if command_exists gdb; then
 
-    if [ -n "$TESTS_ENVIRONMENT" ]; then
+    if [[ -n "$TESTS_ENVIRONMENT" ]]; then
       OLD_TESTS_ENVIRONMENT=$TESTS_ENVIRONMENT
       export -n TESTS_ENVIRONMENT
     fi
 
     # Set ENV GDB_COMMAND
-    if [ -z "$GDB_COMMAND" ]; then
+    if [[ -z "$GDB_COMMAND" ]]; then
       setup_gdb_command
     fi
 
@@ -233,7 +241,7 @@ make_gdb () {
       rm -f gdb.txt
     fi
 
-    if [ -n "$OLD_TESTS_ENVIRONMENT" ]; then
+    if [[ -n "$OLD_TESTS_ENVIRONMENT" ]]; then
       TESTS_ENVIRONMENT=$OLD_TESTS_ENVIRONMENT
       export TESTS_ENVIRONMENT
     fi
@@ -241,14 +249,14 @@ make_gdb () {
 }
 
 make_target () {
-  if [ -n "$MAKE_TARGET" ]; then
+  if [[ -n "$MAKE_TARGET" ]]; then
     OLD_MAKE_TARGET=$MAKE_TARGET
   fi
 
   MAKE_TARGET=$1
   run $MAKE $MAKE_TARGET || die "Cannot execute $MAKE $MAKE_TARGET"
 
-  if [ -n "$MAKE_TARGET" ]; then
+  if [[ -n "$MAKE_TARGET" ]]; then
     MAKE_TARGET=$OLD_MAKE_TARGET
   fi
 }
@@ -277,8 +285,19 @@ make_all () {
   make_target all
 }
 
+run_autoreconf () {
+  if [[ -f Makefile ]]; then
+    make_maintainer_clean
+    rm -f Makefile.in
+    rm -f aminclude.am
+  fi
+
+  run $LIBTOOLIZE $LIBTOOLIZE_FLAGS || die "Cannot execute $LIBTOOLIZE $LIBTOOLIZE_FLAGS"
+  run $AUTORECONF $AUTORECONF_FLAGS || die "Cannot execute $AUTORECONF $AUTORECONF_FLAGS"
+}
+
 run() {
-  if [ -n "$TESTS_ENVIRONMENT" ]; then
+  if [[ -n "$TESTS_ENVIRONMENT" ]]; then
     echo "TESTS_ENVIRONMENT=$TESTS_ENVIRONMENT"
   fi
   echo "\`$@' $ARGS"
@@ -293,8 +312,10 @@ parse_command_line_options() {
 
   eval set -- "$options"
 
-  while [ $# -gt 0 ]; do
+  while [[ $# -gt 0 ]]; do
     case $1 in
+      -a | --autoreconf )
+        AUTORECONF_OPTION="yes" ; shift;;
       -c | --configure )
         CONFIGURE_OPTION="yes" ; shift;;
       -- )
@@ -316,71 +337,74 @@ bootstrap() {
   DEFAULT_DEV_AUTORECONF_FLAGS="--install --force --verbose -Wall"
   DEFAULT_AUTORECONF_FLAGS="--install --force --verbose -Wall"
 
-  if [ -d .git ]; then
+  if [[ -d .git ]]; then
     AUTORECONF_FLAGS=$DEFAULT_DEV_AUTORECONF_FLAGS
     VCS_CHECKOUT=git
-  elif [ -d .bzr ]; then
+  elif [[ -d .bzr ]]; then
     AUTORECONF_FLAGS=$DEFAULT_DEV_AUTORECONF_FLAGS
     VCS_CHECKOUT=bzr
-  elif [ -d .svn ]; then
+  elif [[ -d .svn ]]; then
     AUTORECONF_FLAGS=$DEFAULT_DEV_AUTORECONF_FLAGS
     VCS_CHECKOUT=svn
-  elif [ -d .hg ]; then
+  elif [[ -d .hg ]]; then
     AUTORECONF_FLAGS=$DEFAULT_DEV_AUTORECONF_FLAGS
     VCS_CHECKOUT=hg
   else
     AUTORECONF_FLAGS=$DEFAULT_AUTORECONF_FLAGS
   fi
 
-  if [ -z "$LIBTOOLIZE_FLAGS" ]; then
+  if [[ -z "$LIBTOOLIZE_FLAGS" ]]; then
     LIBTOOLIZE_FLAGS="--force --verbose --install"
   fi
 
-  if [ "$PLATFORM" = "darwin" ]; then
+  if [[ "$PLATFORM" = "darwin" ]]; then
     LIBTOOLIZE=glibtoolize
-  elif [ -z "$LIBTOOLIZE" ]; then 
+  elif [[ -z "$LIBTOOLIZE" ]]; then 
     LIBTOOLIZE=libtoolize
   fi
 
   AUTORECONF=autoreconf
 
   # Set ENV DEBUG in order to enable debugging
-  if [ -n "$DEBUG" ]; then 
+  if [[ -n "$DEBUG" ]]; then 
     DEBUG_ARG="--enable-debug"
   fi
 
   # Set ENV ASSERT in order to enable assert
-  if [ -n "$ASSERT" ]; then 
+  if [[ -n "$ASSERT" ]]; then 
     ASSERT_ARG="--enable-assert"
   fi
 
   # Set ENV MAKE in order to override "make"
-  if [ -z "$MAKE" ]; then 
+  if [[ -z "$MAKE" ]]; then 
     MAKE="make"
   fi
 
   # Set ENV PREFIX in order to set --prefix for ./configure
-  if [ -n "$PREFIX" ]; then 
+  if [[ -n "$PREFIX" ]]; then 
     PREFIX_ARG="--prefix=$PREFIX"
   fi
 
-  if [ -f Makefile ]; then
-    make_maintainer_clean
-    rm -f Makefile.in
-    rm -f aminclude.am
+  if [[ ! -f configure ]] || [[ "x$AUTOCONF_TARGET_PLATFORM" = "xyes" ]]; then
+    run_autoreconf
   fi
 
-  run $LIBTOOLIZE $LIBTOOLIZE_FLAGS || die "Cannot execute $LIBTOOLIZE $LIBTOOLIZE_FLAGS"
-  run $AUTORECONF $AUTORECONF_FLAGS || die "Cannot execute $AUTORECONF $AUTORECONF_FLAGS"
+  if [[ "x$AUTORECONF_OPTION" = "xyes" ]]; then
+    exit
+  fi
+
+  if [[ -d autom4te.cache ]]; then
+    rm -r -f autom4te.cache
+  fi
 
   configure_target_platform
   
-  if [ "$CONFIGURE_OPTION" == "yes" ]; then
+  if [[ "x$CONFIGURE_OPTION" = "xyes" ]]; then
     exit
   fi
 
   # Backwards compatibility
-  if [ -n "$VALGRIND" ]; then
+  if [[ -n "$VALGRIND" ]]; then
     MAKE_TARGET="valgrind"
   fi
 
@@ -389,7 +413,7 @@ bootstrap() {
     LIBTOOL_COMMAND="./libtool --mode=execute"
   fi
 
-  if [ -f docs/conf.py ]; then 
+  if [[ -f docs/conf.py ]]; then 
     if command_exists sphinx-build; then
       make_target "man"
     fi
@@ -398,14 +422,14 @@ bootstrap() {
   # If we are running under Jenkins we predetermine what tests we will run against
   if [[ -n "$JENKINS_HOME" ]]; then 
     make_target_platform
-  elif [ "$MAKE_TARGET" == "gdb" ]; then
+  elif [[ "$MAKE_TARGET" = "gdb" ]]; then
     make_gdb
-  elif [ "$MAKE_TARGET" == "valgrind" ]; then
+  elif [[ "$MAKE_TARGET" = "valgrind" ]]; then
     make_valgrind
-  elif [ "$MAKE_TARGET" == "jenkins" ]; then 
+  elif [[ "$MAKE_TARGET" = "jenkins" ]]; then 
     # Set ENV MAKE_TARGET in order to override default of "all"
     make_target_platform
-  elif [ -z "$MAKE_TARGET" ]; then 
+  elif [[ -z "$MAKE_TARGET" ]]; then 
     make_local
   else
     make_target $MAKE_TARGET
@@ -415,9 +439,11 @@ bootstrap() {
 export -n VCS_CHECKOUT
 export -n PLATFORM
 export -n TARGET_PLATFORM
+AUTORECONF_OPTION=no
 CONFIGURE_OPTION=no
 VCS_CHECKOUT=
 PLATFORM=unknown
 TARGET_PLATFORM=unknown
+AUTOCONF_TARGET_PLATFORM=no
 
 bootstrap $@
