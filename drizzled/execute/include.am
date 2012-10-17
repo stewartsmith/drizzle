@@ -19,32 +19,28 @@
 #  along with this program; if not, write to the Free Software
 #  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
-DISTCLEANFILES+= \
-		 drizzled/execute/parser.output \
-		 drizzled/execute/parser.cc \
-		 drizzled/execute/parser.h \
-		 drizzled/execute/scanner.cc \
-		 drizzled/execute/scanner.h
+DISTCLEANFILES+= drizzled/execute/parser.output
 
-noinst_HEADERS+= \
-		 drizzled/execute/context.h \
-		 drizzled/execute/parser.h \
-		 drizzled/execute/scanner.h \
-		 drizzled/execute/symbol.h
+noinst_HEADERS+= drizzled/execute/context.h
+noinst_HEADERS+= drizzled/execute/parser.h
+noinst_HEADERS+= drizzled/execute/scanner.h
+noinst_HEADERS+= drizzled/execute/symbol.h
+
+MAINTAINERCLEANFILES+= drizzled/execute/parser.cc
+MAINTAINERCLEANFILES+= drizzled/execute/parser.h
+MAINTAINERCLEANFILES+= drizzled/execute/scanner.cc
+MAINTAINERCLEANFILES+= drizzled/execute/scanner.h
 
 
-drizzled_drizzled_SOURCES+= \
-			   drizzled/execute/parser.cc \
-			   drizzled/execute/scanner.cc
+drizzled_drizzled_SOURCES+= drizzled/execute/parser.cc
+drizzled_drizzled_SOURCES+= drizzled/execute/scanner.cc
 
-EXTRA_DIST+= \
-      drizzled/execute/parser.yy\
-      drizzled/execute/scanner.l
+EXTRA_DIST+= drizzled/execute/parser.yy
+EXTRA_DIST+= drizzled/execute/scanner.l
 
-BUILT_SOURCES+= \
-      drizzled/execute/scanner.cc\
-      drizzled/execute/parser.h\
-      drizzled/execute/parser.cc
+BUILT_SOURCES+= drizzled/execute/scanner.cc
+BUILT_SOURCES+= drizzled/execute/parser.h
+BUILT_SOURCES+= drizzled/execute/parser.cc
            
 drizzled/execute/parser.h: drizzled/execute/parser.cc
 

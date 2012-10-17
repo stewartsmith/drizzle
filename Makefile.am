@@ -13,7 +13,7 @@
 #  along with this program; if not, write to the Free Software
 #  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
-ACLOCAL_AMFLAGS = -I m4 --force
+ACLOCAL_AMFLAGS = -I m4
 
 # includes append to these:
 # Pandora build system takes input from plugin.ini files that are appended to these
@@ -65,7 +65,9 @@ if BUILD_PO
 SUBDIRS += po
 endif
 
-DIST_SUBDIRS = ${SUBDIRS} tests
+SUBDIRS+= tests
+
+DIST_SUBDIRS = ${SUBDIRS}
 
 BUILT_SOURCES=
 BUILT_MAINT_SRC=
@@ -95,9 +97,14 @@ DISTCLEANFILES=		ac_available_languages_fragment \
 			intltool-merge \
 			intltool-update
 
-MAINTAINERCLEANFILES= \
-		      autom4te.cache \
-		      ChangeLog
+MAINTAINERCLEANFILES=
+MAINTAINERCLEANFILES+= autom4te.cache
+MAINTAINERCLEANFILES+= ChangeLog
+
+#includes additional rules from aminclude.am
+@INC_AMINCLUDE@
+
+DISTCLEANFILES+= aminclude.am
 
 datahomedir = $(localstatedir)
 datahome_DATA=
@@ -108,8 +115,7 @@ include config/pandora-plugin.am
 
 EXTRA_DIST+=	${man_MANS}
 
-.PHONY: \
-	indent
+.PHONY: indent
 
 
 indent:
@@ -172,6 +178,29 @@ clean-local:
 	$(SPHINX_BUILDDIR)/man $(SPHINX_BUILDDIR)/changes $(SPHINX_BUILDDIR)/linkcheck \
 	$(SPHINX_BUILDDIR)/doctest deb-work-dir support-files/rpm/BUILDROOT/* \
 	support-files/rpm/BUILD/* support-files/rpm/SRPMS/* support-files/rpm/RPMS/*
+
+maintainer-clean-local:
+	find . -type f -name '*~' -exec rm -f '{}' \;
+	-rm -rf @PACKAGE@-*.rpm
+	-rm -rf @PACKAGE@-*.tar.gz
+	-rm -r -f autom4te.cache
+	-rm -f Makefile.in
+	-rm -f aclocal.m4
+	-rm -f config/config.guess
+	-rm -f config/config.sub
+	-rm -f config/depcomp
+	-rm -f config/install-sh
+	-rm -f config/ltmain.sh
+	-rm -f config/missing
+	-rm -f config.in
+	-rm -f config.log
+	-rm -f config.status
+	-rm -f configure
+	-rm -f m4/libtool.m4
+	-rm -f m4/ltoptions.m4
+	-rm -f m4/ltsugar.m4
+	-rm -f m4/ltversion.m4
+	-rm -f m4/lt~obsolete.m4
 
 include config/lcov.am
 
