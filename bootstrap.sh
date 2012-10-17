@@ -533,13 +533,13 @@ make_gdb () {
 
     make_target check
 
-    if [[ -f gdb.txt ]]; then
-      rm -f gdb.txt
+    if [ -f 'gdb.txt' ]; then
+      rm 'gdb.txt'
     fi
 
     pop_TESTS_ENVIRONMENT
 
-    if [[ -f '.gdb_history' ]]; then
+    if [ -f '.gdb_history' ]; then
       rm '.gdb_history'
     fi
   else
@@ -556,7 +556,7 @@ make_target ()
     die "$LINENO: Programmer error, no target provided for make"
   fi
 
-  if [[ ! -f "Makefile" ]]; then
+  if [ ! -f 'Makefile' ]; then
     die "$LINENO: Programmer error, make was called before configure"
     run_configure
   fi
