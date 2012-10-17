@@ -13,7 +13,7 @@
 #  along with this program; if not, write to the Free Software
 #  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
-ACLOCAL_AMFLAGS = -I m4 --force
+ACLOCAL_AMFLAGS = -I m4
 
 # includes append to these:
 # Pandora build system takes input from plugin.ini files that are appended to these
@@ -65,7 +65,7 @@ if BUILD_PO
 SUBDIRS += po
 endif
 
-DIST_SUBDIRS = ${SUBDIRS} tests
+DIST_SUBDIRS = ${SUBDIRS}
 
 BUILT_SOURCES=
 BUILT_MAINT_SRC=
@@ -178,30 +178,27 @@ clean-local:
 	support-files/rpm/BUILD/* support-files/rpm/SRPMS/* support-files/rpm/RPMS/*
 
 maintainer-clean-local:
-	@find ./ | $(GREP) \~$$ | xargs rm -f
-	@rm -f @PACKAGE@-*.rpm
-	@rm -f @PACKAGE@-*.tar.gz
-	@rm -f man/*.1
-	@rm -f man/*.3
-	@rm -f man/*.8
-	@rm -r -f autom4te.cache
-	@rm Makefile.in
-	@rm aclocal.m4
-	@rm config/config.guess
-	@rm config/config.sub
-	@rm config/depcomp
-	@rm config/install-sh
-	@rm config/ltmain.sh
-	@rm config/missing
-	@rm config.in
-	@rm config.log
-	@rm config.status
-	@rm configure
-	@rm m4/libtool.m4
-	@rm m4/ltoptions.m4
-	@rm m4/ltsugar.m4
-	@rm m4/ltversion.m4
-	@rm m4/lt~obsolete.m4
+	find . -type f -name '*~' -exec rm -f '{}' \;
+	-rm -rf @PACKAGE@-*.rpm
+	-rm -rf @PACKAGE@-*.tar.gz
+	-rm -r -f autom4te.cache
+	-rm -f Makefile.in
+	-rm -f aclocal.m4
+	-rm -f config/config.guess
+	-rm -f config/config.sub
+	-rm -f config/depcomp
+	-rm -f config/install-sh
+	-rm -f config/ltmain.sh
+	-rm -f config/missing
+	-rm -f config.in
+	-rm -f config.log
+	-rm -f config.status
+	-rm -f configure
+	-rm -f m4/libtool.m4
+	-rm -f m4/ltoptions.m4
+	-rm -f m4/ltsugar.m4
+	-rm -f m4/ltversion.m4
+	-rm -f m4/lt~obsolete.m4
 
 include config/lcov.am
 
