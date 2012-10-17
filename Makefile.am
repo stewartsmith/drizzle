@@ -65,6 +65,8 @@ if BUILD_PO
 SUBDIRS += po
 endif
 
+SUBDIRS+= tests
+
 DIST_SUBDIRS = ${SUBDIRS}
 
 BUILT_SOURCES=
