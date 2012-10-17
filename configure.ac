@@ -111,6 +111,7 @@ PANDORA_DRIZZLE_BUILD
 PANDORA_HAVE_BOOST_TEST
 PANDORA_HAVE_LIBSQLITE3
 
+AX_AM_JOBSERVER([yes])
 
 #########################################################################
 

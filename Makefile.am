@@ -95,9 +95,14 @@ DISTCLEANFILES=		ac_available_languages_fragment \
 			intltool-merge \
 			intltool-update
 
-MAINTAINERCLEANFILES= \
-		      autom4te.cache \
-		      ChangeLog
+MAINTAINERCLEANFILES=
+MAINTAINERCLEANFILES+= autom4te.cache
+MAINTAINERCLEANFILES+= ChangeLog
+
+#includes additional rules from aminclude.am
+@INC_AMINCLUDE@
+
+DISTCLEANFILES+= aminclude.am
 
 datahomedir = $(localstatedir)
 datahome_DATA=
@@ -108,8 +113,7 @@ include config/pandora-plugin.am
 
 EXTRA_DIST+=	${man_MANS}
 
-.PHONY: \
-	indent
+.PHONY: indent
 
 
 indent:
@@ -172,6 +176,32 @@ clean-local:
 	$(SPHINX_BUILDDIR)/man $(SPHINX_BUILDDIR)/changes $(SPHINX_BUILDDIR)/linkcheck \
 	$(SPHINX_BUILDDIR)/doctest deb-work-dir support-files/rpm/BUILDROOT/* \
 	support-files/rpm/BUILD/* support-files/rpm/SRPMS/* support-files/rpm/RPMS/*
+
+maintainer-clean-local:
+	@find ./ | $(GREP) \~$$ | xargs rm -f
+	@rm -f @PACKAGE@-*.rpm
+	@rm -f @PACKAGE@-*.tar.gz
+	@rm -f man/*.1
+	@rm -f man/*.3
+	@rm -f man/*.8
+	@rm -r -f autom4te.cache
+	@rm Makefile.in
+	@rm aclocal.m4
+	@rm config/config.guess
+	@rm config/config.sub
+	@rm config/depcomp
+	@rm config/install-sh
+	@rm config/ltmain.sh
+	@rm config/missing
+	@rm config.in
+	@rm config.log
+	@rm config.status
+	@rm configure
+	@rm m4/libtool.m4
+	@rm m4/ltoptions.m4
+	@rm m4/ltsugar.m4
+	@rm m4/ltversion.m4
+	@rm m4/lt~obsolete.m4
 
 include config/lcov.am
 

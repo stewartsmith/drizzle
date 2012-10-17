@@ -9,7 +9,7 @@ client/drizzletest.cc
 drizzled/cursor.cc
 drizzled/drizzled.cc
 drizzled/error.cc
-drizzled/execute/parser.cc
+drizzled/execute/parser.yy
 drizzled/gettext.h
 drizzled/ha_commands.cc
 drizzled/identifier/catalog.cc
@@ -48,7 +48,7 @@ drizzled/signal_handler.cc
 drizzled/sql_base.cc
 drizzled/sql_select.cc
 drizzled/sql_table.cc
-drizzled/sql_yacc.cc
+drizzled/sql_yacc.yy
 drizzled/statement/alter_table.cc
 drizzled/sys_var.cc
 drizzled/table.cc
