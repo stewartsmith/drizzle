@@ -50,7 +50,12 @@ command_not_found_handle ()
   exit 127
 }
 
-die () { echo "$@"; exit 1; }
+die ()
+{ 
+  echo "$@" >&2
+  exit 1; 
+}
+
 
 command_exists ()
 {
@@ -129,19 +134,19 @@ set_VENDOR ()
 
   case $vendor in
     apple)
-      VENDOR="apple"
+      VENDOR='apple'
       ;;
     redhat)
-      VENDOR="redhat"
+      VENDOR='redhat'
       ;;
     centos)
-      VENDOR="centos"
+      VENDOR='centos'
       ;;
     canonical)
-      VENDOR="canonical"
+      VENDOR='canonical'
       ;;
     suse)
-      VENDOR="suse"
+      VENDOR='suse'
       ;;
     *)
       die "$LINENO: An attempt was made to set an invalid VENDOR=$_vendor"
@@ -158,29 +163,29 @@ determine_target_platform ()
   UNAME_KERNEL=`(uname -s) 2>/dev/null`  || UNAME_SYSTEM=unknown
   UNAME_KERNEL_RELEASE=`(uname -r) 2>/dev/null` || UNAME_KERNEL_RELEASE=unknown
 
-  if [[ $(uname) == "Darwin" ]]; then
-    set_VENDOR "apple" "darwin" "mountain"
-  elif [[ -f "/etc/fedora-release" ]]; then 
+  if [[ $(uname) == 'Darwin' ]]; then
+    set_VENDOR 'apple' 'darwin' 'mountain'
+  elif [[ -f '/etc/fedora-release' ]]; then 
     local fedora_version=`cat /etc/fedora-release | awk ' { print $3 } '`
-    set_VENDOR "redhat" "fedora" $fedora_version
-    if [[ "x$VENDOR_RELEASE" == "x17" ]]; then
+    set_VENDOR 'redhat' 'fedora' $fedora_version
+    if [[ "x$VENDOR_RELEASE" == 'x17' ]]; then
       AUTORECONF_REBUILD_HOST=true
     fi
-  elif [[ -f "/etc/centos-release" ]]; then
-    local centos_version= `cat /etc/centos-release | awk ' { print $7 } '`
-    set_VENDOR "centos" "rhel" $centos_version
-  elif [[ -f "/etc/SuSE-release" ]]; then
+  elif [[ -f '/etc/centos-release' ]]; then
+    local centos_version=`cat /etc/centos-release | awk ' { print $7 } '`
+    set_VENDOR 'centos' 'rhel' $centos_version
+  elif [[ -f '/etc/SuSE-release' ]]; then
     local suse_distribution=`head -1 /etc/SuSE-release | awk ' { print $1 } '`
     local suse_version=`head -1 /etc/SuSE-release | awk ' { print $2 } '`
-    set_VENDOR "suse" "$suse_distribution" "$suse_version"
-  elif [[ -f "/etc/redhat-release" ]]; then
-    local rhel_version= `cat /etc/redhat-release | awk ' { print $7 } '`
-    set_VENDOR "redhat" "rhel" $rhel_version
-  elif [[ -f "/etc/lsb-release" ]]; then 
+    set_VENDOR 'suse' $suse_distribution $suse_version
+  elif [[ -f '/etc/redhat-release' ]]; then
+    local rhel_version=`cat /etc/redhat-release | awk ' { print $7 } '`
+    set_VENDOR 'redhat' 'rhel' $rhel_version
+  elif [[ -f '/etc/lsb-release' ]]; then 
     local debian_DISTRIB_ID=`cat /etc/lsb-release | grep DISTRIB_ID | awk -F= ' { print $2 } '`
     local debian_version=`cat /etc/lsb-release | grep DISTRIB_CODENAME | awk -F= ' { print $2 } '`
-    set_VENDOR "canonical" $debian_DISTRIB_ID $debian_version
-    if [[ "x$VENDOR_RELEASE" == "xprecise" ]]; then
+    set_VENDOR 'canonical' $debian_DISTRIB_ID $debian_version
+    if [[ "x$VENDOR_RELEASE" == 'xprecise' ]]; then
       AUTORECONF_REBUILD_HOST=true
     fi
   fi
@@ -210,13 +215,13 @@ run_configure ()
 
   # Set ENV DEBUG in order to enable debugging
   if $DEBUG; then 
-    CONFIGURE_ARG="--enable-debug"
+    CONFIGURE_ARG='--enable-debug'
   fi
 
   # Set ENV ASSERT in order to enable assert
   if [[ -n "$ASSERT" ]]; then 
     local ASSERT_ARG=
-    ASSERT_ARG="--enable-assert"
+    ASSERT_ARG='--enable-assert'
     CONFIGURE_ARG="$ASSERT_ARG $CONFIGURE_ARG"
   fi
 
@@ -241,12 +246,12 @@ run_configure ()
 
 setup_gdb_command () {
   GDB_TMPFILE=$(mktemp /tmp/gdb.XXXXXXXXXX)
-  echo "set logging overwrite on" > $GDB_TMPFILE
-  echo "set logging on" >> $GDB_TMPFILE
-  echo "set environment LIBTEST_IN_GDB=1" >> $GDB_TMPFILE
-  echo "run" >> $GDB_TMPFILE
-  echo "thread apply all bt" >> $GDB_TMPFILE
-  echo "quit" >> $GDB_TMPFILE
+  echo 'set logging overwrite on' > $GDB_TMPFILE
+  echo 'set logging on' >> $GDB_TMPFILE
+  echo 'set environment LIBTEST_IN_GDB=1' >> $GDB_TMPFILE
+  echo 'run' >> $GDB_TMPFILE
+  echo 'thread apply all bt' >> $GDB_TMPFILE
+  echo 'quit' >> $GDB_TMPFILE
   GDB_COMMAND="gdb -f -batch -x $GDB_TMPFILE"
 }
 
@@ -324,7 +329,7 @@ safe_popd ()
 
 make_valgrind ()
 {
-  if [[ "$VENDOR_DISTRIBUTION" == "darwin" ]]; then
+  if [[ "$VENDOR_DISTRIBUTION" == 'darwin' ]]; then
     make_darwin_malloc
     return
   fi
@@ -342,19 +347,19 @@ make_valgrind ()
 
   # If valgrind_was_set is set to no we bail
   if ! $valgrind_was_set; then
-    echo "valgrind was not present"
+    echo 'valgrind was not present'
     return 1
   fi
 
   push_TESTS_ENVIRONMENT
 
-  if [[ -f "libtool" ]]; then
+  if [[ -f 'libtool' ]]; then
     TESTS_ENVIRONMENT="$LIBTOOL_COMMAND $VALGRIND_COMMAND"
   else
     TESTS_ENVIRONMENT="$VALGRIND_COMMAND"
   fi
 
-  make_target "check" || return 1
+  make_target 'check' || return 1
 
   pop_TESTS_ENVIRONMENT
 }
@@ -372,11 +377,11 @@ make_install_system ()
 
   push_TESTS_ENVIRONMENT
 
-  make_target "install"
+  make_target 'install'
 
-  make_target "installcheck"
+  make_target 'installcheck'
 
-  make_target "uninstall"
+  make_target 'uninstall'
 
   pop_TESTS_ENVIRONMENT
   pop_PREFIX_ARG
@@ -406,9 +411,9 @@ make_darwin_malloc ()
 
   make_check
 
-  MallocGuardEdges= $old_MallocGuardEdges
-  MallocErrorAbort= $old_MallocErrorAbort
-  MallocScribble= $old_MallocScribble
+  MallocGuardEdges=$old_MallocGuardEdges
+  MallocErrorAbort=$old_MallocErrorAbort
+  MallocScribble=$old_MallocScribble
 }
 
 make_for_continuus_integration ()
@@ -428,7 +433,7 @@ make_for_continuus_integration ()
 
   case $HOST_OS in
     *-fedora-*)
-      if [[ "x$VENDOR_RELEASE" == "x17" ]]; then
+      if [[ "x$VENDOR_RELEASE" == 'x17' ]]; then
         make_maintainer_clean
         run_autoreconf
       fi
@@ -543,7 +548,7 @@ make_gdb () {
       rm '.gdb_history'
     fi
   else
-    echo "gdb was not present"
+    echo 'gdb was not present'
     return 1
   fi
 }
@@ -638,7 +643,7 @@ run ()
     echo "\`$@' $ARGS"
   fi
 
-  $@ $ARGS
+  ($@ $ARGS)
 } 
 
 parse_command_line_options ()
@@ -859,7 +864,11 @@ bootstrap ()
 
   # If we are running under Jenkins we predetermine what tests we will run against
   if [[ -n "$JENKINS_HOME" ]]; then 
-    MAKE_TARGET='jenkins'
+    if [[ -n "$JENKINS_TARGET" ]]; then 
+      MAKE_TARGET="$JENKINS_TARGET"
+    else
+      MAKE_TARGET='jenkins'
+    fi
   fi
 
   if [[ "$MAKE_TARGET" == 'gdb' ]]; then
@@ -941,6 +950,7 @@ main ()
   parse_command_line_options $@
 
   bootstrap
+
   jobs -l
   wait
 
