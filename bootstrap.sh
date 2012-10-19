@@ -37,7 +37,6 @@
 #   AUTORECONF
 #   LIBTOOLIZE
 #   MAKE
-#   MAKE_TARGET
 #   PREFIX
 #   TESTS_ENVIRONMENT
 #   VERBOSE
@@ -52,10 +51,49 @@ command_not_found_handle ()
 
 die ()
 { 
-  echo "$@" >&2
+  echo "$BASH_SOURCE:$BASH_LINENO: $@" >&2
   exit 1; 
 }
 
+function assert ()
+{
+  local param_name=\$"$1"
+  local param_value=`eval "expr \"$param_name\" "`
+
+  if [ -z "$param_value" ]; then
+    echo "$BASH_SOURCE:$BASH_LINENO: assert($param_name)" >&2
+    exit 1
+  fi
+}
+
+assert_file ()
+{
+  if [ ! -f "$1" ]; then
+    echo "$BASH_SOURCE:$BASH_LINENO: assert($1) does not exist: $2" >&2
+    exit 1; 
+  fi
+}
+
+assert_no_file ()
+{
+  if [ -f "$1" ]; then
+    echo "$BASH_SOURCE:$BASH_LINENO: assert($1) file exists: $2" >&2
+    exit 1;
+  fi
+}
+
+assert_exec_file ()
+{
+  if [ ! -f "$1" ]; then
+    echo "$BASH_SOURCE:$BASH_LINENO: assert($1) does not exist: $2" >&2
+    exit 1;
+  fi
+
+  if [ ! -x "$1" ]; then
+    echo "$BASH_SOURCE:$BASH_LINENO: assert($1) exists but is not executable: $2" >&2
+    exit 1;
+  fi
+}
 
 command_exists ()
 {
@@ -93,7 +131,7 @@ set_VENDOR_DISTRIBUTION ()
       VENDOR_DISTRIBUTION='opensuse'
       ;;
     *)
-      die "$LINENO: attempt to set an invalid VENDOR_DISTRIBUTION=$dist"
+      die "attempt to set an invalid VENDOR_DISTRIBUTION=$dist"
       ;;
   esac
 }
@@ -118,10 +156,10 @@ set_VENDOR_RELEASE ()
       VENDOR_RELEASE="$release"
       ;;
     unknown)
-      die "$LINENO: attempt to set VENDOR_RELEASE without setting VENDOR_DISTRIBUTION"
+      die "attempt to set VENDOR_RELEASE without setting VENDOR_DISTRIBUTION"
       ;;
     *)
-      die "$LINENO: attempt to set with an invalid VENDOR_DISTRIBUTION=$VENDOR_DISTRIBUTION"
+      die "attempt to set with an invalid VENDOR_DISTRIBUTION=$VENDOR_DISTRIBUTION"
       ;;
   esac
 }
@@ -149,7 +187,7 @@ set_VENDOR ()
       VENDOR='suse'
       ;;
     *)
-      die "$LINENO: An attempt was made to set an invalid VENDOR=$_vendor"
+      die "An attempt was made to set an invalid VENDOR=$_vendor"
       ;;
   esac
 
@@ -200,7 +238,7 @@ run_configure ()
 
   # We always begin at the root of our build
   if [ ! popd ]; then
-    die "$LINENO: Programmer error, we entered run_configure with a stacked directory"
+    die "Programmer error, we entered run_configure with a stacked directory"
   fi
 
   local BUILD_DIR="$1"
@@ -228,19 +266,19 @@ run_configure ()
   # If we are executing on OSX use CLANG, otherwise only use it if we find it in the ENV
   case $HOST_OS in
     *-darwin-*)
-      CC=clang CXX=clang++ $top_srcdir/configure $CONFIGURE_ARG || die "$LINENO: Cannot execute CC=clang CXX=clang++ configure $CONFIGURE_ARG $PREFIX_ARG"
+      CC=clang CXX=clang++ $top_srcdir/configure $CONFIGURE_ARG || die "Cannot execute CC=clang CXX=clang++ configure $CONFIGURE_ARG $PREFIX_ARG"
       ;;
     rhel-5*)
-      command_exists gcc44 || die "$LINENO: Could not locate gcc44"
-      CC=gcc44 CXX=gcc44 $top_srcdir/configure $CONFIGURE_ARG $PREFIX_ARG || die "$LINENO: Cannot execute CC=gcc44 CXX=gcc44 configure $CONFIGURE_ARG $PREFIX_ARG"
+      command_exists gcc44 || die "Could not locate gcc44"
+      CC=gcc44 CXX=gcc44 $top_srcdir/configure $CONFIGURE_ARG $PREFIX_ARG || die "Cannot execute CC=gcc44 CXX=gcc44 configure $CONFIGURE_ARG $PREFIX_ARG"
       ;;
     *)
-      $top_srcdir/configure $CONFIGURE_ARG $PREFIX_ARG || die "$LINENO: Cannot execute configure $CONFIGURE_ARG $PREFIX_ARG"
+      $top_srcdir/configure $CONFIGURE_ARG $PREFIX_ARG || die "Cannot execute configure $CONFIGURE_ARG $PREFIX_ARG"
       ;;
   esac
 
   if [ ! -f 'Makefile' ]; then
-    die "$LINENO: Programmer error, configure was run but no Makefile existed afterward"
+    die "Programmer error, configure was run but no Makefile existed afterward"
   fi
 }
 
@@ -287,7 +325,7 @@ pop_PREFIX_ARG ()
 push_TESTS_ENVIRONMENT ()
 {
   if [[ -n "$OLD_TESTS_ENVIRONMENT" ]]; then
-    die "$LINENO: OLD_TESTS_ENVIRONMENT was set on push, programmer error!"
+    die "OLD_TESTS_ENVIRONMENT was set on push, programmer error!"
   fi
 
   if [[ -n "$TESTS_ENVIRONMENT" ]]; then
@@ -320,7 +358,7 @@ safe_popd ()
   popd &> /dev/null ;
   if [ $? -eq 0 ]; then
     if [[ "$top_srcdir" == "$directory_to_delete" ]]; then
-      die "$LINENO: We almost deleted top_srcdir($top_srcdir), programmer error"
+      die "We almost deleted top_srcdir($top_srcdir), programmer error"
     fi
 
     rm -r -f "$directory_to_delete"
@@ -351,6 +389,9 @@ make_valgrind ()
     return 1
   fi
 
+  # If we are required to run configure, do so now
+  run_configure_if_required
+
   push_TESTS_ENVIRONMENT
 
   if [[ -f 'libtool' ]]; then
@@ -370,7 +411,7 @@ make_install_system ()
   push_PREFIX_ARG $INSTALL_LOCATION
 
   if [ ! -d $INSTALL_LOCATION ] ; then
-    die "$LINENO: ASSERT temp directory not found '$INSTALL_LOCATION'"
+    die "ASSERT temp directory not found '$INSTALL_LOCATION'"
   fi
 
   run_configure #install_buid_dir
@@ -387,14 +428,10 @@ make_install_system ()
   pop_PREFIX_ARG
 
   rm -r -f $INSTALL_LOCATION
-  make_maintainer_clean
-
-  if [ -f 'configure' ]; then
-    die "$LINENO: ASSERT Makefile should not exist"
-  fi
+  make 'distclean'
 
   if [ -f 'Makefile' ]; then
-    die "$LINENO: ASSERT Makefile should not exist"
+    die "ASSERT Makefile should not exist"
   fi
 
   safe_popd
@@ -402,6 +439,8 @@ make_install_system ()
 
 make_darwin_malloc ()
 {
+  run_configure_if_required
+
   old_MallocGuardEdges=$MallocGuardEdges
   MallocGuardEdges=1
   old_MallocErrorAbort=$MallocErrorAbort
@@ -416,41 +455,73 @@ make_darwin_malloc ()
   MallocScribble=$old_MallocScribble
 }
 
+snapshot_check ()
+{
+  if [ -n "$BOOTSTRAP_SNAPSHOT_CHECK" ]; then
+    assert_file "$BOOTSTRAP_SNAPSHOT_CHECK" 'snapshot check failed'
+  fi
+}
+
+# This will reset our environment, and make sure built files are available.
+make_for_snapshot ()
+{
+  # Make sure it is clean
+  make_maintainer_clean
+
+  run_configure
+  make_target 'dist'
+  make_target 'distclean'
+
+  # We should have a configure, but no Makefile at the end of this exercise
+  assert_no_file 'Makefile'
+  assert_exec_file 'configure'
+
+  snapshot_check
+}
+
+# If we are locally testing, we should make sure the environment is setup correctly
+check_for_jenkins ()
+{
+  if ! $jenkins_build_environment; then
+    echo "Not inside of jenkins"
+
+    if [ -f 'configure' ]; then
+      make_maintainer_clean
+    fi
+
+    if $BOOTSTRAP_SNAPSHOT; then
+      make_for_snapshot
+    fi
+  fi
+}
+
 make_for_continuus_integration ()
 {
-  # If this is really Jenkins everything will be clean, but if not...
-  if [[ -z "$JENKINS_HOME" ]]; then
-    make_maintainer_clean
+  # Setup the environment if we are local
+  check_for_jenkins
+
+  # No matter then evironment, we should not have a Makefile at this point
+  assert_no_file 'Makefile'
+
+  # Platforms which require bootstrap should have some setup done before we hit this stage.
+  # If we are building locally, skip this step, unless we are just testing locally. 
+  if $BOOTSTRAP_SNAPSHOT; then
+    snapshot_check
+  else
+    # If we didn't require a snapshot, then we should not have a configure
+    assert_no_file 'configure'
+
+    run_autoreconf
   fi
 
-  if [ -f 'Makefile' ]; then
-    die "$LINENO: Programmer error, the file Makefile existed where build state should have been clean"
-  fi
-
-  if [ -f 'configure' ]; then
-    die "$LINENO: Programmer error, the file configure existed where build state should have been clean"
-  fi
+  assert_no_file 'Makefile' 'Programmer error, Makefile existed where build state should have been clean'
 
   case $HOST_OS in
     *-fedora-*)
-      if [[ "x$VENDOR_RELEASE" == 'x17' ]]; then
-        make_maintainer_clean
-        run_autoreconf
-      fi
-
-      if [[ -f 'Makefile' ]]; then
-        die "$LINENO: Programmer error, Makefile existed where build state should have been clean"
-      fi
-
       run_configure
 
-      if [ ! -f 'Makefile' ]; then
-        die "$LINENO: Programmer error, Makefile should exist"
-      fi
-
-      if [ ! -f 'configure' ]; then
-        die "$LINENO: Programmer error, Makefile should exist"
-      fi
+      assert_exec_file 'configure'
+      assert_file 'Makefile'
 
       # make rpm includes "make distcheck"
       if [[ -f rpm.am ]]; then
@@ -461,51 +532,26 @@ make_for_continuus_integration ()
         make_distcheck
       fi
 
-      if [ ! -f 'configure' ]; then
-        die "$LINENO: ASSERT Makefile should exist"
-      fi
-
-      if [ ! -f 'Makefile' ]; then
-        die "$LINENO: ASSERT Makefile should exist"
-      fi
-
+      assert_exec_file 'configure'
+      assert_file 'Makefile'
 
       make_install_system
       ;;
     *-precise-*)
-      if [ "x$VENDOR_RELEASE" == 'precise' ]; then
-        make_maintainer_clean
-      fi
-
       run_configure
 
-      if [ ! -f 'configure' ]; then
-        die "$LINENO: ASSERT Makefile should exist"
-      fi
-
-      if [ ! -f 'Makefile' ]; then
-        die "$LINENO: ASSERT Makefile should exist"
-      fi
+      assert_exec_file 'configure'
+      assert_file 'Makefile'
 
       make_distcheck
 
-      if [ ! -f 'configure' ]; then
-        die "$LINENO: ASSERT Makefile should exist"
-      fi
-
-      if [ ! -f 'Makefile' ]; then
-        die "$LINENO: ASSERT Makefile should exist"
-      fi
+      assert_exec_file 'configure'
+      assert_file 'Makefile'
 
       make_valgrind
 
-      if [ ! -f 'configure' ]; then
-        die "$LINENO: ASSERT Makefile should exist"
-      fi
-
-      if [ ! -f 'Makefile' ]; then
-        die "$LINENO: ASSERT Makefile should exist"
-      fi
+      assert_exec_file 'configure'
+      assert_file 'Makefile'
 
       make_install_system
       ;;
@@ -520,7 +566,10 @@ make_for_continuus_integration ()
   safe_popd
 }
 
-make_gdb () {
+make_gdb ()
+{
+  run_configure_if_required
+
   if command_exists gdb; then
 
     push_TESTS_ENVIRONMENT
@@ -558,11 +607,11 @@ make_gdb () {
 make_target ()
 {
   if [[ -z "$1" ]]; then
-    die "$LINENO: Programmer error, no target provided for make"
+    die "Programmer error, no target provided for make"
   fi
 
   if [ ! -f 'Makefile' ]; then
-    die "$LINENO: Programmer error, make was called before configure"
+    die "Programmer error, make was called before configure"
     run_configure
   fi
 
@@ -571,13 +620,13 @@ make_target ()
   fi
 
   if [[ -z "$MAKE" ]]; then
-    die "$LINENO: MAKE was not set"
+    die "MAKE was not set"
   fi
 
   if [[ -n "$2" ]]; then
     run $MAKE $1 || return 1
   else
-    run $MAKE $1 || die "$LINENO: Cannot execute $MAKE $1"
+    run $MAKE $1 || die "Cannot execute $MAKE $1"
   fi
 }
 
@@ -589,11 +638,6 @@ make_distcheck ()
 make_rpm ()
 {
   make_target 'rpm'
-}
-
-make_distclean ()
-{
-  make_target 'distclean'
 }
 
 make_maintainer_clean ()
@@ -619,6 +663,8 @@ run_configure_if_required ()
   if [ ! -f 'Makefile' ]; then
     run_configure
   fi
+
+  assert_file 'Makefile' 'configure did not produce a Makefile'
 }
 
 run_autoreconf_if_required () 
@@ -626,15 +672,19 @@ run_autoreconf_if_required ()
   if [ ! -x 'configure' ]; then
     run_autoreconf
   fi
+
+  assert_exec_file 'configure'
 }
 
 run_autoreconf () 
 {
   if [[ -z "$AUTORECONF" ]]; then
-    die "$LINENO: Programmer error, tried to call run_autoreconf () but AUTORECONF was not set"
+    die "Programmer error, tried to call run_autoreconf () but AUTORECONF was not set"
   fi
 
-  run $AUTORECONF || die "$LINENO: Cannot execute $AUTORECONF"
+  run $AUTORECONF || die "Cannot execute $AUTORECONF"
+
+  eval 'bash -n configure' || die "autoreconf generated a malformed configure"
 }
 
 run ()
@@ -648,39 +698,46 @@ run ()
 
 parse_command_line_options ()
 {
-  local options=
+  local SHORTOPTS=':apcmt:dv'
 
-  local SHORTOPTS='p,c,a,v'
-  local LONGOPTS='target:,debug,clean,print-env,configure,autoreconf' 
-
-  if ! options=$(getopt --long target: --long debug --long clean -o p --long print-env -o c --long configure -o a --long autoreconf -n 'bootstrap' -- "$@"); then
-    die 'Bad option given'
-  fi
-
-  eval set -- "$options"
-
-  while [[ $# -gt 0 ]]; do
-    case $1 in
-      -a | --autoreconf )
-        AUTORECONF_OPTION=true ; MAKE_TARGET='autoreconf' ; shift;;
-      -p | --print-env )
-        PRINT_SETUP_OPTION=true ; shift;;
-      -c | --configure )
-        CONFIGURE_OPTION=true ; MAKE_TARGET='configure' ; shift;;
-      --clean )
-        CLEAN_OPTION=true ; MAKE_TARGET='clean_op' ; shift;;
-      --target )
-        TARGET_OPTION=true ; shift; MAKE_TARGET="$1" ; shift;;
-      --debug )
-        DEBUG_OPTION=true ; DEBUG=true ; shift;;
-      -v | --verbose )
-        VERBOSE_OPTION=true ; VERBOSE=true ; shift;;
-      -- )
-        shift; break;;
-      -* )
-        echo "$0: error - unrecognized option $1" 1>&2; exit 1;;
+  while getopts "$SHORTOPTS" opt; do
+    case $opt in
+      a) #--autoreconf
+        AUTORECONF_OPTION=true
+        MAKE_TARGET='autoreconf'
+        ;;
+      p) #--print-env
+        PRINT_SETUP_OPTION=true
+        ;;
+      c) # --configure
+        CONFIGURE_OPTION=true
+        MAKE_TARGET='configure'
+        ;;
+      m) # maintainer-clean
+        CLEAN_OPTION=true
+        MAKE_TARGET='clean_op'
+        ;;
+      t) # target
+        TARGET_OPTION=true
+        TARGET_OPTION_ARG="$OPTARG"
+        MAKE_TARGET="$OPTARG"
+        ;;
+      d) # debug
+        DEBUG_OPTION=true
+        enable_debug
+        ;;
+      v) # verbose
+        VERBOSE_OPTION=true
+        VERBOSE=true
+        ;;
+      :)
+        echo "Option -$OPTARG requires an argument." >&2
+        exit 1
+        ;;
       *)
-        break;;
+        echo "$0: error - unrecognized option $1" 1>&2
+        exit 1
+        ;;
     esac
   done
 
@@ -748,22 +805,22 @@ autoreconf_setup ()
 
   # Test the ENV AUTOMAKE if it exists
   if [[ -n "$AUTOMAKE" ]]; then
-    run $AUTOMAKE '--help'    &> /dev/null    || die "$LINENO: Failed to run AUTOMAKE:$AUTOMAKE"
+    run $AUTOMAKE '--help'    &> /dev/null    || die "Failed to run AUTOMAKE:$AUTOMAKE"
   fi
 
   # Test the ENV AUTOCONF if it exists
   if [[ -n "$AUTOCONF" ]]; then
-    run $AUTOCONF '--help'    &> /dev/null    || die "$LINENO: Failed to run AUTOCONF:$AUTOCONF"
+    run $AUTOCONF '--help'    &> /dev/null    || die "Failed to run AUTOCONF:$AUTOCONF"
   fi
 
   # Test the ENV AUTOHEADER if it exists
   if [[ -n "$AUTOHEADER" ]]; then
-    run $AUTOHEADER '--help'  &> /dev/null    || die "$LINENO: Failed to run AUTOHEADER:$AUTOHEADER"
+    run $AUTOHEADER '--help'  &> /dev/null    || die "Failed to run AUTOHEADER:$AUTOHEADER"
   fi
 
   # Test the ENV AUTOM4TE if it exists
   if [[ -n "$AUTOM4TE" ]]; then
-    run $AUTOM4TE '--help'    &> /dev/null    || die "$LINENO: Failed to run AUTOM4TE:$AUTOM4TE"
+    run $AUTOM4TE '--help'    &> /dev/null    || die "Failed to run AUTOM4TE:$AUTOM4TE"
   fi
 
   if [[ -z "$AUTORECONF" ]]; then
@@ -778,14 +835,49 @@ autoreconf_setup ()
     fi
   fi
 
-  run $AUTORECONF '--help'  &> /dev/null    || die "$LINENO: Failed to run AUTORECONF:$AUTORECONF"
+  run $AUTORECONF '--help'  &> /dev/null    || die "Failed to run AUTORECONF:$AUTORECONF"
 }
 
 print_setup ()
 {
-  echo 
+  saved_debug_status=$DEBUG
+  if $DEBUG; then
+    disable_debug
+  fi
+
+  echo '----------------------------------------------' 
+  echo 'BOOTSTRAP ENV' 
   echo "AUTORECONF=$AUTORECONF"
   echo "HOST_OS=$HOST_OS"
+
+  echo "getopt()"
+  if $AUTORECONF_OPTION; then
+    echo "--autoreconf"
+  fi
+
+  if $CLEAN_OPTION; then
+    echo "--clean"
+  fi
+
+  if $CONFIGURE_OPTION; then
+    echo "--configure"
+  fi
+
+  if $DEBUG_OPTION; then
+    echo "--debug"
+  fi
+
+  if $PRINT_SETUP_OPTION; then
+    echo "--print-env"
+  fi
+
+  if $TARGET_OPTION; then
+    echo "--target=$TARGET_OPTION_ARG"
+  fi
+
+  if $VERBOSE_OPTION; then
+    echo "--verbose"
+  fi
 
   if [[ -n "$MAKE" ]]; then
     echo "MAKE=$MAKE"
@@ -811,8 +903,17 @@ print_setup ()
     echo "VERBOSE=true"
   fi
 
+  if $DEBUG; then
+    echo "DEBUG=true"
+  fi
+
   if [[ -n "$WARNINGS" ]]; then
     echo "WARNINGS=$WARNINGS"
+  fi
+  echo '----------------------------------------------' 
+
+  if $saved_debug_status; then
+    enable_debug
   fi
 }
 
@@ -829,6 +930,52 @@ make_clean_option ()
   fi
 }
 
+make_for_autoreconf ()
+{
+  if [ -f 'Makefile' ]; then
+    make_maintainer_clean
+  fi
+
+  run_autoreconf
+
+  assert_no_file 'Makefile'
+}
+
+check_make_target()
+{
+  case $1 in
+    'gdb')
+      ;;
+    'clean_op')
+      ;;
+    'autoreconf')
+      ;;
+    'install-system')
+      ;;
+    'configure')
+      ;;
+    'snapshot')
+      ;;
+    'valgrind')
+      ;;
+    'jenkins')
+      ;;
+    'distclean')
+      ;;
+    'maintainer-clean')
+      ;;
+    'install')
+      ;;
+    'all')
+      ;;
+    'dist')
+      ;;
+    *)
+      die "Unknown MAKE_TARGET option: $1"
+      ;;
+  esac
+}
+
 bootstrap ()
 {
   determine_target_platform
@@ -838,7 +985,7 @@ bootstrap ()
   # Set up whatever we need to do to use autoreconf later
   autoreconf_setup
 
-  if $PRINT_SETUP_OPTION -o  $PRINT_ENV_DEBUG_OPTION; then
+  if $PRINT_SETUP_OPTION -o  $DEBUG; then
     echo 
     print_setup
     echo 
@@ -862,62 +1009,66 @@ bootstrap ()
     push_PREFIX_ARG $PREFIX
   fi
 
-  # If we are running under Jenkins we predetermine what tests we will run against
-  if [[ -n "$JENKINS_HOME" ]]; then 
-    if [[ -n "$JENKINS_TARGET" ]]; then 
-      MAKE_TARGET="$JENKINS_TARGET"
-    else
-      MAKE_TARGET='jenkins'
-    fi
-  fi
+  # Either we run a known target (or error), or we default to "all"
+  if [[ -n "$MAKE_TARGET" ]]; then
 
-  if [[ "$MAKE_TARGET" == 'gdb' ]]; then
-    run_configure_if_required
-    make_gdb || die "$LINENO: gdb was not found"
-  elif [[ "$MAKE_TARGET" == 'clean_op' ]]; then
-    make_clean_option
-    return
-  elif [[ "$MAKE_TARGET" == 'autoreconf' ]]; then
-    run_autoreconf
-    return
-  elif [[ "$MAKE_TARGET" == 'install-system' ]]; then
-    make_install_system
-    return
-  elif [[ "$MAKE_TARGET" == 'configure' ]]; then
-    run_configure
-    return
-  elif [[ "$MAKE_TARGET" == 'valgrind' ]]; then
-    run_configure_if_required
-    make_valgrind || die "$LINENO: valrind was not found"
-  elif [[ "$MAKE_TARGET" == 'jenkins' ]]; then 
-    make_for_continuus_integration
-  elif [[ -z "$MAKE_TARGET" ]]; then 
-    run_configure_if_required
-    make_all
+    # If we are running inside of Jenkins, we want to only run some of the possible tests
+    if $jenkins_build_environment; then
+      check_make_target $MAKE_TARGET
+    fi
+
+    case $MAKE_TARGET in
+      'gdb')
+        make_gdb
+        ;;
+      'clean_op')
+        make_clean_option
+        ;;
+      'autoreconf')
+        make_for_autoreconf
+        ;;
+      'install-system')
+        make_install_system
+        ;;
+      'configure')
+        run_configure
+        ;;
+      'snapshot')
+        make_for_snapshot
+        ;;
+      'valgrind')
+        make_valgrind
+        ;;
+      'jenkins')
+        make_for_continuus_integration
+        ;;
+      *)
+        run_configure_if_required
+        make_target $MAKE_TARGET
+        ;;
+    esac
   else
     run_configure_if_required
-    make_target $MAKE_TARGET
+    make_all
   fi
 }
 
 main ()
 {
-  if [[ -f '.bootstrap' ]]; then
-    source '.bootstrap'
-  fi
-
   # Variables we export
-  declare -x VCS_CHECKOUT
+  declare -x VCS_CHECKOUT=
+
+  # Variables we control globally
+  local MAKE_TARGET=
 
   # Options for getopt
-  local PRINT_ENV_DEBUG_OPTION=false
-  local PRINT_SETUP_OPTION=false
-
   local AUTORECONF_OPTION=false
   local CLEAN_OPTION=false
   local CONFIGURE_OPTION=false
   local DEBUG_OPTION=false
-  local TARGET_OPTION="$MAKE_TARGET"
+  local PRINT_SETUP_OPTION=false
+  local TARGET_OPTION=false
+  local TARGET_OPTION_ARG=
   local VERBOSE_OPTION=false
 
   # If we call autoreconf on the platform or not
@@ -947,6 +1098,13 @@ main ()
 
   rebuild_host_os no_output
 
+  # If we are running under Jenkins we predetermine what tests we will run against
+  # This MAKE_TARGET can be overridden by parse_command_line_options based MAKE_TARGET changes.
+  # We don't want Jenkins overriding other variables, so we NULL them.
+  if $jenkins_build_environment; then
+    MAKE_TARGET='jenkins'
+  fi
+
   parse_command_line_options $@
 
   bootstrap
@@ -956,6 +1114,35 @@ main ()
 
   exit 0
 }
+
+enable_debug ()
+{
+  if ! $DEBUG; then
+    local caller_loc=`caller`
+    if [ -n $1 ]; then
+      echo "$caller_loc Enabling debug: $1"
+    else
+      echo "$caller_loc Enabling debug"
+    fi
+    set -x
+    DEBUG=true
+  fi
+}
+
+disable_debug ()
+{
+  set +x
+  DEBUG=true
+}
+
+# Script begins here
+
+env_debug_enabled=false
+if [[ -n "$JENKINS_HOME" ]]; then 
+  declare -r jenkins_build_environment=true
+else
+  declare -r jenkins_build_environment=false
+fi
 
 export AUTOCONF
 export AUTOHEADER
@@ -969,18 +1156,6 @@ export TESTS_ENVIRONMENT
 export VERBOSE
 export WARNINGS
 
-if [[ -n "$VERBOSE" ]]; then
-  VERBOSE=true
-else
-  VERBOSE=false
-fi
-
-if [[ -n "$DEBUG" ]]; then
-  DEBUG=true
-else
-  DEBUG=false
-fi
-
 case $OSTYPE in
   darwin*)
     export MallocGuardEdges
@@ -989,8 +1164,34 @@ case $OSTYPE in
     ;;
 esac
 
-if [[ -f '.bootstrap' ]]; then
+# We check for DEBUG twice, once before we source the config file, and once afterward
+env_debug_enabled=false
+if [[ -n "$DEBUG" ]]; then
+  env_debug_enabled=true
+  enable_debug
+  print_setup
+fi
+
+# Variables which only can be set by .bootstrap
+BOOTSTRAP_SNAPSHOT=false
+BOOTSTRAP_SNAPSHOT_CHECK=
+
+if [ -f '.bootstrap' ]; then
   source '.bootstrap'
+fi
+
+if $env_debug_enabled; then
+  enable_debug
+else
+  if [[ -n "$DEBUG" ]]; then
+    enable_debug "Enabling DEBUG from '.bootstrap'"
+    print_setup
+  fi
+fi
+
+# We do this in order to protect the case where DEBUG
+if ! $env_debug_enabled; then
+  DEBUG=false
 fi
 
 main $@

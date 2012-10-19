@@ -1,16 +1,14 @@
 # ===========================================================================
-#      http://
+#      https://github.com/BrianAker/ddm4/
 # ===========================================================================
 #
 # SYNOPSIS
 #
-#   AX_VCS_CHECKOUT
+#   AX_ASSERT()
 #
 # DESCRIPTION
 #
-#   Discover whether or not we are operating with a tree which
-#   has been checked out of a version control system.
-#
+#   --enable-assert
 #
 # LICENSE
 #
@@ -45,17 +43,24 @@
 #  (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 #  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#serial 4
+#serial 3
 
-AC_DEFUN([AX_VCS_CHECKOUT],[
-    AC_CACHE_CHECK([for vcs checkout], [ac_cv_vcs_checkout], [
-      AS_IF([test -d ".bzr"],[ac_cv_vcs_checkout=yes])
-      AS_IF([test -d ".svn"],[ac_cv_vcs_checkout=yes])
-      AS_IF([test -d ".hg"], [ac_cv_vcs_checkout=yes])
-      AS_IF([test -d ".git"],[ac_cv_vcs_checkout=yes])
+AC_DEFUN([AX_ASSERT],[
+    AC_REQUIRE([AX_DEBUG])
+    AC_ARG_ENABLE([assert],
+      [AS_HELP_STRING([--enable-assert],
+        [Enable assert, this will be overridden by --enable-debug (yes|no) @<:@default=no@:>@])],[
+      ax_enable_assert=yes
       ],[
-      ac_cv_vcs_checkout=no
+      ax_enable_assert=no
       ])
 
-    AM_CONDITIONAL([MAINTAINER_MODE], [ test "$ac_cv_vcs_checkout" = "yes" ])
+    AS_IF([ test "$ax_enable_assert" = "yes" -o "$ax_enable_debug" = "yes" ],[
+      ax_enable_assert="yes"
+      AC_DEFINE(NDEBUG,[1],[Define to 1 to enable assert'ing code.])
+      ])
+
+    AC_MSG_CHECKING([for assert])
+    AC_MSG_RESULT([$ax_enable_assert])
     ])
+
