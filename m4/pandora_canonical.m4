@@ -151,7 +151,9 @@ AC_DEFUN([PANDORA_CANONICAL_TARGET],[
 
   PANDORA_PLATFORM
 
-  PANDORA_LIBTOOL
+  LT_PREREQ([2.2])
+  LT_INIT
+  LT_LANG([C++])
 
   dnl autoconf doesn't automatically provide a fail-if-no-C++ macro
   dnl so we check c++98 features and fail if we don't have them, mainly
