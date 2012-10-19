@@ -26,7 +26,12 @@
         LIBS="-levent $LIBS"
         AC_LANG_PUSH([C])
         AC_RUN_IFELSE([
-          AC_LANG_PROGRAM([#include <event.h>], [
+          AC_LANG_PROGRAM([
+#include <sys/types.h>
+#include <sys/time.h>
+#include <stdlib.h>
+#include <event.h>
+            ], [
             struct event_base *tmp_event= event_init();
             event_base_free(tmp_event);
             ])],
@@ -54,7 +59,13 @@
         LIBS="-levent $LIBS"
         AC_LANG_PUSH([C])
         AC_RUN_IFELSE([
-          AC_LANG_PROGRAM([#include <event2/event.h>], [
+          AC_LANG_PROGRAM([
+#include <sys/types.h>
+#include <sys/time.h>
+#include <stdlib.h>
+#include <event2/event.h>
+#include <event2/http.h>
+            ], [
             struct event_base *tmp_event= event_init();
             event_base_free(tmp_event);
             ])],
@@ -67,7 +78,7 @@
 
       AS_IF([test "x$ax_cv_libevent2" = "xyes"],[
         LIBEVENT2_LDFLAGS="-levent"
-        AC_SUBST(LIBEVENT_LDFLAGS)
+        AC_SUBST(LIBEVENT2_LDFLAGS)
         AC_DEFINE([HAVE_LIBEVENT2],[1],[Define if event_init is present in event2/event.h.])],[
         AC_DEFINE([HAVE_LIBEVENT2],[0],[Define if event_init is present in event2/event.h.])
         ])

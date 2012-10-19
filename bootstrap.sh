@@ -687,13 +687,13 @@ run_autoreconf ()
   eval 'bash -n configure' || die "autoreconf generated a malformed configure"
 }
 
-run ()
+function run ()
 {
   if $VERBOSE; then
     echo "\`$@' $ARGS"
   fi
 
-  ($@ $ARGS)
+  eval $@ $ARGS
 } 
 
 parse_command_line_options ()
