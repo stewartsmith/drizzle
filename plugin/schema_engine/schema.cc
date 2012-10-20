@@ -110,7 +110,7 @@ void Schema::prime_catalog(identifier::Catalog &catalog_identifier)
 
 void Schema::prime()
 {
-  drizzled::CachedDirectory directory(drizzled::getDataHome().file_string(),
+  drizzled::CachedDirectory directory(drizzled::getDataHome().string(),
                                       drizzled::CachedDirectory::DIRECTORY,
                                       true);
   drizzled::CachedDirectory::Entries files= directory.getEntries();

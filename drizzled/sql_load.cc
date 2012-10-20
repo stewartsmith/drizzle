@@ -286,7 +286,7 @@ int load(Session *session,file_exchange *ex,TableList *table_list,
 
   if (not secure_file_priv.string().empty())
   {
-    if (target_path.file_string().substr(0, secure_file_priv.file_string().size()) != secure_file_priv.file_string())
+    if (target_path.string().substr(0, secure_file_priv.string().size()) != secure_file_priv.string())
     {
       /* Read only allowed from within dir specified by secure_file_priv */
       my_error(ER_OPTION_PREVENTS_STATEMENT, MYF(0), "--secure-file-priv");
@@ -295,9 +295,9 @@ int load(Session *session,file_exchange *ex,TableList *table_list,
   }
 
   struct stat stat_info;
-  if (stat(target_path.file_string().c_str(), &stat_info))
+  if (stat(target_path.string().c_str(), &stat_info))
   {
-    my_error(ER_FILE_NOT_FOUND, MYF(0), target_path.file_string().c_str(), errno);
+    my_error(ER_FILE_NOT_FOUND, MYF(0), target_path.string().c_str(), errno);
     return true;
   }
 
@@ -307,16 +307,16 @@ int load(Session *session,file_exchange *ex,TableList *table_list,
         ((stat_info.st_mode & S_IFREG) == S_IFREG ||
          (stat_info.st_mode & S_IFIFO) == S_IFIFO)))
   {
-    my_error(ER_TEXTFILE_NOT_READABLE, MYF(0), target_path.file_string().c_str());
+    my_error(ER_TEXTFILE_NOT_READABLE, MYF(0), target_path.string().c_str());
     return true;
   }
   if ((stat_info.st_mode & S_IFIFO) == S_IFIFO)
     is_fifo = 1;
 
 
-  if ((file=internal::my_open(target_path.file_string().c_str(), O_RDONLY,MYF(MY_WME))) < 0)
+  if ((file=internal::my_open(target_path.string().c_str(), O_RDONLY,MYF(MY_WME))) < 0)
   {
-    my_error(ER_CANT_OPEN_FILE, MYF(0), target_path.file_string().c_str(), errno);
+    my_error(ER_CANT_OPEN_FILE, MYF(0), target_path.string().c_str(), errno);
     return true;
   }
   CopyInfo info;

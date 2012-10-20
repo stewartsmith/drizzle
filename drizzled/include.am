@@ -541,6 +541,13 @@ drizzled_drizzled_LDADD= \
 				$(BOOST_LIBS) \
                                 $(LTLIBAIO) \
 				$(GCOV_LIBS)
+drizzled_drizzled_LDADD+= $(BOOST_DATE_TIME_LIBS)
+drizzled_drizzled_LDADD+= $(BOOST_FILESYSTEM_LIBS)
+drizzled_drizzled_LDADD+= $(BOOST_IOSTREAMS_LIBS)
+drizzled_drizzled_LDADD+= $(BOOST_PROGRAM_OPTIONS_LIBS)
+drizzled_drizzled_LDADD+= $(BOOST_REGEX_LIBS)
+drizzled_drizzled_LDADD+= $(BOOST_SYSTEM_LIBS)
+drizzled_drizzled_LDADD+= $(BOOST_THREAD_LIBS)
 
 drizzled_drizzled_DEPENDENCIES= \
                                       drizzled/message/libdrizzledmessage.la \

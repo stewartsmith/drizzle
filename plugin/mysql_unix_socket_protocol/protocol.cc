@@ -89,10 +89,10 @@ static int init(drizzled::module::Context &context)
     Protocol *listen_obj= new Protocol("mysql_unix_socket_protocol", uds_path);
     listen_obj->addCountersToTable();
     context.add(listen_obj);
-    context.registerVariable(new sys_var_const_string_val("path", fs::system_complete(uds_path).file_string()));
+    context.registerVariable(new sys_var_const_string_val("path", fs::system_complete(uds_path).string()));
     context.registerVariable(new sys_var_bool_ptr_readonly("clobber", &clobber));
     context.registerVariable(new sys_var_uint32_t_ptr("max-connections", &Protocol::mysql_unix_counters.max_connections));
-    snprintf(at_exit_socket_file, sizeof(at_exit_socket_file), "%s", uds_path.file_string().c_str());
+    snprintf(at_exit_socket_file, sizeof(at_exit_socket_file), "%s", uds_path.string().c_str());
     atexit(remove_socket_file);
   }
   else
@@ -119,28 +119,28 @@ bool Protocol::getFileDescriptors(std::vector<int> &fds)
   // then attempt to remove it.
   if (clobber)
   {
-    fs::path move_file(_unix_socket_path.file_string() + ".old");
+    fs::path move_file(_unix_socket_path.string() + ".old");
     fs::rename(_unix_socket_path, move_file);
-    unlink(move_file.file_string().c_str());
+    unlink(move_file.string().c_str());
   }
 
 
   int arg= 1;
 
   (void) setsockopt(unix_sock, SOL_SOCKET, SO_REUSEADDR, (char*)&arg, sizeof(arg));
-  unlink(_unix_socket_path.file_string().c_str());
+  unlink(_unix_socket_path.string().c_str());
 
   sockaddr_un servAddr;
   memset(&servAddr, 0, sizeof(servAddr));
 
   servAddr.sun_family= AF_UNIX;
-  if (_unix_socket_path.file_string().size() > sizeof(servAddr.sun_path))
+  if (_unix_socket_path.string().size() > sizeof(servAddr.sun_path))
   {
     std::cerr << "Unix Socket Path length too long. Must be under "
       << sizeof(servAddr.sun_path) << " bytes." << endl;
     return false;
   }
-  memcpy(servAddr.sun_path, _unix_socket_path.file_string().c_str(), min(sizeof(servAddr.sun_path)-1,_unix_socket_path.file_string().size()));
+  memcpy(servAddr.sun_path, _unix_socket_path.string().c_str(), min(sizeof(servAddr.sun_path)-1,_unix_socket_path.string().size()));
 
   socklen_t addrlen= sizeof(servAddr);
   if (::bind(unix_sock, reinterpret_cast<sockaddr *>(&servAddr), addrlen) < 0)
@@ -158,12 +158,12 @@ bool Protocol::getFileDescriptors(std::vector<int> &fds)
   }
   else
   {
-    errmsg_printf(error::INFO, _("Listening on %s"), _unix_socket_path.file_string().c_str());
+    errmsg_printf(error::INFO, _("Listening on %s"), _unix_socket_path.string().c_str());
   }
 
   fds.push_back(unix_sock);
 
-  chmod(_unix_socket_path.file_string().c_str(),0777);
+  chmod(_unix_socket_path.string().c_str(),0777);
 
   return false;
 }

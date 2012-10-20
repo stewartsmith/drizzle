@@ -402,7 +402,7 @@ public:
   SHOW_TYPE show_type() { return SHOW_CHAR; }
   unsigned char *value_ptr(Session *, sql_var_t)
   {
-    return (unsigned char*)(value.file_string().c_str());
+    return (unsigned char*)(value.string().c_str());
   }
   bool check_update_type(Item_result)
   {

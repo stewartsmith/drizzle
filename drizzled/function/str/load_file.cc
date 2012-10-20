@@ -68,7 +68,7 @@ String *Item_load_file::val_str(String *str)
   if (not secure_file_priv.string().empty())
   {
     fs::path secure_file_path(fs::system_complete(secure_file_priv));
-    if (target_path.file_string().substr(0, secure_file_path.file_string().size()) != secure_file_path.file_string())
+    if (target_path.string().substr(0, secure_file_path.string().size()) != secure_file_path.string())
     {
       /* Read only allowed from within dir specified by secure_file_priv */
       my_error(ER_OPTION_PREVENTS_STATEMENT, MYF(0), "--secure-file-priv"); 
@@ -77,7 +77,7 @@ String *Item_load_file::val_str(String *str)
     }
   }
 
-  if (stat(target_path.file_string().c_str(), &stat_info))
+  if (stat(target_path.string().c_str(), &stat_info))
   {
     my_error(ER_TEXTFILE_NOT_READABLE, MYF(0), file_name->c_ptr());
     goto err;
@@ -104,8 +104,11 @@ String *Item_load_file::val_str(String *str)
   }
 
   tmp_value.alloc((size_t)stat_info.st_size);
-  if ((file = internal::my_open(target_path.file_string().c_str(), O_RDONLY, MYF(0))) < 0)
+  if ((file = internal::my_open(target_path.string().c_str(), O_RDONLY, MYF(0))) < 0)
+  {
     goto err;
+  }
+
   if (internal::my_read(file, (unsigned char*) tmp_value.ptr(), (size_t)stat_info.st_size, MYF(MY_NABP)))
   {
     internal::my_close(file, MYF(0));

@@ -63,7 +63,8 @@ client_drizzle_SOURCES+= client/server_detect.cc
 
 client_drizzle_LDADD=
 client_drizzle_LDADD+= ${READLINE_LIBS}
-client_drizzle_LDADD+= ${BOOST_LIBS}
+client_drizzle_LDADD+= ${BOOST_IOSTREAMS_LIBS}
+client_drizzle_LDADD+= $(BOOST_PROGRAM_OPTIONS_LIBS)
 client_drizzle_LDADD+= libdrizzle-2.0/libdrizzle-2.0.la
 client_drizzle_LDADD+= $(LIBINTL)
 client_drizzle_LDADD+= $(LIBZ)
@@ -80,7 +81,10 @@ client_drizzledump_SOURCES+= client/drizzledump_drizzle.cc
 client_drizzledump_SOURCES+= client/drizzledump_mysql.cc
 client_drizzledump_SOURCES+= client/server_detect.cc
 client_drizzledump_LDADD+= ${CLIENT2_LDADD}
-client_drizzledump_LDADD+= ${BOOST_LIBS}
+client_drizzledump_LDADD+= ${BOOST_DATE_TIME_LIBS}
+client_drizzledump_LDADD+= ${BOOST_PROGRAM_OPTIONS_LIBS}
+client_drizzledump_LDADD+= ${BOOST_REGEX_LIBS}
+client_drizzledump_LDADD+= ${BOOST_SYSTEM_LIBS}
 
 client_drizzleimport_DEPENDENCIES=
 client_drizzleimport_SOURCES=
@@ -89,7 +93,9 @@ client_drizzleimport_LDADD=
 client_drizzleimport_DEPENDENCIES+= plugin/libmyisam_plugin.la
 client_drizzleimport_SOURCES+=	client/drizzleimport.cc
 client_drizzleimport_LDADD+= ${CLIENT2_LDADD}
-client_drizzleimport_LDADD+= ${BOOST_LIBS}
+client_drizzleimport_LDADD+= ${BOOST_PROGRAM_OPTIONS_LIBS}
+client_drizzleimport_LDADD+= ${BOOST_REGEX_LIBS}
+client_drizzleimport_LDADD+= ${BOOST_SYSTEM_LIBS}
 
 client_drizzleslap_DEPENDENCIES=
 client_drizzleslap_LDADD=
@@ -99,7 +105,10 @@ client_drizzleslap_CXXFLAGS=
 client_drizzleslap_DEPENDENCIES+= plugin/libmyisam_plugin.la
 client_drizzleslap_SOURCES+= client/drizzleslap.cc
 client_drizzleslap_LDADD+= ${CLIENT2_LDADD}
-client_drizzleslap_LDADD+= ${BOOST_LIBS}
+client_drizzleslap_LDADD+= ${BOOST_PROGRAM_OPTIONS_LIBS}
+client_drizzleslap_LDADD+= ${BOOST_REGEX_LIBS}
+client_drizzleslap_LDADD+= ${BOOST_SYSTEM_LIBS}
+client_drizzleslap_LDADD+= ${BOOST_THREAD_LIBS}
 client_drizzleslap_CXXFLAGS+= ${AM_CXXFLAGS}
 client_drizzleslap_CXXFLAGS+= ${BOOSTSKIP_WARNINGS}
 
@@ -109,8 +118,12 @@ client_drizzletest_LDADD=
 
 client_drizzletest_DEPENDENCIES+= plugin/libmyisam_plugin.la
 client_drizzletest_SOURCES+= client/drizzletest.cc
-client_drizzletest_LDADD+=${CLIENT2_LDADD}
-client_drizzletest_LDADD+=${BOOST_LIBS} ${LIBPCRE} 
+client_drizzletest_LDADD+= ${CLIENT2_LDADD}
+client_drizzletest_LDADD+= ${LIBPCRE} 
+client_drizzletest_LDADD+= ${BOOST_PROGRAM_OPTIONS_LIBS}
+client_drizzletest_LDADD+= ${BOOST_REGEX_LIBS}
+client_drizzletest_LDADD+= ${BOOST_SYSTEM_LIBS}
+client_drizzletest_LDADD+= ${BOOST_THREAD_LIBS}
 
 
 client_drizzle_password_hash_DEPENDENCIES=

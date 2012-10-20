@@ -35,7 +35,7 @@ class Protocol : public ListenMySQLProtocol
 {
 public:
   Protocol(std::string name, const boost::filesystem::path &unix_socket_path) :
-    ListenMySQLProtocol(name, unix_socket_path.file_string()), 
+    ListenMySQLProtocol(name, unix_socket_path.string()), 
     _unix_socket_path(unix_socket_path)
   { }
 

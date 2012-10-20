@@ -115,7 +115,7 @@ drizzled::message::catalog::shared_ptr Engine::getMessage(const drizzled::identi
 void Engine::prime(drizzled::message::catalog::vector &messages)
 {
   bool found_local= false;
-  drizzled::CachedDirectory directory(drizzled::getFullDataHome().file_string(), drizzled::CachedDirectory::DIRECTORY, true);
+  drizzled::CachedDirectory directory(drizzled::getFullDataHome().string(), drizzled::CachedDirectory::DIRECTORY, true);
   drizzled::CachedDirectory::Entries files= directory.getEntries();
 
 
