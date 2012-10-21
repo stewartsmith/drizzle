@@ -97,7 +97,7 @@ drizzled_message_table_raw_reader_LDADD = ${MESSAGE_LDADD}
 drizzled_message_table_raw_reader_CXXFLAGS = ${MESSAGE_AM_CXXFLAGS}
 
 drizzled_message_table_writer_SOURCES =  drizzled/message/table_writer.cc
-drizzled_message_table_writer_LDADD = ${MESSAGE_LDADD} ${BOOST_LIBS}
+drizzled_message_table_writer_LDADD = ${MESSAGE_LDADD} ${BOOST_LIBS} $(BOOST_PROGRAM_OPTIONS_LIBS)
 drizzled_message_table_writer_CXXFLAGS = ${MESSAGE_AM_CXXFLAGS}
 
 drizzled_message_transaction_writer_SOURCES =  drizzled/message/transaction_writer.cc

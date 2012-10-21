@@ -2274,7 +2274,7 @@ innobase_init(
   btr_search_enabled= not vm.count("disable-adaptive-hash-index");
 
   /* Hafta do this here because we need to late-bind the default value */
-  innobase_data_home_dir= vm.count("data-home-dir") ? vm["data-home-dir"].as<string>() : getDataHome().file_string();
+  innobase_data_home_dir= vm.count("data-home-dir") ? vm["data-home-dir"].as<string>() : getDataHome().string();
 
   if (vm.count("data-file-path"))
   {
@@ -2413,7 +2413,7 @@ mem_free_and_error:
   }
   else
   {
-    innobase_log_group_home_dir= getDataHome().file_string();
+    innobase_log_group_home_dir= getDataHome().string();
   }
 
   ret = (bool)
@@ -7460,7 +7460,7 @@ ha_innobase::info(
     /* Note that we do not know the access time of the table,
     nor the CHECK TABLE time, nor the UPDATE or INSERT time. */
 
-    if (os_file_get_status(get_status_path.file_string().c_str(), &stat_info)) {
+    if (os_file_get_status(get_status_path.string().c_str(), &stat_info)) {
       stats.create_time = (ulong) stat_info.ctime;
     }
   }

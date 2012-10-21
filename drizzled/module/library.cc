@@ -102,7 +102,7 @@ module::Library *module::Library::loadLibrary(const string &plugin_name, bool bu
   else
   {
   /* Open new dll handle */
-    dlpath= Library::getLibraryPath(plugin_name).file_string();
+    dlpath= Library::getLibraryPath(plugin_name).string();
     dl_handle= dlopen(dlpath.c_str(), RTLD_NOW|RTLD_GLOBAL);
     if (dl_handle == NULL)
     {

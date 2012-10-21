@@ -898,7 +898,7 @@ void select_to_file::send_error(drizzled::error_t errcode,const char *err)
   {
     (void) cache->end_io_cache();
     (void) internal::my_close(file, MYF(0));
-    (void) internal::my_delete(path.file_string().c_str(), MYF(0));		// Delete file on error
+    (void) internal::my_delete(path.string().c_str(), MYF(0));		// Delete file on error
     file= -1;
   }
 }
@@ -1004,7 +1004,7 @@ static int create_file(Session& session,
 
   if (not secure_file_priv.string().empty())
   {
-    if (target_path.file_string().substr(0, secure_file_priv.file_string().size()) != secure_file_priv.file_string())
+    if (target_path.string().substr(0, secure_file_priv.string().size()) != secure_file_priv.string())
     {
       /* Write only allowed to dir or subdir specified by secure_file_priv */
       my_error(ER_OPTION_PREVENTS_STATEMENT, MYF(0), "--secure-file-priv");
@@ -1012,20 +1012,20 @@ static int create_file(Session& session,
     }
   }
 
-  if (!access(target_path.file_string().c_str(), F_OK))
+  if (!access(target_path.string().c_str(), F_OK))
   {
     my_error(ER_FILE_EXISTS_ERROR, MYF(0), exchange->file_name);
     return -1;
   }
   /* Create the file world readable */
-  int file= internal::my_create(target_path.file_string().c_str(), 0666, O_WRONLY|O_EXCL, MYF(MY_WME));
+  int file= internal::my_create(target_path.string().c_str(), 0666, O_WRONLY|O_EXCL, MYF(MY_WME));
   if (file < 0)
     return file;
   (void) fchmod(file, 0666);			// Because of umask()
   if (cache->init_io_cache(file, 0, internal::WRITE_CACHE, 0L, 1, MYF(MY_WME)))
   {
     internal::my_close(file, MYF(0));
-    internal::my_delete(target_path.file_string().c_str(), MYF(0));  // Delete file on error, it was just created
+    internal::my_delete(target_path.string().c_str(), MYF(0));  // Delete file on error, it was just created
     return -1;
   }
   return file;
@@ -1297,7 +1297,7 @@ bool select_dump::send_data(List<Item> &items)
     }
     else if (cache->write(res->ptr(), res->length()))
     {
-      my_error(ER_ERROR_ON_WRITE, MYF(0), path.file_string().c_str(), errno);
+      my_error(ER_ERROR_ON_WRITE, MYF(0), path.string().c_str(), errno);
       return 1;
     }
   }

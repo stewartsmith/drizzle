@@ -14,7 +14,7 @@ dnl  Check for Google Proto Buffers
 dnl --------------------------------------------------------------------
 
 AC_DEFUN([_PANDORA_SEARCH_LIBPROTOBUF],[
-  AC_REQUIRE([PANDORA_HAVE_PTHREAD])
+  AC_REQUIRE([AX_PTHREAD])
 
   AC_LANG_PUSH([C++])
   save_CXXFLAGS="${CXXFLAGS}"

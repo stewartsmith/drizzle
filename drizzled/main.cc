@@ -305,9 +305,9 @@ int main(int argc, char **argv)
 
   if (was_help_requested() == false)
   {
-    if (chdir(getDataHome().file_string().c_str()))
+    if (chdir(getDataHome().string().c_str()))
     {
-      unireg_abort << "Data directory " << getDataHome().file_string() << " does not exist";
+      unireg_abort << "Data directory " << getDataHome().string() << " does not exist";
     }
 
     ifstream old_uuid_file ("server.uuid");
@@ -350,7 +350,7 @@ int main(int argc, char **argv)
     }
 
     setFullDataHome(boost::filesystem::system_complete(getDataHome()));
-    errmsg_printf(error::INFO, "Data Home directory is : %s", getFullDataHome().native_file_string().c_str());
+    errmsg_printf(error::INFO, "Data Home directory is : %s", getFullDataHome().native().c_str());
   }
 
   if (server_id == 0)

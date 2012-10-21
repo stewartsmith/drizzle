@@ -420,7 +420,7 @@ static void create_pid_file()
 {
   int file;
 
-  if ((file = open(pid_file.file_string().c_str(), O_CREAT|O_WRONLY|O_TRUNC|O_CLOEXEC, S_IRWXU|S_IRGRP|S_IROTH)) > 0)
+  if ((file = open(pid_file.string().c_str(), O_CREAT|O_WRONLY|O_TRUNC|O_CLOEXEC, S_IRWXU|S_IRGRP|S_IROTH)) > 0)
   {
     char buff[1024];
     int length= snprintf(buff, sizeof(buff), "%ld\n", (long) getpid());
@@ -429,7 +429,7 @@ static void create_pid_file()
     {
       if (close(file) != -1)
       {
-        snprintf(at_exit_pid_file, sizeof(at_exit_pid_file), "%s", pid_file.file_string().c_str());
+        snprintf(at_exit_pid_file, sizeof(at_exit_pid_file), "%s", pid_file.string().c_str());
         atexit(remove_pidfile);
         return;
       }
@@ -437,7 +437,7 @@ static void create_pid_file()
     (void)close(file); /* We can ignore the error, since we are going to error anyway at this point */
   }
 
-  unireg_abort << "Can't start server, was unable to create PID file: " <<  pid_file.file_string();
+  unireg_abort << "Can't start server, was unable to create PID file: " <<  pid_file.string();
 }
 
 #ifdef DEFINED_O_CLOEXEC
@@ -1051,7 +1051,7 @@ static void process_defaults_files()
   {
     fs::path file_location= iter;
 
-    ifstream input_defaults_file(file_location.file_string().c_str());
+    ifstream input_defaults_file(file_location.string().c_str());
 
     po::parsed_options file_parsed= dpo::parse_config_file(input_defaults_file, full_options, true);
     vector<string> file_unknown= po::collect_unrecognized(file_parsed.options, po::include_positional);
@@ -1368,19 +1368,19 @@ bool init_variables_before_daemonizing(int argc, char **argv)
   {
     fs::path system_config_file_drizzle(system_config_dir);
     system_config_file_drizzle /= "drizzled.cnf";
-    defaults_file_list.insert(defaults_file_list.begin(), system_config_file_drizzle.file_string());
+    defaults_file_list.insert(defaults_file_list.begin(), system_config_file_drizzle.string());
 
     fs::path config_conf_d_location(system_config_dir);
     config_conf_d_location /= "conf.d";
 
-    CachedDirectory config_conf_d(config_conf_d_location.file_string());
+    CachedDirectory config_conf_d(config_conf_d_location.string());
     if (not config_conf_d.fail())
     {
 			BOOST_FOREACH(CachedDirectory::Entries::const_reference iter, config_conf_d.getEntries())
       {
         string file_entry(iter->filename);
         if (not file_entry.empty() && file_entry != "." && file_entry != "..")
-          defaults_file_list.push_back((config_conf_d_location / file_entry).file_string());
+          defaults_file_list.push_back((config_conf_d_location / file_entry).string());
       }
     }
   }
@@ -2233,7 +2233,7 @@ static void fix_paths()
   }
   else if (tmp_string == NULL)
   {
-    drizzle_tmpdir.append(getDataHome().file_string());
+    drizzle_tmpdir.append(getDataHome().string());
     drizzle_tmpdir.push_back(FN_LIBCHAR);
     drizzle_tmpdir.append(GLOBAL_TEMPORARY_EXT);
   }
@@ -2242,7 +2242,7 @@ static void fix_paths()
     drizzle_tmpdir.append(tmp_string);
   }
 
-  drizzle_tmpdir= fs::path(fs::system_complete(fs::path(drizzle_tmpdir))).file_string();
+  drizzle_tmpdir= fs::path(fs::system_complete(fs::path(drizzle_tmpdir))).string();
   assert(drizzle_tmpdir.size());
 
   assert(getuid() != 0 and geteuid() != 0);
