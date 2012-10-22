@@ -237,6 +237,7 @@ plugin_innobase_xtrabackup_drizzlebackup_innobase_LDADD = \
 plugin_innobase_xtrabackup_drizzlebackup_innobase_LDADD+= $(BOOST_PROGRAM_OPTIONS_LIBS)
 plugin_innobase_xtrabackup_drizzlebackup_innobase_LDADD+= $(BOOST_SYSTEM_LIBS)
 plugin_innobase_xtrabackup_drizzlebackup_innobase_LDADD+= $(BOOST_THREAD_LIBS)
+plugin_innobase_xtrabackup_drizzlebackup_innobase_LDADD+= $(LIBUUID_LDFLAGS)
 
 plugin_innobase_xtrabackup_drizzlebackup_innobase_CXXFLAGS=${AM_CXXFLAGS} ${INNOBASE_SKIP_WARNINGS} -I${top_builddir}/plugin/innobase/include -I$(top_srcdir)/plugin/innobase/include -DBUILD_DRIZZLE
 
