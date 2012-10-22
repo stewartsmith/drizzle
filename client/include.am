@@ -85,6 +85,7 @@ client_drizzledump_LDADD+= ${BOOST_DATE_TIME_LIBS}
 client_drizzledump_LDADD+= ${BOOST_PROGRAM_OPTIONS_LIBS}
 client_drizzledump_LDADD+= ${BOOST_REGEX_LIBS}
 client_drizzledump_LDADD+= ${BOOST_SYSTEM_LIBS}
+client_drizzledump_LDADD+= @LIBUUID_LDFLAGS@
 
 client_drizzleimport_DEPENDENCIES=
 client_drizzleimport_SOURCES=

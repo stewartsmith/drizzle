@@ -42,9 +42,7 @@ AC_ARG_WITH([server],
 
 AS_IF([test "x${pandora_cv_skip_requires}" != "xno"],[
 
-  AC_PATH_PROG(GPERF, gperf)
-  AS_IF([test "x$GPERF" = "x"],
-    AC_MSG_ERROR("Drizzle requires gperf to build."))
+  AC_PATH_PROG([GPERF],[gperf],[AC_MSG_ERROR([Drizzle requires gperf to build.])])
 
   # libexecinfo provides backtrace_symbols on FreeBSD
   AC_SEARCH_LIBS(backtrace_symbols, [execinfo])
@@ -97,15 +95,14 @@ PANDORA_REQUIRE_LIBPROTOBUF
 PANDORA_PROTOBUF_REQUIRE_VERSION([2.1.0])
 PANDORA_REQUIRE_PROTOC
 
-AX_PTHREAD([ 
-            AM_CFLAGS="${PTHREAD_CFLAGS} ${AM_CFLAGS}"
-            AM_CXXFLAGS="${PTHREAD_CFLAGS} ${AM_CXXFLAGS}"
-            AM_LDFLAGS="${PTHREAD_LIBS} ${AM_LDFLAGS}"
-            LIBS="${PTHREAD_LIBS} ${LIBS}"
-            ], [AC_MSG_ERROR([Drizzle requires pthreads])])
+AC_DEFUN([DRIZZLE_UUID],[
+          AC_REQUIRE([AX_UUID_GENERATE_TIME_SAFE])dnl
+          AS_IF([ test "$ax_libuuid" = yes ],,[AC_MSG_ERROR([Drizzle requires uuid/uuid.h to build.])])
+          AS_IF([ test "$ax_cv_uuid_generate_time_safe" = yes ],,[AC_MSG_ERROR([Drizzle requires a uuid/uuid.h with uuid_generate_time_safe() to build.])])
+          ])
+DRIZZLE_UUID
 
 AC_LANG_PUSH(C++)
-PANDORA_REQUIRE_LIBUUID
 PANDORA_REQUIRE_LIBZ
 PANDORA_REQUIRE_LIBSSL
 PANDORA_REQUIRE_LIBPCRE
@@ -126,6 +123,14 @@ BOOST_REGEX
 BOOST_TEST
 
 AM_CONDITIONAL([HAVE_BOOST_TEST],[ test "x$ac_cv_header_boost_test_unit_test_hpp" = "xyes" ])
+
+AX_PTHREAD([ 
+            AM_CFLAGS="${PTHREAD_CFLAGS} ${AM_CFLAGS}"
+            AM_CXXFLAGS="${PTHREAD_CFLAGS} ${AM_CXXFLAGS}"
+            AM_LDFLAGS="${PTHREAD_LIBS} ${AM_LDFLAGS}"
+            LIBS="${PTHREAD_LIBS} ${LIBS}"
+            ], [AC_MSG_ERROR([Drizzle requires pthreads])])
+
 
 AX_AM_JOBSERVER([yes])
 
