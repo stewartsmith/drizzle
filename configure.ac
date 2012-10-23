@@ -28,6 +28,8 @@ PANDORA_CANONICAL_TARGET(less-warnings, require-cxx, force-gcc42, version-from-v
 
 m4_include([m4/libdrizzle_version.m4])
 
+gl_VISIBILITY
+
 dnl Set the default datadir location to /usr/local/var/drizzle. If a
 dnl localstatedir is explicitly given, just use that.
 AS_IF([test "x${localstatedir}" = 'x${prefix}/var'],[
@@ -192,7 +194,13 @@ echo "   * System type:               $host_vendor-$host_os"
 echo "   * pandora-build version:     PANDORA_CANONICAL_VERSION"
 echo "   * Host CPU:                  $host_cpu"
 echo "   * C Compiler:                $CC_VERSION"
+echo "   * C Flags:                   $CFLAGS"
+echo "   * C AM Flags                 $AM_CFLAGS"
 echo "   * C++ Compiler:              $CXX_VERSION"
+echo "   * C++ Flags:                 $CXXFLAGS"
+echo "   * C++ AM Flags:              $AM_CXXFLAGS"
+echo "   * CPP Flags:                 $CPPFLAGS"
+echo "   * CPP AM Flags:              $AM_CPPFLAGS"
 echo "   * Assertions enabled:        $ac_cv_assert"
 echo "   * Debug enabled:             $with_debug"
 echo "   * Profiling enabled:         $ac_profiling"
