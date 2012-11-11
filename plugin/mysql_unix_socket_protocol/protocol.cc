@@ -63,7 +63,7 @@ in_port_t Protocol::getPort() const
 
 extern "C" {
 
-  char at_exit_socket_file[1024 * 4]= { 0 };
+  char at_exit_socket_file[PATH_MAX]= { 0 };
 
   static void remove_socket_file(void)
   {
