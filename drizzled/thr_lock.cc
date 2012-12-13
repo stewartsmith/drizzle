@@ -170,7 +170,11 @@ static enum enum_thr_lock_result wait_for_lock(Session &session, struct st_lock_
     if (can_deadlock)
     {
       boost::xtime xt; 
-      xtime_get(&xt, boost::TIME_UTC); 
+#if BOOST_VERSION >= 105000
+      xtime_get(&xt, boost::TIME_UTC_);
+#else
+      xtime_get(&xt, boost::TIME_UTC);
+#endif
       xt.sec += table_lock_wait_timeout; 
       if (not cond->timed_wait(scoped, xt))
       {

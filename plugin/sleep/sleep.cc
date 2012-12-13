@@ -98,7 +98,11 @@ int64_t Item_func_sleep::val_int()
 
     try {
       boost::xtime xt; 
-      xtime_get(&xt, boost::TIME_UTC); 
+#if BOOST_VERSION >= 105000
+      xtime_get(&xt, boost::TIME_UTC_);
+#else
+      xtime_get(&xt, boost::TIME_UTC);
+#endif
       xt.nsec += (uint64_t)(dtime * 1000000000ULL); 
       session.getThread()->sleep(xt);
     }

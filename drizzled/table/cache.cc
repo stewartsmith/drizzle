@@ -263,7 +263,11 @@ bool Cache::removeTable(Session& session, const identifier::Table &identifier, u
             table::Cache::removeTable routine.
           */
           boost::xtime xt;
+#if BOOST_VERSION >= 105000
+          xtime_get(&xt, boost::TIME_UTC_);
+#else
           xtime_get(&xt, boost::TIME_UTC);
+#endif
           xt.sec += 10;
           boost::mutex::scoped_lock scoped(table::Cache::mutex(), boost::adopt_lock_t());
           COND_refresh.timed_wait(scoped, xt);
