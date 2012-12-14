@@ -1934,7 +1934,11 @@ static void timer_thread()
     boost::mutex::scoped_lock scopedLock(timer_alarm_mutex);
 
     boost::xtime xt; 
-    xtime_get(&xt, boost::TIME_UTC); 
+#if BOOST_VERSION >= 105000
+    xtime_get(&xt, boost::TIME_UTC_);
+#else
+    xtime_get(&xt, boost::TIME_UTC);
+#endif
     xt.sec += opt_timer_length; 
 
     (void)timer_alarm_threshold.timed_wait(scopedLock, xt);

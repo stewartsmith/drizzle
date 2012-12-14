@@ -460,7 +460,11 @@ void close_connections()
     while (select_thread_in_use)
     {
       boost::xtime xt;
+#if BOOST_VERSION >= 105000
+      xtime_get(&xt, boost::TIME_UTC_);
+#else
       xtime_get(&xt, boost::TIME_UTC);
+#endif
       xt.sec += 2;
 
       for (uint32_t tmp=0 ; tmp < 10 && select_thread_in_use; tmp++)
