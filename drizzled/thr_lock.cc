@@ -78,7 +78,7 @@ TL_WRITE_CONCURRENT_INSERT lock at the same time as multiple read locks.
 
 #include <drizzled/util/test.h>
 
-#include <boost/interprocess/sync/lock_options.hpp>
+#include <boost/interprocess/sync/sharable_lock.hpp>
 
 using namespace std;
 
