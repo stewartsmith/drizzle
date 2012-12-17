@@ -29,6 +29,7 @@ PANDORA_CANONICAL_TARGET(less-warnings, require-cxx, force-gcc42, version-from-v
 m4_include([m4/libdrizzle_version.m4])
 
 gl_VISIBILITY
+AX_ASSERT
 
 dnl Set the default datadir location to /usr/local/var/drizzle. If a
 dnl localstatedir is explicitly given, just use that.
@@ -132,7 +133,6 @@ AX_PTHREAD([
             AM_LDFLAGS="${PTHREAD_LIBS} ${AM_LDFLAGS}"
             LIBS="${PTHREAD_LIBS} ${LIBS}"
             ], [AC_MSG_ERROR([Drizzle requires pthreads])])
-
 
 AX_AM_JOBSERVER([yes])
 
