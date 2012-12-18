@@ -92,7 +92,6 @@ examples_pipe_query_LDADD= libdrizzle-2.0/libdrizzle-2.0.la
 
 if HAVE_LIBSQLITE3
 examples_sqlite_server_LDFLAGS= libdrizzle-2.0/libdrizzle-2.0.la $(LTLIBSQLITE3)
-examples_sqlite_server_DEPENDENCIES= libdrizzle-2.0/libdrizzle-2.0.la
 examples_sqlite_server_SOURCES= examples/sqlite_server.cc
 endif
 

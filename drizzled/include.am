@@ -547,12 +547,12 @@ drizzled_drizzled_LDADD+= $(BOOST_PROGRAM_OPTIONS_LIBS)
 drizzled_drizzled_LDADD+= $(BOOST_REGEX_LIBS)
 drizzled_drizzled_LDADD+= $(BOOST_SYSTEM_LIBS)
 drizzled_drizzled_LDADD+= $(BOOST_THREAD_LIBS)
-drizzled_drizzled_LDADD+= @LIBUUID_LDFLAGS@
+drizzled_drizzled_LDADD+= @LIBUUID_LIB@
 
-drizzled_drizzled_DEPENDENCIES= \
-                                      drizzled/message/libdrizzledmessage.la \
-                                      ${noinst_LTLIBRARIES} \
-                                      $(pandora_plugin_libs)
+EXTRA_drizzled_drizzled_DEPENDENCIES=
+EXTRA_drizzled_drizzled_DEPENDENCIES+= drizzled/message/libdrizzledmessage.la
+EXTRA_drizzled_drizzled_DEPENDENCIES+= ${noinst_LTLIBRARIES}
+EXTRA_drizzled_drizzled_DEPENDENCIES+= $(pandora_plugin_libs)
 
 drizzled_drizzled_SOURCES+= \
 			   drizzled/alter_info.cc \
