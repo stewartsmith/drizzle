@@ -49,7 +49,7 @@ command_not_found_handle ()
   exit 127
 }
 
-die ()
+function die ()
 { 
   echo "$BASH_SOURCE:$BASH_LINENO: $@" >&2
   exit 1; 
@@ -358,8 +358,10 @@ function safe_pushd ()
 {
   pushd $1 &> /dev/null ;
 
-  if $VERBOSE -a test -n "$BUILD_DIR"; then
-    echo "BUILD_DIR=$BUILD_DIR"
+  if [ -n "$BUILD_DIR" ]; then
+    if $VERBOSE; then
+      echo "BUILD_DIR=$BUILD_DIR"
+    fi
   fi
 }
 
@@ -470,6 +472,10 @@ function make_darwin_malloc ()
 
 function snapshot_check ()
 {
+  if [ ! -f "$BOOTSTRAP_SNAPSHOT_CHECK" ]; then
+    make_for_snapshot
+  fi
+
   if [ -n "$BOOTSTRAP_SNAPSHOT_CHECK" ]; then
     assert_file "$BOOTSTRAP_SNAPSHOT_CHECK" 'snapshot check failed'
   fi
@@ -492,6 +498,26 @@ function make_for_snapshot ()
   snapshot_check
 }
 
+function make_for_mingw32 ()
+{
+  # Make sure it is clean
+  if [ -f Makefile -o -f configure ]; then
+    make_maintainer_clean
+  fi
+  assert_no_file 'Makefile'
+
+  if command_exists mingw32-configure; then
+    run_autoreconf
+
+    mingw32-configure || die 'mingw32-configure failed'
+    assert_file 'Makefile'
+
+    if command_exists mingw32-make; then
+      mingw32-make || die 'mingw32-make failed'
+    fi
+  fi
+}
+
 # If we are locally testing, we should make sure the environment is setup correctly
 function check_for_jenkins ()
 {
@@ -506,6 +532,17 @@ function check_for_jenkins ()
       make_for_snapshot
     fi
   fi
+}
+
+function make_universe ()
+{
+  make_for_snapshot
+  make_valgrind
+  make_gdb
+  make_rpm
+  make_for_mingw32
+  make_distcheck
+  make_install_system
 }
 
 function make_for_continuus_integration ()
@@ -536,6 +573,8 @@ function make_for_continuus_integration ()
       assert_exec_file 'configure'
       assert_file 'Makefile'
 
+      make_target 'all'
+
       # make rpm includes "make distcheck"
       if [[ -f rpm.am ]]; then
         make_rpm
@@ -555,6 +594,8 @@ function make_for_continuus_integration ()
 
       assert_exec_file 'configure'
       assert_file 'Makefile'
+
+      make_target 'all'
 
       make_distcheck
 
@@ -632,7 +673,7 @@ function make_gdb ()
 # $2 to die, or not to die, based on contents
 function make_target ()
 {
-  if [[ -z "$1" ]]; then
+  if [ -z "$1" ]; then
     die "Programmer error, no target provided for make"
   fi
 
@@ -641,15 +682,17 @@ function make_target ()
     run_configure
   fi
 
-  if test -n "$TESTS_ENVIRONMENT" -a $VERBOSE; then
-    echo "TESTS_ENVIRONMENT=$TESTS_ENVIRONMENT"
+  if [ -n "$TESTS_ENVIRONMENT" ]; then
+    if $VERBOSE; then
+      echo "TESTS_ENVIRONMENT=$TESTS_ENVIRONMENT"
+    fi
   fi
 
-  if [[ -z "$MAKE" ]]; then
+  if [ -z "$MAKE" ]; then
     die "MAKE was not set"
   fi
 
-  if [[ -n "$2" ]]; then
+  if [ -n "$2" ]; then
     run $MAKE $1 || return 1
   else
     run $MAKE $1 || die "Cannot execute $MAKE $1"
@@ -663,8 +706,10 @@ function make_distcheck ()
 
 function make_rpm ()
 {
-  run_configure_if_required
-  make_target 'rpm'
+  if [ -f 'rpm.am' -o -d 'rpm' ]; then
+    run_configure_if_required
+    make_target 'rpm'
+  fi
 }
 
 function make_maintainer_clean ()
@@ -714,6 +759,11 @@ function run_autoreconf ()
 {
   if [[ -z "$AUTORECONF" ]]; then
     die "Programmer error, tried to call run_autoreconf () but AUTORECONF was not set"
+  fi
+
+  if test $use_libtool = 1; then
+    assert $BOOTSTRAP_LIBTOOLIZE
+    run $BOOTSTRAP_LIBTOOLIZE '--copy' '--install' '--force' || die "Cannot execute $BOOTSTRAP_LIBTOOLIZE"
   fi
 
   run $AUTORECONF || die "Cannot execute $AUTORECONF"
@@ -805,7 +855,16 @@ determine_vcs ()
   fi
 }
 
-autoreconf_setup ()
+function require_libtoolise ()
+{
+  use_libtool=0
+  grep '^[         ]*A[CM]_PROG_LIBTOOL' configure.ac >/dev/null \
+    && use_libtool=1
+  grep '^[         ]*LT_INIT' configure.ac >/dev/null \
+    && use_libtool=1
+}
+
+function autoreconf_setup ()
 {
   # Set ENV MAKE in order to override "make"
   if [[ -z "$MAKE" ]]; then 
@@ -817,8 +876,14 @@ autoreconf_setup ()
       fi
     fi
     
+    if [ "$VCS_CHECKOUT" ]; then
+      if $DEBUG; then
+        MAKE="$MAKE --warn-undefined-variables"
+      fi
+    fi
+
     if $DEBUG; then
-      MAKE="$MAKE --warn-undefined-variables"
+      MAKE="$MAKE -d"
     fi
   fi
 
@@ -830,6 +895,10 @@ autoreconf_setup ()
     GNU_BUILD_FLAGS="$GNU_BUILD_FLAGS --verbose"
   fi
 
+  if [ -z "$ACLOCAL_PATH" ]; then
+    ACLOCAL_PATH="/usr/local/share/aclocal $ACLOCAL_PATH"
+  fi
+
   if [[ -z "$WARNINGS" ]]; then
     if [[ -n "$VCS_CHECKOUT" ]]; then
       WARNINGS="all,error"
@@ -838,15 +907,36 @@ autoreconf_setup ()
     fi
   fi
 
-  if [[ -z "$LIBTOOLIZE" ]]; then
-    # If we are using OSX, we first check to see glibtoolize is available
-    if [[ "$VENDOR_DISTRIBUTION" == "darwin" ]]; then
-      LIBTOOLIZE=`type -p glibtoolize`
+  if test $use_libtool = 1; then
+    if [[ -n "$LIBTOOLIZE" ]]; then
+      BOOTSTRAP_LIBTOOLIZE=`type -p $LIBTOOLIZE`
 
-      if [[ -z "$LIBTOOLIZE" ]]; then
-        echo "Couldn't find glibtoolize, it is required on OSX"
+      if [[ -z "$BOOTSTRAP_LIBTOOLIZE" ]]; then
+        echo "Couldn't find user supplied libtoolize, it is required"
+      fi
+    else
+      # If we are using OSX, we first check to see glibtoolize is available
+      if [[ "$VENDOR_DISTRIBUTION" == "darwin" ]]; then
+        BOOTSTRAP_LIBTOOLIZE=`type -p glibtoolize`
+
+        if [[ -z "$BOOTSTRAP_LIBTOOLIZE" ]]; then
+          echo "Couldn't find glibtoolize, it is required on OSX"
+        fi
+      else
+        BOOTSTRAP_LIBTOOLIZE=`type -p libtoolize`
+
+        if [[ -z "$BOOTSTRAP_LIBTOOLIZE" ]]; then
+          echo "Couldn't find libtoolize, it is required"
+        fi
       fi
     fi
+    if $VERBOSE; then
+      LIBTOOLIZE_OPTIONS="--verbose $BOOTSTRAP_LIBTOOLIZE_OPTIONS"
+    fi
+    if $DEBUG; then
+      LIBTOOLIZE_OPTIONS="--debug $BOOTSTRAP_LIBTOOLIZE_OPTIONS"
+    fi
+    LIBTOOLIZE=true
   fi
 
   # Test the ENV AUTOMAKE if it exists
@@ -868,6 +958,12 @@ autoreconf_setup ()
   if [[ -n "$AUTOM4TE" ]]; then
     run $AUTOM4TE '--help'    &> /dev/null    || die "Failed to run AUTOM4TE:$AUTOM4TE"
   fi
+
+  # Test the ENV AUTOHEADER if it exists, if not we add one and add --install
+  if [[ -z "$ACLOCAL" ]]; then
+    ACLOCAL="aclocal --install"
+  fi
+  run $ACLOCAL '--help'  &> /dev/null    || die "Failed to run ACLOCAL:$ACLOCAL"
 
   if [[ -z "$AUTORECONF" ]]; then
     AUTORECONF=`type -p autoreconf`
@@ -992,6 +1088,8 @@ check_make_target()
   case $1 in
     'self')
       ;;
+    'rpm')
+      ;;
     'gdb')
       ;;
     'clean_op')
@@ -1007,6 +1105,10 @@ check_make_target()
     'check')
       ;;
     'snapshot')
+      ;;
+    'mingw')
+      ;;
+    'universe')
       ;;
     'valgrind')
       ;;
@@ -1041,6 +1143,7 @@ function bootstrap ()
   determine_vcs
 
   # Set up whatever we need to do to use autoreconf later
+  require_libtoolise
   autoreconf_setup
 
   if [ -z "$MAKE_TARGET" ]; then
@@ -1101,6 +1204,9 @@ function bootstrap ()
         make
         run_configure
         ;;
+      'mingw')
+        make_for_mingw32
+        ;;
       'snapshot')
         make_for_snapshot
         ;;
@@ -1109,6 +1215,9 @@ function bootstrap ()
         ;;
       'valgrind')
         make_valgrind
+        ;;
+      'universe')
+        make_universe
         ;;
       'jenkins')
         make_for_continuus_integration
@@ -1171,8 +1280,10 @@ main ()
   # If we are running under Jenkins we predetermine what tests we will run against
   # This MAKE_TARGET can be overridden by parse_command_line_options based MAKE_TARGET changes.
   # We don't want Jenkins overriding other variables, so we NULL them.
-  if [ -z "$MAKE_TARGET" -a $jenkins_build_environment ]; then
-    MAKE_TARGET='jenkins'
+  if [ -z "$MAKE_TARGET" ]; then
+    if $jenkins_build_environment; then
+      MAKE_TARGET='jenkins'
+    fi
   fi
 
   bootstrap
@@ -1181,6 +1292,48 @@ main ()
   wait
 
   exit 0
+}
+
+function set_branch ()
+{
+  if [ -z "$BRANCH" ]; then 
+    if [ -z "$CI_PROJECT_TEAM" ]; then 
+      die "Variable CI_PROJECT_TEAM has not been set"
+    fi
+    if [ -z "$PROJECT" ]; then 
+      die "Variable PROJECT has not been set"
+    fi
+    if [ -z "$BUILD_TAG" ]; then 
+      die "Variable BUILD_TAG has not been set"
+    fi
+
+    BRANCH="lp:~$CI_PROJECT_TEAM/$PROJECT/$BUILD_TAG"
+    export BRANCH
+  fi
+
+  if [ -z "$BRANCH" ]; then 
+    die "Missing values required to build BRANCH variable."
+  fi
+}
+
+function merge ()
+{
+  if [ -z "$VCS_CHECKOUT" ]; then
+    die "Merges require VCS_CHECKOUT."
+  fi
+
+  set_branch
+
+  if [[ "$VCS_CHECKOUT" == 'bzr' ]]; then
+    if test -n "$BRANCH_TO_MERGE"; then
+      bzr merge $BRANCH_TO_MERGE
+      bzr commit --message="Merge $BRANCH_TO_MERGE Build: $BUILD_TAG" --unchanged
+    fi
+
+    bzr push "$BRANCH"
+  elif [[ -n "$VCS_CHECKOUT" ]]; then
+    die "Merge attempt occured, current VCS setup does not support this"
+  fi
 }
 
 enable_debug ()
@@ -1197,6 +1350,18 @@ enable_debug ()
   fi
 }
 
+function usage ()
+{
+  cat << EOF
+  Usage: $program_name [OPTION]..
+
+  Bootstrap this package from the checked-out sources, and optionally walk through CI run.
+
+  Options:
+
+EOF
+}
+
 disable_debug ()
 {
   set +x
@@ -1205,6 +1370,8 @@ disable_debug ()
 
 # Script begins here
 
+program_name=$0
+
 env_debug_enabled=false
 if [[ -n "$JENKINS_HOME" ]]; then 
   declare -r jenkins_build_environment=true
@@ -1212,6 +1379,7 @@ else
   declare -r jenkins_build_environment=false
 fi
 
+export ACLOCAL
 export AUTOCONF
 export AUTOHEADER
 export AUTOM4TE
@@ -1219,6 +1387,8 @@ export AUTOMAKE
 export AUTORECONF
 export DEBUG
 export GNU_BUILD_FLAGS
+export LIBTOOLIZE
+export LIBTOOLIZE_OPTIONS
 export MAKE
 export TESTS_ENVIRONMENT
 export VERBOSE
