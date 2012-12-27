@@ -4,7 +4,6 @@
 
 EXTRA_DIST+= \
 	     ${top_srcdir}/docs/_static \
-	     ${top_srcdir}/docs/_templates \
 	     ${top_srcdir}/docs/conf.py \
 	     ${top_srcdir}/docs/Doxyfile \
 	     ${top_srcdir}/docs/drizzled_header.html \
@@ -133,10 +132,18 @@ text:
 	@echo
 	@echo "Build finished. The text files are in $(SPHINX_BUILDDIR)/text."
 
+if HAVE_RECENT_SPHINX
+
 man:
 	PYTHONPATH=${top_srcdir}/docs  $(SPHINXBUILD) -b man $(ALLSPHINXOPTS) ${top_builddir}/man
 	@echo
 	@echo "Build finished. The manual pages are in $(SPHINX_BUILDDIR)/man."
+
+else
+
+man:
+
+endif
 
 changes:
 	PYTHONPATH=${top_srcdir}/docs  $(SPHINXBUILD) -b changes $(ALLSPHINXOPTS) $(SPHINX_BUILDDIR)/changes
@@ -153,4 +160,9 @@ doctest:
 	PYTHONPATH=${top_srcdir}/docs  $(SPHINXBUILD) -b doctest $(ALLSPHINXOPTS) $(SPHINX_BUILDDIR)/doctest
 	@echo "Testing of doctests in the sources finished, look at the " \
 	      "results in $(SPHINX_BUILDDIR)/doctest/output.txt."
+
+else
+
+man:
+
 endif
