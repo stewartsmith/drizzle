@@ -14,23 +14,6 @@ AC_DEFUN([PANDORA_MSG_ERROR],[
   ])
 ])
 
-AC_DEFUN([PANDORA_FORCE_DEPEND_TRACKING],[
-  AC_ARG_ENABLE([fat-binaries],
-    [AS_HELP_STRING([--enable-fat-binaries],
-      [Enable fat binary support on OSX @<:@default=off@:>@])],
-    [ac_enable_fat_binaries="$enableval"],
-    [ac_enable_fat_binaries="no"])
-
-  dnl Force dependency tracking on for Sun Studio builds
-  AS_IF([test "x${enable_dependency_tracking}" = "x"],[
-    enable_dependency_tracking=yes
-  ])
-  dnl If we're building OSX Fat Binaries, we have to turn off -M options
-  AS_IF([test "x${ac_enable_fat_binaries}" = "xyes"],[
-    enable_dependency_tracking=no
-  ])
-])
-
 AC_DEFUN([PANDORA_BLOCK_BAD_OPTIONS],[
   AS_IF([test "x${prefix}" = "x"],[
     PANDORA_MSG_ERROR([--prefix requires an argument])
@@ -39,7 +22,6 @@ AC_DEFUN([PANDORA_BLOCK_BAD_OPTIONS],[
 
 dnl The standard setup for how we build Pandora projects
 AC_DEFUN([PANDORA_CANONICAL_TARGET],[
-  AC_REQUIRE([PANDORA_FORCE_DEPEND_TRACKING])
   ifdef([m4_define],,[define([m4_define],   defn([define]))])
   ifdef([m4_undefine],,[define([m4_undefine],   defn([undefine]))])
   m4_define([PCT_ALL_ARGS],[$*])
@@ -77,14 +59,6 @@ AC_DEFUN([PANDORA_CANONICAL_TARGET],[
     ])
   ])
 
-  AC_CONFIG_MACRO_DIR([m4])
-
-  m4_if(m4_substr(m4_esyscmd(test -d src && echo 0),0,1),0,[
-    AC_CONFIG_HEADERS([src/config.h])
-  ],[
-    AC_CONFIG_HEADERS([config.h])
-  ])
-
   PANDORA_BLOCK_BAD_OPTIONS
 
   # We need to prevent canonical target
@@ -95,14 +69,6 @@ AC_DEFUN([PANDORA_CANONICAL_TARGET],[
   AS_IF([test "x${ac_cv_env_CXXFLAGS_set}" = "x"],
         [CXXFLAGS=""])
   
-  AC_CANONICAL_TARGET
-  
-  m4_if(PCT_DONT_SUPRESS_INCLUDE,yes,[
-    AM_INIT_AUTOMAKE(-Wall -Werror -Wno-portability subdir-objects foreign tar-ustar)
-  ],[
-    AM_INIT_AUTOMAKE(-Wall -Werror -Wno-portability nostdinc subdir-objects foreign tar-ustar)
-  ])
-
   m4_ifdef([AM_SILENT_RULES],[AM_SILENT_RULES([yes])])
 
   m4_if(m4_substr(m4_esyscmd(test -d gnulib && echo 0),0,1),0,[
@@ -151,10 +117,6 @@ AC_DEFUN([PANDORA_CANONICAL_TARGET],[
 
   PANDORA_PLATFORM
 
-  LT_PREREQ([2.2])
-  LT_INIT
-  LT_LANG([C++])
-
   dnl autoconf doesn't automatically provide a fail-if-no-C++ macro
   dnl so we check c++98 features and fail if we don't have them, mainly
   dnl for that reason
@@ -164,37 +126,10 @@ AC_DEFUN([PANDORA_CANONICAL_TARGET],[
       PANDORA_MSG_ERROR([No working C++ Compiler has been found. ${PACKAGE} requires a C++ compiler that can handle C++98])
     ])
   ])
-  PANDORA_CXX_CSTDINT
-  PANDORA_CXX_CINTTYPES
+  AX_CXX_CINTTYPES
   
-  m4_if(m4_substr(m4_esyscmd(test -d gnulib && echo 0),0,1),0,[
-    gl_INIT
-    AC_CONFIG_LIBOBJ_DIR([gnulib])
-  ])
-
   PANDORA_CHECK_C_VERSION
   PANDORA_CHECK_CXX_VERSION
-
-  AC_HEADER_TIME
-  AC_STRUCT_TM
-  AC_TYPE_SIZE_T
-  AC_SYS_LARGEFILE
-  PANDORA_CLOCK_GETTIME
-
-  # off_t is not a builtin type
-  AC_CHECK_SIZEOF(off_t, 4)
-  AS_IF([test "$ac_cv_sizeof_off_t" -eq 0],[
-    PANDORA_MSG_ERROR("${PACKAGE} needs an off_t type.")
-  ])
-
-  AC_CHECK_SIZEOF(size_t)
-  AS_IF([test "$ac_cv_sizeof_size_t" -eq 0],[
-    PANDORA_MSG_ERROR("${PACKAGE} needs an size_t type.")
-  ])
-
-  AC_DEFINE_UNQUOTED([SIZEOF_SIZE_T],[$ac_cv_sizeof_size_t],[Size of size_t as computed by sizeof()])
-  AC_CHECK_SIZEOF(long long)
-  AC_DEFINE_UNQUOTED([SIZEOF_LONG_LONG],[$ac_cv_sizeof_long_long],[Size of long long as computed by sizeof()])
 
   AC_CACHE_CHECK([if system defines RUSAGE_THREAD], [ac_cv_rusage_thread],[
   AC_COMPILE_IFELSE([AC_LANG_PROGRAM(

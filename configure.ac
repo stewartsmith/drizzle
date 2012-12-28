@@ -17,16 +17,32 @@ dnl  along with this program; if not, write to the Free Software
 dnl  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 
-AC_PREREQ(2.59)dnl		Minimum Autoconf version required.
-dnl Version from the AC_INIT call below is overridden later
-dnl So don't update it here
 AC_INIT([drizzle],[7.2],[http://bugs.launchpad.net/drizzle],[drizzle],[http://drizzle.org/])
-AC_CONFIG_SRCDIR([drizzled/drizzled.cc])
+
 AC_CONFIG_AUX_DIR([config])
 
-PANDORA_CANONICAL_TARGET(less-warnings, require-cxx, force-gcc42, version-from-vc) 
+AM_INIT_AUTOMAKE([-Wall -Werror -Wno-portability subdir-objects foreign tar-ustar])
+AC_PREREQ(2.59)dnl		Minimum Autoconf version required.
+
+AC_CANONICAL_HOST
+AC_CANONICAL_BUILD
+AC_ARG_PROGRAM
+AC_USE_SYSTEM_EXTENSIONS
+
+AC_CONFIG_MACRO_DIR([m4])
+
+AC_CONFIG_HEADERS([config.h])
+
+AC_CONFIG_SRCDIR([drizzled/drizzled.cc])
+
+PANDORA_CANONICAL_TARGET([less-warnings, require-cxx, force-gcc42, version-from-vc]) 
 
 m4_include([m4/libdrizzle_version.m4])
+
+LT_PREREQ([2.2])
+LT_INIT
+LT_LANG([C++])
+
 
 gl_VISIBILITY
 AX_ASSERT
@@ -36,12 +52,6 @@ dnl localstatedir is explicitly given, just use that.
 AS_IF([test "x${localstatedir}" = 'x${prefix}/var'],[
   localstatedir='${prefix}/var/drizzle'
 ])
-
-AC_ARG_WITH([server],
-    [AS_HELP_STRING([--without-server],
-      [Do not build the drizzled server.])],
-    [ pandora_cv_skip_requires="$withval" ]
-    [ pandora_cv_skip_requires=no ])
 
 AS_IF([test "x${pandora_cv_skip_requires}" != "xno"],[
 
@@ -149,6 +159,29 @@ AC_C_CONST
 AC_C_INLINE
 AC_C_VOLATILE
 AC_C_RESTRICT
+
+AC_HEADER_TIME
+AC_STRUCT_TM
+AC_TYPE_SIZE_T
+AC_SYS_LARGEFILE
+PANDORA_CLOCK_GETTIME
+
+# off_t is not a builtin type
+AC_CHECK_SIZEOF(off_t, 4)
+AS_IF([test "$ac_cv_sizeof_off_t" -eq 0],[
+       PANDORA_MSG_ERROR("${PACKAGE} needs an off_t type.")
+       ])
+
+AC_CHECK_SIZEOF(size_t)
+AS_IF([test "$ac_cv_sizeof_size_t" -eq 0],[
+       PANDORA_MSG_ERROR("${PACKAGE} needs an size_t type.")
+       ])
+
+AC_DEFINE_UNQUOTED([SIZEOF_SIZE_T],[$ac_cv_sizeof_size_t],[Size of size_t as computed by sizeof()])
+AC_CHECK_SIZEOF(long long)
+AC_DEFINE_UNQUOTED([SIZEOF_LONG_LONG],[$ac_cv_sizeof_long_long],[Size of long long as computed by sizeof()])
+
+
 
 
 # Checks for library functions.
