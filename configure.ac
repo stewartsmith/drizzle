@@ -134,6 +134,28 @@ AX_PTHREAD([
             LIBS="${PTHREAD_LIBS} ${LIBS}"
             ], [AC_MSG_ERROR([Drizzle requires pthreads])])
 
+# Specialty checks
+
+# Checks for programs.
+
+# Checks for libraries.
+
+# Checks for header files.
+AC_CHECK_HEADERS([sys/socket.h])
+
+# Checks for typedefs, structures, and compiler characteristics.
+AC_C_BIGENDIAN
+AC_C_CONST
+AC_C_INLINE
+AC_C_VOLATILE
+AC_C_RESTRICT
+
+
+# Checks for library functions.
+AC_CHECK_FUNC([setsockopt],[],[AC_CHECK_LIB(socket, setsockopt)])
+AC_CHECK_FUNC([bind],[],[AC_CHECK_LIB(bind, bind)])
+
+AC_CHECK_PROGS([DOXYGEN],[doxygen])
 AX_AM_JOBSERVER([yes])
 
 #########################################################################

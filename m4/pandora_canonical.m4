@@ -175,19 +175,11 @@ AC_DEFUN([PANDORA_CANONICAL_TARGET],[
   PANDORA_CHECK_C_VERSION
   PANDORA_CHECK_CXX_VERSION
 
-  AC_C_BIGENDIAN
-  AC_C_CONST
-  AC_C_INLINE
-  AC_C_VOLATILE
-  AC_C_RESTRICT
-
   AC_HEADER_TIME
   AC_STRUCT_TM
   AC_TYPE_SIZE_T
   AC_SYS_LARGEFILE
   PANDORA_CLOCK_GETTIME
-
-  AC_CHECK_HEADERS(sys/socket.h)
 
   # off_t is not a builtin type
   AC_CHECK_SIZEOF(off_t, 4)
@@ -203,23 +195,6 @@ AC_DEFUN([PANDORA_CANONICAL_TARGET],[
   AC_DEFINE_UNQUOTED([SIZEOF_SIZE_T],[$ac_cv_sizeof_size_t],[Size of size_t as computed by sizeof()])
   AC_CHECK_SIZEOF(long long)
   AC_DEFINE_UNQUOTED([SIZEOF_LONG_LONG],[$ac_cv_sizeof_long_long],[Size of long long as computed by sizeof()])
-  AC_CACHE_CHECK([if time_t is unsigned], [ac_cv_time_t_unsigned],[
-  AC_COMPILE_IFELSE([AC_LANG_PROGRAM(
-      [[
-#include <time.h>
-      ]],
-      [[
-      int array[(((time_t)-1) > 0) ? 1 : -1];
-      ]])
-    ],[
-      ac_cv_time_t_unsigned=yes
-    ],[
-      ac_cv_time_t_unsigned=no
-    ])
-  ])
-  AS_IF([test "$ac_cv_time_t_unsigned" = "yes"],[
-    AC_DEFINE([TIME_T_UNSIGNED], 1, [Define to 1 if time_t is unsigned])
-  ])
 
   AC_CACHE_CHECK([if system defines RUSAGE_THREAD], [ac_cv_rusage_thread],[
   AC_COMPILE_IFELSE([AC_LANG_PROGRAM(
@@ -244,10 +219,6 @@ AC_DEFUN([PANDORA_CANONICAL_TARGET],[
   dnl Bug on FreeBSD - LIBM check doesn't set the damn variable
   AC_SUBST([LIBM])
   
-  AC_CHECK_FUNC(setsockopt, [], [AC_CHECK_LIB(socket, setsockopt)])
-  AC_CHECK_FUNC(bind, [], [AC_CHECK_LIB(bind, bind)])
-
-
 
   PANDORA_OPTIMIZE
 
@@ -271,29 +242,8 @@ AC_DEFUN([PANDORA_CANONICAL_TARGET],[
   PANDORA_ENABLE_DTRACE
 
   AC_LIB_PREFIX
-  PANDORA_HAVE_BETTER_MALLOC
-  PANDORA_WITH_VALGRIND
 
-  AC_CHECK_PROGS([DOXYGEN], [doxygen])
-  AC_CHECK_PROGS([PERL], [perl])
-  AC_CHECK_PROGS([DPKG_GENSYMBOLS], [dpkg-gensymbols], [:])
-  AC_CHECK_PROGS([LCOV], [lcov], [echo lcov not found])
-  AC_CHECK_PROGS([LCOV_GENHTML], [genhtml], [echo genhtml not found])
-
-  AC_CHECK_PROGS([SPHINXBUILD], [sphinx-build], [:])
-  AS_IF([test "x${SPHINXBUILD}" != "x:"],[
-    AC_CACHE_CHECK([if sphinx is new enough],[ac_cv_recent_sphinx],[
-    
-    ${SPHINXBUILD} -Q -C -b man -d conftest.d . . >/dev/null 2>&1
-    AS_IF([test $? -eq 0],[ac_cv_recent_sphinx=yes],
-          [ac_cv_recent_sphinx=no])
-    rm -rf conftest.d
-    ])
-  ])
-
-  AM_CONDITIONAL(HAVE_DPKG_GENSYMBOLS,[test "x${DPKG_GENSYMBOLS}" != "x:"])
-  AM_CONDITIONAL(HAVE_SPHINX,[test "x${SPHINXBUILD}" != "x:"])
-  AM_CONDITIONAL(HAVE_RECENT_SPHINX,[test "x${ac_cv_recent_sphinx}" = "xyes"])
+  AX_PROG_SPHINX_BUILD
 
   m4_if(m4_substr(m4_esyscmd(test -d po && echo 0),0,1),0, [
     AM_PO_SUBDIRS
