@@ -98,13 +98,16 @@ EXTRA_DIST += \
 	tests/strip-valgrind
 
 
-check-local: tests/var/drizzle test-drizzle
+check-local: tests/var/drizzle test-drizzle tests/qp_data
 
 tests/var:
 	$(mkdir_p) tests/var
 
 tests/var/drizzle: tests/var
 	$(mkdir_p) tests/var/drizzle
+
+tests/qp_data:
+	$(mkdir_p) tests/qp_data
 
 
 # dtr - a shortcut for executing test-run.pl

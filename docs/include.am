@@ -4,7 +4,6 @@
 
 EXTRA_DIST+= \
 	     ${top_srcdir}/docs/_static \
-	     ${top_srcdir}/docs/_templates \
 	     ${top_srcdir}/docs/conf.py \
 	     ${top_srcdir}/docs/Doxyfile \
 	     ${top_srcdir}/docs/drizzled_header.html \
@@ -31,20 +30,15 @@ PAPEROPT_a4     = -D latex_paper_size=a4
 PAPEROPT_letter = -D latex_paper_size=letter
 ALLSPHINXOPTS   = -d $(SPHINX_BUILDDIR)/doctrees $(PAPEROPT_$(PAPER)) $(SPHINXOPTS) ${top_srcdir}/docs
 
+.PHONY: clean-docs-check
+
+clean-docs-check:
+	-rm -rf docs/_build docs/doctrees man/.doctrees/
+
 .PHONY: help clean html dirhtml singlehtml pickle json htmlhelp qthelp devhelp epub latex latexpdf text man changes linkcheck doctest doxygen
 
 doxygen:
 	${DOXYGEN} docs/Doxyfile
-
-
-if HAVE_RECENT_SPHINX
-man_MANS+= \
-	   docs/man/drizzledump.1
-DISTCLEANFILES+= \
-           docs/man/drizzledump.1
-	   
-docs/man/drizzledump.1: man
-endif
 
 if HAVE_SPHINX
 sphinx-help:
@@ -138,10 +132,18 @@ text:
 	@echo
 	@echo "Build finished. The text files are in $(SPHINX_BUILDDIR)/text."
 
+if HAVE_RECENT_SPHINX
+
 man:
-	PYTHONPATH=${top_srcdir}/docs  $(SPHINXBUILD) -b man $(ALLSPHINXOPTS) $(SPHINX_BUILDDIR)/man
+	PYTHONPATH=${top_srcdir}/docs  $(SPHINXBUILD) -b man $(ALLSPHINXOPTS) ${top_builddir}/man
 	@echo
 	@echo "Build finished. The manual pages are in $(SPHINX_BUILDDIR)/man."
+
+else
+
+man:
+
+endif
 
 changes:
 	PYTHONPATH=${top_srcdir}/docs  $(SPHINXBUILD) -b changes $(ALLSPHINXOPTS) $(SPHINX_BUILDDIR)/changes
@@ -158,4 +160,9 @@ doctest:
 	PYTHONPATH=${top_srcdir}/docs  $(SPHINXBUILD) -b doctest $(ALLSPHINXOPTS) $(SPHINX_BUILDDIR)/doctest
 	@echo "Testing of doctests in the sources finished, look at the " \
 	      "results in $(SPHINX_BUILDDIR)/doctest/output.txt."
+
+else
+
+man:
+
 endif
