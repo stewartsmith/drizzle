@@ -8,21 +8,22 @@ dnl with or without modifications, as long as this notice is preserved.
 #--------------------------------------------------------------------
 
 
-AC_DEFUN([_PANDORA_SEARCH_LIBV8],[
-  AC_REQUIRE([AC_LIB_PREFIX])
+AC_DEFUN([_PANDORA_SEARCH_LIBV8],
+    [AC_REQUIRE([AC_LIB_PREFIX])
 
-  # v8 is written in C++, need to use g++ for test link below
-  AC_LANG_CPLUSPLUS
+# v8 is written in C++, need to use g++ for test link below
+    AC_LANG_PUSH([C++])
 
-  AC_LIB_HAVE_LINKFLAGS(v8, pthread,
-  [
-    #include <v8.h>
-  ],[
-    v8::HandleScope handle_scope;
-  ]) 
+    AC_LIB_HAVE_LINKFLAGS([v8],[pthread],
+      [
+#include <v8.h>
+      ],[
+      v8::HandleScope handle_scope;
+      ]) 
+    AC_LANG_POP([C++])
 
-  AM_CONDITIONAL(HAVE_LIBV8, [test "x${ac_cv_libv8}" = "xyes"])
-])
+    AM_CONDITIONAL(HAVE_LIBV8, [test "x${ac_cv_libv8}" = "xyes"])
+    ])
 
 AC_DEFUN([_PANDORA_HAVE_LIBV8],[
   AC_ARG_ENABLE([libv8],

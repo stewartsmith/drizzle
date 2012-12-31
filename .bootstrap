@@ -11,6 +11,6 @@
 # MallocScribble=
 # TESTS_ENVIRONMENT=
 # VERBOSE=true
-WARNINGS="all"
+WARNINGS="all no-obsolete error"
 BOOTSTRAP_SNAPSHOT=true
 BOOTSTRAP_SNAPSHOT_CHECK="configure"
