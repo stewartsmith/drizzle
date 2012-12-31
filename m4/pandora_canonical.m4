@@ -1,9 +1,24 @@
-dnl  Copyright (C) 2009 Sun Microsystems, Inc.
-dnl This file is free software; Sun Microsystems, Inc.
-dnl gives unlimited permission to copy and/or distribute it,
-dnl with or without modifications, as long as this notice is preserved.
+#  Copyright (C) 2009 Sun Microsystems, Inc.
+#  This file is free software; Sun Microsystems, Inc.
+#  gives unlimited permission to copy and/or distribute it,
+#  with or without modifications, as long as this notice is preserved.
 
-dnl Which version of the canonical setup we're using
+#
+# Test whether madvise() is declared in C++ code -- it is not on some
+# systems, such as Solaris
+AC_DEFUN([LOCAL_MADVISE],
+    [AC_PREREQ([2.63])dnl
+    AC_LANG_PUSH([C++])
+    AC_CHECK_DECLS([madvise],[],[],[AC_INCLUDES_DEFAULT[
+#if HAVE_SYS_MMAN_H
+# include <sys/types.h>
+# include <sys/mman.h>
+#endif
+      ]])
+    AC_LANG_POP([C++])
+    ])
+
+# Which version of the canonical setup we're using
 AC_DEFUN([PANDORA_CANONICAL_VERSION],[0.175])
 
 AC_DEFUN([PANDORA_MSG_ERROR],[
@@ -20,7 +35,7 @@ AC_DEFUN([PANDORA_BLOCK_BAD_OPTIONS],[
   ])
 ])
 
-dnl The standard setup for how we build Pandora projects
+# The standard setup for how we build Pandora projects
 AC_DEFUN([PANDORA_CANONICAL_TARGET],[
   ifdef([m4_define],,[define([m4_define],   defn([define]))])
   ifdef([m4_undefine],,[define([m4_undefine],   defn([undefine]))])
@@ -107,19 +122,17 @@ AC_DEFUN([PANDORA_CANONICAL_TARGET],[
   ])
   PANDORA_VERSION
 
-  dnl Once we can use a modern autoconf, we can use this
-  dnl AC_PROG_CC_C99
+# Once we can use a modern autoconf, we can use this
+# AC_PROG_CC_C99
   AC_REQUIRE([AC_PROG_CXX])
   PANDORA_EXTENSIONS
   AM_PROG_CC_C_O
 
-
-
   PANDORA_PLATFORM
 
-  dnl autoconf doesn't automatically provide a fail-if-no-C++ macro
-  dnl so we check c++98 features and fail if we don't have them, mainly
-  dnl for that reason
+# autoconf doesn't automatically provide a fail-if-no-C++ macro
+# so we check c++98 features and fail if we don't have them, mainly
+# for that reason
   PANDORA_CHECK_CXX_STANDARD
   m4_if(PCT_REQUIRE_CXX, [yes], [
     AS_IF([test "$ac_cv_cxx_stdcxx_98" = "no"],[
@@ -150,23 +163,11 @@ AC_DEFUN([PANDORA_CANONICAL_TARGET],[
       [Define if system doesn't define])
   ])
 
-  AC_CHECK_LIBM
-  dnl Bug on FreeBSD - LIBM check doesn't set the damn variable
-  AC_SUBST([LIBM])
-  
+  LT_LIB_M
 
   PANDORA_OPTIMIZE
 
-  AC_LANG_PUSH(C++)
-  # Test whether madvise() is declared in C++ code -- it is not on some
-  # systems, such as Solaris
-  AC_CHECK_DECLS([madvise], [], [], [AC_INCLUDES_DEFAULT[
-  #if HAVE_SYS_MMAN_H
-  #include <sys/types.h>
-  #include <sys/mman.h>
-  #endif
-  ]])
-  AC_LANG_POP()
+  LOCAL_MADVISE
 
   PANDORA_HAVE_GCC_ATOMICS
 
