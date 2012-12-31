@@ -1122,6 +1122,8 @@ check_make_target()
       ;;
     'all')
       ;;
+    'make_default')
+      ;;
     'test-*')
       ;;
     'valgrind-*')
@@ -1200,9 +1202,8 @@ function bootstrap ()
       'configure')
         run_configure
         ;;
-      'default')
-        make
-        run_configure
+      'make_default')
+        make_default
         ;;
       'mingw')
         make_for_mingw32
