@@ -19,14 +19,13 @@
 #   and this notice are preserved. This file is offered as-is, without any
 #   warranty.
 
-#serial 6
+#serial 7
 
 AU_ALIAS([AC_CXX_HEADER_STDCXX_98], [AX_CXX_HEADER_STDCXX_98])
 AC_DEFUN([AX_CXX_HEADER_STDCXX_98], [
   AC_CACHE_CHECK(for ISO C++ 98 include files,
   ax_cv_cxx_stdcxx_98,
-  [AC_LANG_SAVE
-  AC_LANG_CPLUSPLUS
+  [AC_LANG_PUSH([C++])
   AC_TRY_COMPILE([
     #include <cassert>
     #include <cctype>
@@ -79,7 +78,7 @@ AC_DEFUN([AX_CXX_HEADER_STDCXX_98], [
     #include <vector>
   ],,
   ax_cv_cxx_stdcxx_98=yes, ax_cv_cxx_stdcxx_98=no)
-  AC_LANG_RESTORE
+  AC_LANG_POP([C++])
   ])
   if test "$ax_cv_cxx_stdcxx_98" = yes; then
     AC_DEFINE(STDCXX_98_HEADERS,,[Define if ISO C++ 1998 header files are present. ])
