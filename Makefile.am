@@ -201,6 +201,7 @@ maintainer-clean-local:
 	-rm -f m4/ltsugar.m4
 	-rm -f m4/ltversion.m4
 	-rm -f m4/lt~obsolete.m4
+	-rm -rf html
 
 include config/lcov.am
 
