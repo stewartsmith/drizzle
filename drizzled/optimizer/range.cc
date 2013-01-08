@@ -1002,7 +1002,7 @@ optimizer::TableReadPlan *get_best_disjunct_quick(Session *session,
   }
 
   if (imerge_too_expensive || (imerge_cost > read_time) ||
-      ((non_cpk_scan_records+cpk_scan_records >= param->table->cursor->stats.records) && read_time != DBL_MAX))
+      ((non_cpk_scan_records+cpk_scan_records >= param->table->cursor->stats.records) && compare_ne_double(read_time, DBL_MAX)))
   {
     /*
       Bail out if it is obvious that both index_merge and ROR-union will be
@@ -1226,7 +1226,7 @@ static int cmp_ror_scan_info(optimizer::RorScanInfo** a, optimizer::RorScanInfo*
 {
   double val1= static_cast<double>((*a)->records) * (*a)->key_rec_length;
   double val2= static_cast<double>((*b)->records) * (*b)->key_rec_length;
-  return (val1 < val2)? -1: (val1 == val2)? 0 : 1;
+  return (val1 < val2)? -1: (compare_double(val1, val2))? 0 : 1;
 }
 
 
@@ -1522,7 +1522,7 @@ static bool ror_intersect_add(ROR_INTERSECT_INFO *info,
   double selectivity_mult= 1.0;
 
   selectivity_mult = ror_scan_selectivity(info, ror_scan);
-  if (selectivity_mult == 1.0)
+  if (compare_double(selectivity_mult, 1.0))
   {
     /* Don't add this scan if it doesn't improve selectivity. */
     return false;

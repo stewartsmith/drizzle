@@ -85,14 +85,13 @@ bool parsePolicyFile(std::string new_policy_file, PolicyItemList& table_policies
   }
   catch (const std::exception &e)
   {
-    errmsg_printf(error::ERROR, _(e.what()));
+    errmsg_printf(error::ERROR, _("parsePolicyFile() %s"), e.what());
     return false;
   }
 
   if (! file.is_open())
   {
-    string error_msg= "Unable to open regex policy file: " + new_policy_file;
-    errmsg_printf(error::ERROR, _(error_msg.c_str()));
+    errmsg_printf(error::ERROR, _("Unable to open regex policy file: %s"), new_policy_file.c_str());
     return false;
   }
 
@@ -137,8 +136,7 @@ bool parsePolicyFile(std::string new_policy_file, PolicyItemList& table_policies
       }
       catch (const std::exception &e)
       {
-	string error_msg= "Bad policy item: user=" + user_regex + " object=" + object_regex + " action=" + action;
-        errmsg_printf(error::ERROR, _(error_msg.c_str()));
+        errmsg_printf(error::ERROR, _("Bad policy item: user= %s object= %s action %s"), user_regex.c_str(), object_regex.c_str(), action.c_str());
         throw std::exception();
       }
     }
@@ -147,8 +145,7 @@ bool parsePolicyFile(std::string new_policy_file, PolicyItemList& table_policies
   catch (const std::exception &e)
   {
     /* On any non-EOF break, unparseable line */
-    string error_msg= "Unable to parse policy file " + new_policy_file + ":" + e.what();
-    errmsg_printf(error::ERROR, _(error_msg.c_str()));
+    errmsg_printf(error::ERROR, _("Unable to parse policy file %s:%s"), new_policy_file.c_str(), e.what());
     return false;
   }
 

@@ -211,6 +211,7 @@ AS_IF([test "x${ac_gcc_profile_mode}" = "xyes" -a "x${pandora_cv_boost_profile}"
     AC_DEFINE([_GLIBCXX_PROFILE],[1],[Enable GCC Profile Mode])
     ])
 
+AX_HARDEN_COMPILER_FLAGS
 
 AC_CONFIG_FILES(Makefile dnl
  tests/Makefile dnl

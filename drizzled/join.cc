@@ -3641,7 +3641,7 @@ static void best_access_path(Join *join,
             }
             else
             {
-              if (!(records=keyinfo->rec_per_key[keyinfo->key_parts-1]))
+              if (compare_double(records= keyinfo->rec_per_key[keyinfo->key_parts-1], 0.0))
               {                                   /* Prefer longer keys */
                 records=
                   ((double) s->records / (double) rec *
@@ -3741,7 +3741,7 @@ static void best_access_path(Join *join,
             else
             {
               /* Check if we have statistic about the distribution */
-              if ((records= keyinfo->rec_per_key[max_key_part-1]))
+              if (compare_ne_double((records= keyinfo->rec_per_key[max_key_part-1]), 0.0))
               {
                 /*
                   Fix for the case where the index statistics is too
@@ -3783,14 +3783,19 @@ static void best_access_path(Join *join,
                   x = used key parts (1 <= x <= c)
                 */
                 double rec_per_key;
-                if (!(rec_per_key=(double)
-                      keyinfo->rec_per_key[keyinfo->key_parts-1]))
+                if (compare_double((rec_per_key=(double) keyinfo->rec_per_key[keyinfo->key_parts-1]), 0.0))
+                {
                   rec_per_key=(double) s->records/rec+1;
+                }
 
                 if (!s->records)
+                {
                   tmp = 0;
+                }
                 else if (rec_per_key/(double) s->records >= 0.01)
+                {
                   tmp = rec_per_key;
+                }
                 else
                 {
                   double a=s->records*0.01;
@@ -3975,7 +3980,7 @@ static void best_access_path(Join *join,
       as record_count * rnd_records / TIME_FOR_COMPARE. This cost plus
       tmp give us total cost of using Table SCAN
     */
-    if (best == DBL_MAX ||
+    if (compare_double(best, DBL_MAX) ||
         (tmp  + record_count/(double) TIME_FOR_COMPARE*rnd_records <
          best + record_count/(double) TIME_FOR_COMPARE*records))
     {

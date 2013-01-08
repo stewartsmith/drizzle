@@ -338,7 +338,7 @@ bool Item_field::val_bool_result()
 
   case REAL_RESULT:
   case STRING_RESULT:
-    return result_field->val_real() != 0.0;
+    return bool(compare_ne_double(result_field->val_real(), 0.0));
 
   case ROW_RESULT:
     assert(false);
