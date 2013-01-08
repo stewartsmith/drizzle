@@ -93,6 +93,7 @@ bool ModulesTool::Generator::populate()
     case PLUGIN_LICENSE_LGPL:
       push(LGPL_STRING);
       break;
+    case PLUGIN_LICENSE_PROPRIETARY:
     default:
       push(PROPRIETARY_STRING);
       break;

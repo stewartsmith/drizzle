@@ -33,6 +33,42 @@
 #include <drizzled/item/string.h>
 #include <drizzled/item/sum.h>
 #include <drizzled/qsort_cmp.h>
+#include <climits>
+
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wfloat-equal"
+
+static inline int compare_double(double f1, double f2)
+{
+  if (f1 == f2)
+  {
+    return 1;
+  }
+
+  return 0;
+#if 0
+  double diff= f1 - f2;
+  return (diff < std::numeric_limits<double>::epsilon()) && (-diff > std::numeric_limits<double>::epsilon());
+
+  double precision = 0.000001;
+  if (((f1 - precision) < f2) && 
+      ((f1 + precision) > f2))
+  {
+    return 1;
+  }
+  else
+  {
+    return 0;
+  }
+#endif
+}
+
+#pragma GCC diagnostic pop
+
+static inline int compare_ne_double(double f1, double f2)
+{
+  return compare_double(f1, f2) == 1 ? 0 : 1;
+}
 
 namespace drizzled {
 
@@ -1033,12 +1069,12 @@ public:
   }
   int cmp(Item *arg)
   {
-    return value != arg->val_real();
+    return compare_ne_double(value, arg->val_real());
   }
   int compare(cmp_item *ci)
   {
     cmp_item_real *l_cmp= (cmp_item_real *) ci;
-    return (value < l_cmp->value)? -1 : ((value == l_cmp->value) ? 0 : 1);
+    return (value < l_cmp->value)? -1 : (compare_double(value, l_cmp->value) ? 0 : 1);
   }
   cmp_item *make_same();
 };

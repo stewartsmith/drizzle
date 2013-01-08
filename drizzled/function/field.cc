@@ -74,8 +74,10 @@ int64_t Item_func_field::val_int()
       return 0;
     for (uint32_t i=1; i < arg_count ; i++)
     {
-      if (val == args[i]->val_real() && !args[i]->null_value)
+      if (compare_double(val, args[i]->val_real()) && !args[i]->null_value)
+      {
         return (int64_t) (i);
+      }
     }
   }
   return 0;

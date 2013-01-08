@@ -110,7 +110,7 @@ bool Item::val_bool()
 
     case REAL_RESULT:
     case STRING_RESULT:
-      return val_real() != 0.0;
+      return compare_ne_double(val_real(), 0.0);
 
     case ROW_RESULT:
       assert(0);
@@ -1519,7 +1519,7 @@ bool field_is_equal_to_item(Field *field,Item *item)
   if (item->null_value)
     return 1;
 
-  return result == field->val_real();
+  return compare_double(result, field->val_real());
 }
 
 /**

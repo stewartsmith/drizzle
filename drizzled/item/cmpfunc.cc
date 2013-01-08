@@ -1189,7 +1189,7 @@ int Arg_comparator::compare_real()
     {
       owner->null_value= 0;
       if (val1 < val2)	return -1;
-      if (val1 == val2) return 0;
+      if (compare_double(val1, val2)) return 0;
       return 1;
     }
   }
@@ -1221,7 +1221,7 @@ int Arg_comparator::compare_e_real()
   double val2= (*b)->val_real();
   if ((*a)->null_value || (*b)->null_value)
     return test((*a)->null_value && (*b)->null_value);
-  return test(val1 == val2);
+  return test(compare_double(val1, val2));
 }
 
 int Arg_comparator::compare_e_decimal()
@@ -1250,7 +1250,7 @@ int Arg_comparator::compare_real_fixed()
     if (!(*b)->null_value)
     {
       owner->null_value= 0;
-      if (val1 == val2 || fabs(val1 - val2) < precision)
+      if (compare_double(val1, val2) || fabs(val1 - val2) < precision)
         return 0;
       if (val1 < val2)
         return -1;
@@ -1268,7 +1268,7 @@ int Arg_comparator::compare_e_real_fixed()
   double val2= (*b)->val_real();
   if ((*a)->null_value || (*b)->null_value)
     return test((*a)->null_value && (*b)->null_value);
-  return test(val1 == val2 || fabs(val1 - val2) < precision);
+  return test(compare_double(val1, val2) || fabs(val1 - val2) < precision);
 }
 
 
@@ -3081,7 +3081,7 @@ int cmp_int64_t(void *, in_int64_t::packed_int64_t *a,
 
 static int cmp_double(void *, double *a, double *b)
 {
-  return *a < *b ? -1 : *a == *b ? 0 : 1;
+  return *a < *b ? -1 : compare_double(*a, *b) ? 0 : 1;
 }
 
 static int cmp_row(void *, cmp_item_row *a, cmp_item_row *b)

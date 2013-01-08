@@ -221,6 +221,41 @@ public:
   char *env_s;
 };
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wfloat-equal"
+
+static inline int compare_double(double f1, double f2)
+{
+  if (f1 == f2)
+  {
+    return 1;
+  }
+
+  return 0;
+#if 0
+  double diff= f1 - f2;
+  return (diff < std::numeric_limits<double>::epsilon()) && (-diff > std::numeric_limits<double>::epsilon());
+
+  double precision = 0.000001;
+  if (((f1 - precision) < f2) && 
+      ((f1 + precision) > f2))
+  {
+    return 1;
+  }
+  else
+  {
+    return 0;
+  }
+#endif
+}
+
+#pragma GCC diagnostic pop
+
+static inline int compare_ne_double(double f1, double f2)
+{
+  return compare_double(f1, f2) == 1 ? 0 : 1;
+}
+
 /*Perl/shell-like variable registers */
 boost::array<VAR, 10> var_reg;
 
@@ -2863,8 +2898,10 @@ static void do_sleep(st_command* command, bool real_sleep)
   if (opt_sleep >= 0 && !real_sleep)
     sleep_val= opt_sleep;
 
-  if (sleep_val)
+  if (compare_ne_double(sleep_val, 0.0))
+  {
     usleep(sleep_val * 1000000);
+  }
   command->last_argument= sleep_end;
 }
 

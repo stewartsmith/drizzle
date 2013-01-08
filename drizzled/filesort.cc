@@ -51,6 +51,8 @@
 #include <drizzled/statistics_variables.h>
 #include <drizzled/system_variables.h>
 
+#include <drizzled/item/cmpfunc.h>
+
 using namespace std;
 
 namespace drizzled {
@@ -1650,7 +1652,7 @@ unpack_addon_fields(sort_addon_field *addon_field, unsigned char *buff)
 void change_double_for_sort(double nr,unsigned char *to)
 {
   unsigned char *tmp=(unsigned char*) to;
-  if (nr == 0.0)
+  if (compare_double(nr, 0.0))
   {						/* Change to zero string */
     tmp[0]=(unsigned char) 128;
     memset(tmp+1, 0, sizeof(nr)-1);

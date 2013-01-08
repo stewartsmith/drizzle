@@ -32,6 +32,7 @@
 #include <drizzled/internal/my_pthread.h>
 #include <drizzled/function/str/strfunc.h>
 #include <drizzled/plugin/function.h>
+#include <drizzled/item/cmpfunc.h>
 
 #include <string>
 
@@ -71,11 +72,11 @@ public:
 int64_t Item_func_sleep::val_int()
 {
   /* int time in seconds, decimal allowed */
-  double dtime;
+  double dtime= args[0]->val_real();
 
   Session &session(getSession());
 
-  if ((arg_count != 1) || ! (dtime= args[0]->val_real()))
+  if ((arg_count != 1) || compare_double(0, dtime))
   {
     null_value= true;
     return 0;

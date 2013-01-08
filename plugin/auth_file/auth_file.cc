@@ -234,8 +234,7 @@ bool parseUsersFile(std::string new_users_file, users_t& users_dummy)
 
   if (!file.is_open())
   {
-    string error_msg= "Could not open users file: " + new_users_file;
-    errmsg_printf(error::ERROR, _(error_msg.c_str()));
+    errmsg_printf(error::ERROR, _("Could not open users file: %s"), new_users_file.c_str());
     return false;
   }
 
@@ -261,8 +260,7 @@ bool parseUsersFile(std::string new_users_file, users_t& users_dummy)
   
       if (not users_dummy.insert(pair<string, string>(username, password)).second)
       {
-        string error_msg= "Duplicate entry found in users file: " + username;
-        errmsg_printf(error::ERROR, _(error_msg.c_str()));
+        errmsg_printf(error::ERROR, _("Duplicate entry found in users file: %s"), username.c_str());
         return false;
       }
     }
@@ -271,8 +269,7 @@ bool parseUsersFile(std::string new_users_file, users_t& users_dummy)
   catch (const std::exception &e)
   {
     /* On any non-EOF break, unparseable line */
-    string error_msg= "Unable to parse users file " + new_users_file + ":" + e.what();
-    errmsg_printf(error::ERROR, _(error_msg.c_str()));
+    errmsg_printf(error::ERROR, _("Unable to parse users file %s:%s"), new_users_file.c_str(), e.what());
     return false;
   }
 }
