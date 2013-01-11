@@ -85,5 +85,5 @@ public:
   bool closeLogFile();
 
 private:
-  std::ofstream _fh;  ///< File handle for open log file
+  int _fd;  ///< File handle for open log file
 };
