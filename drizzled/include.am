@@ -44,6 +44,8 @@ DTRACEFILES= \
 	     drizzled/statement/insert.o \
 	     drizzled/statement/insert_select.o
 
+noinst_HEADERS+= drizzled/compare_double.h
+
 nobase_dist_pkginclude_HEADERS+= \
 			      drizzled/abort_exception.h \
 			      drizzled/alter_column.h \
