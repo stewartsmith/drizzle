@@ -39,11 +39,13 @@
 
 #include <drizzled/internal/m_string.h>  /* for memcpy and NOT_FIXED_DEC */
 
-#include <float.h>
+#include <cfloat>
 
 #include <cstdlib>
 #include <cerrno>
 #include <algorithm>
+
+#include "drizzled/compare_double.h"
 
 using namespace std;
 
@@ -1506,7 +1508,7 @@ static double my_strtod_int(const char *s00, char **se, int *error)
         else
           word1(rv)&= 0xffffffff << j;
       }
-      if (!dval(rv))
+      if (compare_double(dval(rv), 0))
       {
  undfl:
           dval(rv)= 0.;
