@@ -35,40 +35,7 @@
 #include <drizzled/qsort_cmp.h>
 #include <climits>
 
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wfloat-equal"
-
-static inline int compare_double(double f1, double f2)
-{
-  if (f1 == f2)
-  {
-    return 1;
-  }
-
-  return 0;
-#if 0
-  double diff= f1 - f2;
-  return (diff < std::numeric_limits<double>::epsilon()) && (-diff > std::numeric_limits<double>::epsilon());
-
-  double precision = 0.000001;
-  if (((f1 - precision) < f2) && 
-      ((f1 + precision) > f2))
-  {
-    return 1;
-  }
-  else
-  {
-    return 0;
-  }
-#endif
-}
-
-#pragma GCC diagnostic pop
-
-static inline int compare_ne_double(double f1, double f2)
-{
-  return compare_double(f1, f2) == 1 ? 0 : 1;
-}
+#include "drizzled/compare_double.h"
 
 namespace drizzled {
 
