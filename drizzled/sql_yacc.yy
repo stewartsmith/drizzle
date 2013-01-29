@@ -50,6 +50,7 @@
 #include <drizzled/system_variables.h>
 #include <drizzled/lex_input_stream.h>
 #include <drizzled/show.h>
+#include "drizzled/probes.h"
 
 int yylex(union ParserType *yylval, drizzled::Session *session);
 
@@ -5726,6 +5727,49 @@ subselect_end:
             child->select_n_where_fields;
           }
         ;
+
 /**
   @} (end of group Parser)
 */
+
+%%
+
+namespace drizzled {
+
+/**
+  This is a wrapper of DRIZZLEparse(). All the code should call parse_sql()
+  instead of DRIZZLEparse().
+
+  @param session Thread context.
+  @param lip Lexer context.
+
+  @return Error status.
+    @retval false on success.
+    @retval true on parsing error.
+*/
+
+bool parse_sql(Session *session, Lex_input_stream *lip)
+{
+  assert(session->m_lip == NULL);
+
+  DRIZZLE_QUERY_PARSE_START(session->getQueryString()->c_str());
+
+/* Set Lex_input_stream. */
+  session->m_lip= lip;
+
+/* Parse the query. */
+  bool parse_status= base_sql_parse(session) != 0;
+
+/* Check that if DRIZZLEparse() failed, session->is_error() is set. */
+  assert(!parse_status || session->is_error());
+
+/* Reset Lex_input_stream. */
+  session->m_lip= NULL;
+
+  DRIZZLE_QUERY_PARSE_DONE(parse_status || session->is_fatal_error);
+
+/* That's it. */
+  return parse_status || session->is_fatal_error;
+}
+
+} // namespace drizzled

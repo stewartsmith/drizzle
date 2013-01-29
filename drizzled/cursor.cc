@@ -47,6 +47,7 @@
 #include <drizzled/resource_context.h>
 #include <drizzled/statistics_variables.h>
 #include <drizzled/system_variables.h>
+#include "drizzled/probes.h"
 
 using namespace std;
 
