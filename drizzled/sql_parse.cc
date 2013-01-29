@@ -70,8 +70,6 @@
 
 using namespace std;
 
-extern int base_sql_parse(drizzled::Session *session); // from sql_yacc.cc
-
 namespace drizzled {
 
 /* Prototypes */

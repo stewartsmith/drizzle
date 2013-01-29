@@ -20,6 +20,8 @@
 
 #include <config.h>
 
+#include <drizzled/execute/common.h>
+
 #include <drizzled/session.h>
 #include <drizzled/user_var_entry.h>
 #include <drizzled/plugin/client/cached.h>

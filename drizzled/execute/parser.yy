@@ -37,16 +37,31 @@
  *
  */
 
+%{
+
+#include <config.h>
+#include <iostream>
+#include <stdint.h>
+#include "drizzled/execute/common.h"
+#include <drizzled/execute/scanner.h>
+#include <vector>
+
+#ifndef __INTEL_COMPILER
+# pragma GCC diagnostic ignored "-Wold-style-cast"
+#endif
+
+%}
+
 %error-verbose
 %debug
 %defines
 %expect 0
 %output "drizzled/execute/parser.cc"
 %defines "drizzled/execute/parser.h"
-%lex-param { yyscan_t *scanner }
+%lex-param { void *scanner }
 %name-prefix="execute_"
-%parse-param { ::drizzled::execute::Context *context }
-%parse-param { yyscan_t *scanner }
+%parse-param { class drizzled::execute::Context *context }
+%parse-param { void *scanner }
 %pure-parser
 %require "2.2"
 %start begin
@@ -54,25 +69,15 @@
 
 %{
 
-#include <config.h>
-#include <iostream>
-#include <stdint.h>
-#include <drizzled/execute/symbol.h>
-#include <drizzled/execute/scanner.h>
-#include <drizzled/execute/context.h>
-#include <vector>
-
-#ifndef __INTEL_COMPILER
-#pragma GCC diagnostic ignored "-Wold-style-cast"
-#endif
-
 #define YYENABLE_NLS 0
 #define YYLTYPE_IS_TRIVIAL 0
 
 std::string query;
 #define parser_abort(A, B) do { parser::abort_func((A), (B)); YYABORT; } while (0)
 
-inline void execute_error(::drizzled::execute::Context *context, yyscan_t *scanner, const char *error)
+namespace drizzled { namespace execute { class Context; }}
+
+inline void execute_error(class drizzled::execute::Context *context, void *scanner, const char *error)
 {
   if (not context->end())
   {
