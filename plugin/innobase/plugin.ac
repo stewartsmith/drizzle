@@ -26,7 +26,7 @@ AC_DEFUN([AC_INNODB_ACTIONS],[
   AC_CHECK_SIZEOF(int, 4)
   AC_CHECK_SIZEOF(long, 4)
   AC_CHECK_SIZEOF(void*, 4)
-  AC_CHECK_FUNCS(sched_yield fdatasync localtime_r pread)
+  AC_CHECK_FUNCS([sched_yield fdatasync localtime_r pread])
   AC_CHECK_FUNCS([uname munmap memchr getpagesize bzero])
   AC_C_BIGENDIAN
   case "$target_os" in
@@ -66,7 +66,7 @@ AC_DEFUN([AC_INNODB_ACTIONS],[
 		INNODB_DYNAMIC_CFLAGS="$INNODB_DYNAMIC_CFLAGS -prefer-non-pic"
 		;;
   esac
-  AC_SUBST(INNODB_DYNAMIC_CFLAGS)
+  AC_SUBST([INNODB_DYNAMIC_CFLAGS])
 
   AC_CACHE_CHECK([whether pthread_t can be used by GCC atomic builtins],
     [ac_cv_plugin_innodb_have_gcc_atomic],[

@@ -1,3 +1,4 @@
+/*  vim:expandtab:shiftwidth=2:tabstop=2:smarttab: */
 /*****************************************************************************
 
 Copyright (C) 1997, 2009, Innobase Oy. All Rights Reserved.

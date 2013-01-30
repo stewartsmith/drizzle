@@ -494,6 +494,7 @@ type::timestamp_t Time::store(const char *str, uint32_t length, uint32_t flags)
 
 bool Time::store(const char *str, uint32_t length, int &warning, type::timestamp_t arg)
 {
+  (void)arg;
   uint32_t date[5];
   uint64_t value;
   const char *end=str+length, *end_of_days;
@@ -505,15 +506,21 @@ bool Time::store(const char *str, uint32_t length, int &warning, type::timestamp
   this->neg=0;
   warning= 0;
   for (; str != end && my_charset_utf8_general_ci.isspace(*str) ; str++)
+  {
     length--;
+  }
+
   if (str != end && *str == '-')
   {
     this->neg=1;
     str++;
     length--;
   }
+
   if (str == end)
+  {
     return true;
+  }
 
   /* Check first if this is a full TIMESTAMP */
   if (length >= 12)
@@ -531,7 +538,9 @@ bool Time::store(const char *str, uint32_t length, int &warning, type::timestamp
 
   /* Not a timestamp. Try to get this as a DAYS_TO_SECOND string */
   for (value=0; str != end && my_charset_utf8_general_ci.isdigit(*str) ; str++)
-    value=value*10L + (long) (*str - '0');
+  {
+    value= value*10L + (long) (*str - '0');
+  }
 
   /* Skip all space after 'days' */
   end_of_days= str;
@@ -539,7 +548,7 @@ bool Time::store(const char *str, uint32_t length, int &warning, type::timestamp
     ;
 
   found_days=found_hours=0;
-  if ((uint32_t) (end-str) > 1 && str != end_of_days &&
+  if ((uint32_t) (end-str) > 1 and str != end_of_days and
       my_charset_utf8_general_ci.isdigit(*str))
   {                                             /* Found days part */
     date[0]= (uint32_t) value;

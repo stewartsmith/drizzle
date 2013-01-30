@@ -238,8 +238,14 @@ bool plugin::TableFunction::Generator::sub_populate(uint32_t field_size)
 {
   columns_iterator= columns;
   bool ret= populate();
+#ifndef NDEBUG
   if (ret)
+  {
     assert(columns_iterator == columns + field_size);
+  }
+#else
+  (void)field_size;
+#endif
   return ret;
 }
 

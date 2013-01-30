@@ -156,6 +156,14 @@ Client *plugin::Listen::getNullClient()
 void Listen::shutdown()
 {
   ssize_t ret= write(wakeup_pipe[1], "\0", 1);
+  if (ret == -1)
+  {
+    sql_perror("write()");
+  }
+  else if (ret == 0)
+  {
+    errmsg_printf(error::ERROR, _("write(1) failed for the the wakeup_pipe during shutdown"));
+  }
   assert(ret == 1);
 }
 
