@@ -93,10 +93,8 @@ extern ulint		pars_star_denoter;
 #define PARS_OUTPUT	1
 #define PARS_NOT_PARAM	2
 
-#if 0
 int
 yyparse(void);
-#endif
 
 /*************************************************************//**
 Parses an SQL string returning the query graph.
