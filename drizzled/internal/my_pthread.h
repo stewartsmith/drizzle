@@ -81,10 +81,6 @@ namespace internal {
 
 	/* READ-WRITE thread locking */
 
-#if !defined(HAVE_PTHREAD_ATTR_SETSTACKSIZE) && ! defined(pthread_attr_setstacksize)
-#define pthread_attr_setstacksize(A,B) pthread_dummy(0)
-#endif
-
 /* Define mutex types, see my_thr_init.c */
 #ifdef THREAD_ADAPTIVE_MUTEX_INITIALIZER_NP
 extern pthread_mutexattr_t my_fast_mutexattr;

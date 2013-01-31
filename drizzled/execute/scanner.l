@@ -41,10 +41,13 @@
 
 #include <config.h>
 #include <unistd.h>
-#include <drizzled/execute/parser.h>  
-#include <drizzled/execute/context.h>
-#include <drizzled/execute/symbol.h>
-#include <drizzled/lex_string.h>
+
+#ifndef execute_HEADER_H
+# define execute_HEADER_H 1
+#endif
+
+#include "drizzled/execute/common.h"
+#include "drizzled/lex_string.h"
 
 using namespace drizzled;
 
@@ -55,7 +58,9 @@ using namespace drizzled;
 #pragma GCC diagnostic ignored "-Wmissing-declarations"
 #endif
 
-#define YY_EXTRA_TYPE ::drizzled::execute::Context*
+#ifndef YY_EXTRA_TYPE
+# define YY_EXTRA_TYPE drizzled::execute::Context*
+#endif
 
 }
 

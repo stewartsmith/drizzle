@@ -25,6 +25,7 @@ noinst_HEADERS+= drizzled/execute/context.h
 noinst_HEADERS+= drizzled/execute/parser.h
 noinst_HEADERS+= drizzled/execute/scanner.h
 noinst_HEADERS+= drizzled/execute/symbol.h
+noinst_HEADERS+= drizzled/execute/common.h
 
 MAINTAINERCLEANFILES+= drizzled/execute/parser.cc
 MAINTAINERCLEANFILES+= drizzled/execute/parser.h

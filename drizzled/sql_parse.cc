@@ -70,13 +70,10 @@
 
 using namespace std;
 
-extern int base_sql_parse(drizzled::Session *session); // from sql_yacc.cc
-
 namespace drizzled {
 
 /* Prototypes */
 bool my_yyoverflow(short **a, ParserType **b, ulong *yystacksize);
-static bool parse_sql(Session *session, Lex_input_stream *lip);
 void parse(Session&, str_ref);
 
 /**
@@ -1590,48 +1587,6 @@ bool check_identifier_name(str_ref str, error_t err_code)
   }
 
   return true;
-}
-
-
-/**
-  This is a wrapper of DRIZZLEparse(). All the code should call parse_sql()
-  instead of DRIZZLEparse().
-
-  @param session Thread context.
-  @param lip Lexer context.
-
-  @return Error status.
-    @retval false on success.
-    @retval true on parsing error.
-*/
-
-static bool parse_sql(Session *session, Lex_input_stream *lip)
-{
-  assert(session->m_lip == NULL);
-
-  DRIZZLE_QUERY_PARSE_START(session->getQueryString()->c_str());
-
-  /* Set Lex_input_stream. */
-
-  session->m_lip= lip;
-
-  /* Parse the query. */
-
-  bool parse_status= base_sql_parse(session) != 0;
-
-  /* Check that if DRIZZLEparse() failed, session->is_error() is set. */
-
-  assert(!parse_status || session->is_error());
-
-  /* Reset Lex_input_stream. */
-
-  session->m_lip= NULL;
-
-  DRIZZLE_QUERY_PARSE_DONE(parse_status || session->is_fatal_error);
-
-  /* That's it. */
-
-  return parse_status || session->is_fatal_error;
 }
 
 /**

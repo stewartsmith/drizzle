@@ -39,10 +39,7 @@ on 1/27/1998 */
 #include "dict0mem.h"
 #include "dict0crea.h"
 #include "que0que.h"
-#ifndef PARS0GRM_H
-# define PARS0GRM_H
-# include "pars0grm.hh"
-#endif
+#include "pars0grm.hh"
 #include "pars0opt.h"
 #include "data0data.h"
 #include "data0type.h"

@@ -70,5 +70,7 @@ Item * all_any_subquery_creator(Item *left_expr,
 
 char* query_table_status(Session*,const char *db,const char *table_name);
 
+bool parse_sql(Session *session, Lex_input_stream *lip);
+
 } /* namespace drizzled */
 

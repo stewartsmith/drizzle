@@ -213,6 +213,12 @@ AS_IF([test "x${ac_gcc_profile_mode}" = "xyes" -a "x${pandora_cv_boost_profile}"
 
 #AX_HARDEN_COMPILER_FLAGS
 
+AH_BOTTOM([
+           #ifndef BOOST_SYSTEM_NO_DEPRECATED
+           #define BOOST_SYSTEM_NO_DEPRECATED 1
+           #endif
+           ])
+
 AC_CONFIG_FILES(Makefile dnl
  tests/Makefile dnl
  drizzled/plugin/version.h dnl
