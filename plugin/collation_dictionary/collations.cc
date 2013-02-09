@@ -39,6 +39,7 @@ CollationsTool::CollationsTool() :
 
 CollationsTool::Generator::Generator(Field **arg) :
   CharacterSetsTool::Generator(arg),
+  collation_iter(NULL),
   is_collation_primed(false)
 {
 }
