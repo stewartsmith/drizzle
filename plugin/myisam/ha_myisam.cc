@@ -546,6 +546,8 @@ ha_myisam::ha_myisam(plugin::StorageEngine &engine_arg,
                      Table &table_arg)
   : Cursor(engine_arg, table_arg),
   file(0),
+  data_file_name(NULL),
+  index_file_name(NULL),
   can_enable_indexes(true),
   is_ordered(true)
 { }
