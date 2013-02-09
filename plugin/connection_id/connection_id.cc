@@ -30,8 +30,8 @@ class ConnectionIdFunction :public Item_int_func
 {
   int64_t value;
 public:
-  ConnectionIdFunction() :Item_int_func() {}
-  
+  ConnectionIdFunction() :Item_int_func(), value(0) {}
+
   int64_t val_int() 
   {
     assert(fixed == true);
