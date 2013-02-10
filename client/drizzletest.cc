@@ -5129,7 +5129,7 @@ try
 
   if (vm.count("tmpdir"))
   {
-    strncpy(TMPDIR, vm["tmpdir"].as<string>().c_str(), sizeof(TMPDIR));
+    strncpy(TMPDIR, vm["tmpdir"].as<string>().c_str(), sizeof(TMPDIR)-1);
   }
 
   if (vm.count("version"))
