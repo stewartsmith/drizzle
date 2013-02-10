@@ -168,7 +168,7 @@ MI_INFO *mi_open(const drizzled::identifier::Table &identifier, int mode, uint32
       (void) strcpy(index_name, org_name);
     *strrchr(org_name, '.')= '\0';
     (void) internal::fn_format(data_name,org_name,"",MI_NAME_DEXT,
-                     MY_APPEND_EXT|MY_UNPACK_FILENAME|MY_RESOLVE_SYMLINKS);
+                     MY_APPEND_EXT|MY_UNPACK_FILENAME);
 
     info_length=mi_uint2korr(share->state.header.header_length);
     base_pos=mi_uint2korr(share->state.header.base_pos);

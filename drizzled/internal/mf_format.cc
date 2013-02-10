@@ -119,21 +119,13 @@ char * fn_format(char * to, const char *name, const char *dir,
   {
     struct stat stat_buff;
     char rp_buff[PATH_MAX];
-    if ((!flag & MY_RESOLVE_SYMLINKS) || 
-       (!lstat(to,&stat_buff) && S_ISLNK(stat_buff.st_mode)))
+    if ((!lstat(to,&stat_buff) && S_ISLNK(stat_buff.st_mode)))
     {
       if (!realpath(to,rp_buff))
         my_load_path(rp_buff, to, NULL);
       rp_buff[FN_REFLEN-1]= '\0';
       strcpy(to,rp_buff);
     }
-  }
-  else if (flag & MY_RESOLVE_SYMLINKS)
-  {
-    strcpy(buff,to);
-    ssize_t sym_link_size= readlink(buff,to,FN_REFLEN-1);
-    if (sym_link_size >= 0)
-      to[sym_link_size]= '\0';
   }
   return(to);
 } /* fn_format */
