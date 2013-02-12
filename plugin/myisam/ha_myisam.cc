@@ -546,8 +546,6 @@ ha_myisam::ha_myisam(plugin::StorageEngine &engine_arg,
                      Table &table_arg)
   : Cursor(engine_arg, table_arg),
   file(0),
-  data_file_name(NULL),
-  index_file_name(NULL),
   can_enable_indexes(true),
   is_ordered(true)
 { }
@@ -1200,7 +1198,6 @@ void ha_myisam::position(const unsigned char *)
 int ha_myisam::info(uint32_t flag)
 {
   MI_ISAMINFO misam_info;
-  char name_buff[FN_REFLEN];
 
   (void) mi_status(file,&misam_info,flag);
   if (flag & HA_STATUS_VARIABLE)
@@ -1277,19 +1274,6 @@ int ha_myisam::info(uint32_t flag)
 	     sizeof(getTable()->key_info[0].rec_per_key)*share->key_parts);
     assert(share->getType() != message::Table::STANDARD);
 
-   /*
-     Set data_file_name and index_file_name to point at the symlink value
-     if table is symlinked (Ie;  Real name is not same as generated name)
-   */
-    data_file_name= index_file_name= 0;
-    internal::fn_format(name_buff, file->filename, "", MI_NAME_DEXT,
-              MY_APPEND_EXT | MY_UNPACK_FILENAME);
-    if (strcmp(name_buff, misam_info.data_file_name))
-      data_file_name=misam_info.data_file_name;
-    internal::fn_format(name_buff, file->filename, "", MI_NAME_IEXT,
-              MY_APPEND_EXT | MY_UNPACK_FILENAME);
-    if (strcmp(name_buff, misam_info.index_file_name))
-      index_file_name=misam_info.index_file_name;
   }
   if (flag & HA_STATUS_ERRKEY)
   {
