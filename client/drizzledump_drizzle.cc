@@ -222,7 +222,7 @@ bool DrizzleDumpTableDrizzle::populateIndexes()
   std::string query;
   std::string lastKey;
   bool firstIndex= true;
-  DrizzleDumpIndex *index;
+  DrizzleDumpIndex *index= NULL;
 
   if (verbose)
     std::cerr << _("-- Retrieving indexes for ") << tableName << "..." << std::endl;
@@ -241,7 +241,7 @@ bool DrizzleDumpTableDrizzle::populateIndexes()
   while ((row= drizzle_row_next(result)))
   {
     std::string indexName(row[0]);
-    if (indexName.compare(lastKey) != 0)
+    if (index == NULL || indexName.compare(lastKey) != 0)
     {
       if (!firstIndex)
         indexes.push_back(index);
