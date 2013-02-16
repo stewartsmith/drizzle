@@ -264,7 +264,7 @@ bool DrizzleDumpTableMySQL::populateIndexes()
   std::string query;
   std::string lastKey;
   bool firstIndex= true;
-  DrizzleDumpIndex *index;
+  DrizzleDumpIndex *index= NULL;
 
   if (verbose)
     std::cerr << _("-- Retrieving indexes for ") << tableName << "..." << std::endl;
@@ -280,7 +280,7 @@ bool DrizzleDumpTableMySQL::populateIndexes()
   while ((row= drizzle_row_next(result)))
   {
     std::string indexName(row[2]);
-    if (indexName.compare(lastKey) != 0)
+    if (index == NULL || indexName.compare(lastKey) != 0)
     {
       if (strcmp(row[10], "FULLTEXT") == 0)
         continue;
