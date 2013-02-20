@@ -35,6 +35,7 @@ CharacterSetsTool::CharacterSetsTool() :
 
 CharacterSetsTool::Generator::Generator(Field **arg) :
   plugin::TableFunction::Generator(arg),
+  character_set_iter(NULL),
   is_char_primed(false)
 {
 }

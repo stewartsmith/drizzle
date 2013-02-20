@@ -40,7 +40,7 @@ namespace drizzle_plugin
 namespace json_server
 {
 SQLExecutor::SQLExecutor(const string &schema)
-  : _in_error_state(false)
+  : _in_error_state(false), _err(EE_OK)
 {
   /* setup a Session object */
   _session= Session::make_shared(plugin::Listen::getNullClient(), catalog::local());

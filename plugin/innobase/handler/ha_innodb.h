@@ -60,7 +60,7 @@ typedef struct st_innobase_share {
         st_innobase_share(const char *arg) :
           use_count(0)
         {
-          strncpy(table_name, arg, FN_REFLEN);
+          strncpy(table_name, arg, FN_REFLEN-1);
         }
 
 } INNOBASE_SHARE;

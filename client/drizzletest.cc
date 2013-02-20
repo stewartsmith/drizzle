@@ -5129,7 +5129,7 @@ try
 
   if (vm.count("tmpdir"))
   {
-    strncpy(TMPDIR, vm["tmpdir"].as<string>().c_str(), sizeof(TMPDIR));
+    strncpy(TMPDIR, vm["tmpdir"].as<string>().c_str(), sizeof(TMPDIR)-1);
   }
 
   if (vm.count("version"))
@@ -5867,7 +5867,7 @@ st_replace_regex::st_replace_regex(char* expr)
   char last_c = 0;
   st_regex reg;
 
-  char* buf= new char[expr_len];
+  char* buf= new char[expr_len+1];
   char* expr_end= expr + expr_len;
   char* p= expr;
   char* buf_p= buf;

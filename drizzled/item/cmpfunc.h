@@ -1566,10 +1566,7 @@ public:
   COND_EQUAL *upper_levels;       /* multiple equalities of upper and levels */
   List<Item_equal> current_level; /* list of multiple equalities of
                                      the current and level           */
-  COND_EQUAL()
-  {
-    upper_levels= 0;
-  }
+  COND_EQUAL() : max_members(0), upper_levels(NULL) {}
 };
 
 typedef List<Item_field>::iterator Item_equal_iterator;

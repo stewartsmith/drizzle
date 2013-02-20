@@ -26,7 +26,6 @@
 class ha_myisam: public drizzled::Cursor
 {
   MI_INFO *file;
-  char    *data_file_name, *index_file_name;
   bool can_enable_indexes;
   bool is_ordered;
   int repair(drizzled::Session *session, MI_CHECK &param, bool optimize);
