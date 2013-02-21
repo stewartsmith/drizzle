@@ -93,7 +93,6 @@ static string extended_row;
 FILE *md_result_file= 0;
 FILE *stderror_file= 0;
 std::vector<DrizzleDumpDatabase*> database_store;
-DrizzleDumpConnection* db_connection;
 DrizzleDumpConnection* destination_connection;
 
 enum destinations {
@@ -125,10 +124,10 @@ boost::unordered_set<string> ignore_table;
 
 void maybe_exit(int error);
 static void die(int error, const char* reason, ...);
-static void write_header(char *db_name);
-static int dump_selected_tables(const string &db, const vector<string> &table_names);
-static int dump_databases(const vector<string> &db_names);
-static int dump_all_databases(void);
+static void write_header(DrizzleDumpConnection* db_connection,char *db_name);
+static int dump_selected_tables(DrizzleDumpConnection* db_connection,const string &db, const vector<string> &table_names);
+static int dump_databases(DrizzleDumpConnection* db_connection,const vector<string> &db_names);
+static int dump_all_databases(DrizzleDumpConnection* db_connection);
 int get_server_type();
 void dump_all_tables(void);
 void generate_dump(void);
@@ -234,7 +233,7 @@ static void check_io(FILE *file)
     die(EX_EOF, _("Got errno %d on write"), errno);
 }
 
-static void write_header(char *db_name)
+static void write_header(DrizzleDumpConnection* db_connection,char *db_name)
 {
   if ((not opt_compact) and (opt_comments))
   {
@@ -337,13 +336,12 @@ void maybe_exit(int error)
     first_error= error;
   if (ignore_errors)
     return;
-  delete db_connection;
   delete destination_connection;
   free_resources();
   exit(error);
 }
 
-static int dump_all_databases()
+static int dump_all_databases(DrizzleDumpConnection* db_connection)
 {
   drizzle_row_t row;
   drizzle_result_st *tableres;
@@ -378,7 +376,7 @@ static int dump_all_databases()
 /* dump_all_databases */
 
 
-static int dump_databases(const vector<string> &db_names)
+static int dump_databases(DrizzleDumpConnection* db_connection,const vector<string> &db_names)
 {
   int result=0;
   string temp;
@@ -396,7 +394,7 @@ static int dump_databases(const vector<string> &db_names)
   return(result);
 } /* dump_databases */
 
-static int dump_selected_tables(const string &db, const vector<string> &table_names)
+static int dump_selected_tables(DrizzleDumpConnection* db_connection,const string &db, const vector<string> &table_names)
 {
   DrizzleDumpDatabase *database;
 
@@ -417,7 +415,7 @@ static int dump_selected_tables(const string &db, const vector<string> &table_na
   return 0;
 } /* dump_selected_tables */
 
-static int do_flush_tables_read_lock()
+static int do_flush_tables_read_lock(DrizzleDumpConnection* db_connection)
 {
   /*
     We do first a FLUSH TABLES. If a long update is running, the FLUSH TABLES
@@ -434,7 +432,7 @@ static int do_flush_tables_read_lock()
   return 0;
 }
 
-static int start_transaction()
+static int start_transaction(DrizzleDumpConnection* db_connection)
 {
   db_connection->queryNoResult("SET SESSION TRANSACTION ISOLATION LEVEL REPEATABLE READ");
   db_connection->queryNoResult("START TRANSACTION WITH CONSISTENT SNAPSHOT");
@@ -460,7 +458,7 @@ int main(int argc, char **argv)
 try
 {
   int exit_code;
-
+  DrizzleDumpConnection* db_connection=NULL;
 #if defined(ENABLE_NLS)
 # if defined(HAVE_LOCALE_H)
   setlocale(LC_ALL, "");
@@ -770,26 +768,26 @@ try
   if (path.empty() && vm.count("database-used"))
   {
     string database_used= *vm["database-used"].as< vector<string> >().begin();
-    write_header((char *)database_used.c_str());
+    write_header(db_connection,(char *)database_used.c_str());
   }
 
-  if ((opt_lock_all_tables) && do_flush_tables_read_lock())
+  if ((opt_lock_all_tables) && do_flush_tables_read_lock(db_connection))
     goto err;
-  if (opt_single_transaction && start_transaction())
+  if (opt_single_transaction && start_transaction(db_connection))
     goto err;
   if (opt_lock_all_tables)
     db_connection->queryNoResult("FLUSH LOGS");
 
   if (opt_alldbs)
   {
-    dump_all_databases();
+    dump_all_databases(db_connection);
     dump_all_tables();
   }
   if (vm.count("database-used") && vm.count("Table-used") && not opt_databases)
   {
     string database_used= *vm["database-used"].as< vector<string> >().begin();
     /* Only one database and selected table(s) */
-    dump_selected_tables(database_used, vm["Table-used"].as< vector<string> >());
+    dump_selected_tables(db_connection,database_used, vm["Table-used"].as< vector<string> >());
   }
 
   if (vm.count("Table-used") && opt_databases)
@@ -804,13 +802,13 @@ try
       database_used.insert(database_used.end(), *it);
     }
 
-    dump_databases(database_used);
+    dump_databases(db_connection,database_used);
     dump_all_tables();
   }
 
   if (vm.count("database-used") && not vm.count("Table-used"))
   {
-    dump_databases(vm["database-used"].as< vector<string> >());
+    dump_databases(db_connection,vm["database-used"].as< vector<string> >());
     dump_all_tables();
   }
 
