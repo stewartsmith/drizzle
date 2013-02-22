@@ -175,7 +175,7 @@ const key_map *Cursor::keys_to_use_for_scanning()
 
 bool Cursor::has_transactions()
 {
-  return (getTable()->getShare()->db_type()->check_flag(HTON_BIT_DOES_TRANSACTIONS));
+  return (getEngine()->participatesInSqlTransaction());
 }
 
 void Cursor::ha_statistic_increment(uint64_t system_status_var::*offset) const
