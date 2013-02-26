@@ -101,14 +101,6 @@ RPAD
 
 
 
-.. _soundex-function:
-
-SOUNDEX
--------
-
-
-
-
 .. _substr-function:
 
 SUBSTR
