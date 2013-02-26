@@ -20,17 +20,30 @@ To load this plugin, start :program:`drizzled` with::
 
 .. seealso:: :ref:`drizzled_plugin_options` for more information about adding and removing plugins.
 
+Configuration
+-------------
+
+These command line options configure the plugin when :program:`drizzled`
+is started.  See :ref:`command_line_options` for more information about specifying command line options.
+
+.. program:: drizzled
+
+.. option:: --simple-user-policy.remap-dot-to ARG
+
+   :Default: '.'
+
+   Since using a period (dot) in a schema name requires quoting, we support remapping this to another character. When set to an underscore, this enables user 'first.last' to connect to the 'first_last' schema, a schema name which does not require quoting.
+
 Examples
 --------
 
-Sorry, there are no examples for this plugin.
 
 .. _simple_user_policy_authors:
 
 Authors
 -------
 
-Monty Taylor
+Monty Taylor, Stewart Smith
 
 .. _simple_user_policy_version:
 
