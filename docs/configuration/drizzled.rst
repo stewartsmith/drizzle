@@ -30,7 +30,7 @@ General Options
 .. option:: --user, -u ARG
 
    :Default:
-   :Variable: 
+   :Variable:
 
    Run drizzled daemon as user.
 
@@ -49,21 +49,21 @@ Config File Options
 .. option:: --config-dir DIR
 
    :Default: :file:`/etc/drizzle`
-   :Variable: 
+   :Variable:
 
    Base location for config files.
 
 .. option:: --defaults-file FILE
-   
+
    :Default:
-   :Variable: 
+   :Variable:
 
    Configuration file to use.
 
 .. option:: --no-defaults
 
    :Default:
-   :Variable: 
+   :Variable:
 
    Configuration file defaults are not used if no-defaults is set.
 
@@ -75,11 +75,11 @@ Plugin Options
 .. option:: --plugin-add LIST
 
    :Default:
-   :Variable: 
+   :Variable:
 
    Optional comma separated list of plugins to load at startup in addition
    to the default list of plugins.
-  
+
    For example::
 
      --plugin-add=crc32,console,pbxt
@@ -87,14 +87,14 @@ Plugin Options
 .. option:: --plugin-dir DIR
 
    :Default:
-   :Variable: 
+   :Variable:
 
    Directory for plugins.
 
 .. option:: --plugin-load LIST
 
    :Default: See :ref:`default_plugins`
-   :Variable: 
+   :Variable:
 
    Optional comma separated list of plugins to load at starup instead of 
    the default plugin load list. This completely replaces the whole list.
@@ -102,7 +102,7 @@ Plugin Options
 .. option:: --plugin-remove LIST
 
    :Default:
-   :Variable: 
+   :Variable:
 
    Optional comma separated list of plugins to not load at startup.
    Effectively removes a plugin from the list of plugins to be loaded.
@@ -120,7 +120,7 @@ Replication Options
 
    :Default:
    :Variable: ``replicate_query``
-   
+
    Include the SQL query in replicated protobuf messages.
 
 .. option:: --transaction-message-threshold
@@ -178,7 +178,7 @@ Kernel Options
 .. option:: --chroot, -r ARG
 
    :Default:
-   :Variable: 
+   :Variable:
 
    Chroot drizzled daemon during startup.
 
@@ -199,7 +199,7 @@ Kernel Options
 .. option:: --core-file
 
    :Default:
-   :Variable: 
+   :Variable:
 
    Write core on errors.
 
@@ -220,7 +220,7 @@ Kernel Options
 .. option:: --default-time-zone ARG
 
    :Default:
-   :Variable: 
+   :Variable:
 
    Set the default time zone.
 
@@ -236,21 +236,21 @@ Kernel Options
 
    :Default: 4
    :Variable: ``div_precision_increment``
-  
+
    Precision of the result of '/' operator will be increased on that value.
 
 .. We should really remove --exit-info as an option
 .. option:: --exit-info, -T ARG
 
    :Default:
-   :Variable: 
+   :Variable:
 
    Used for debugging;  Use at your own risk!
 
 .. option:: --gdb
 
    :Default:
-   :Variable: 
+   :Variable:
 
    Set up signals usable for debugging.
 
@@ -264,7 +264,7 @@ Kernel Options
 .. option:: --join-buffer-constraint ARG
 
    :Default: 0
-   :Variable: 
+   :Variable:
 
    A global constraint for join-buffer-size for all clients, cannot be set lower
    than :option:`--join-buffer-size`.  Setting to 0 means unlimited.
@@ -286,7 +286,7 @@ Kernel Options
 .. option:: --log-warnings, -W ARG
 
    :Default:
-   :Variable: 
+   :Variable:
 
    Log some not critical warnings to the log file.
 
@@ -301,9 +301,9 @@ Kernel Options
 .. option:: --max-connect-errors ARG
 
    :Default: 10
-   :Variable: 
+   :Variable:
 
-   If there is more than this number of interrupted connections from a host 
+   If there is more than this number of interrupted connections from a host
    this host will be blocked from further connections.
 
 .. option:: --max-error-count ARG
@@ -325,7 +325,7 @@ Kernel Options
    :Default: 2147483647
    :Variable: ``max_join_size``
 
-   Joins that are probably going to read more than max_join_size records return 
+   Joins that are probably going to read more than max_join_size records return
    an error.
 
 .. option:: --max-length-for-sort-data SIZE
@@ -348,7 +348,7 @@ Kernel Options
    :Default: 1024
    :Variable: ``max_sort_length``
 
-   The number of bytes to use when sorting BLOB or TEXT values (only the first 
+   The number of bytes to use when sorting BLOB or TEXT values (only the first
    max_sort_length bytes of each value are used; the rest are ignored).
 
 .. option:: --max-write-lock-count ARG
@@ -375,13 +375,13 @@ Kernel Options
    Maximum depth of search performed by the query optimizer. Values larger than
    the number of relations in a query result in better query plans, but take
    longer to compile a query. Smaller values than the number of tables in a
-   relation result in faster optimization, but may produce very bad query plans. 
+   relation result in faster optimization, but may produce very bad query plans.
    If set to 0, the system will automatically pick a reasonable value; if set to
    MAX_TABLES+2, the optimizer will switch to the original find_best (used for
    testing/comparison).
 
 .. option:: --pid-file FILE
-   
+
    :Default:
    :Variable: ``pid_file``
 
@@ -391,7 +391,7 @@ Kernel Options
 .. option:: --port-open-timeout ARG
 
    :Default: 0
-   :Variable: 
+   :Variable:
 
    Maximum time in seconds to wait for the port to become free.
    A value of 0 means not to wait.
@@ -427,7 +427,7 @@ Kernel Options
 .. option:: --read-buffer-constraint ARG
 
    :Default: 0
-   :Variable: 
+   :Variable:
 
    A global constraint for read-buffer-size for all clients, cannot be set lower
    than --read-buffer-size.  Setting to 0 means unlimited.
@@ -453,7 +453,7 @@ Kernel Options
 .. option:: --read-rnd-constraint ARG
 
    :Default: 0
-   :Variable: 
+   :Variable:
 
    A global constraint for read-rnd-buffer-size for all clients, cannot be set
    lower than --read-rnd-buffer-size.  Setting to 0 means unlimited.
@@ -485,20 +485,20 @@ Kernel Options
 .. option:: --skip-stack-trace
 
    :Default:
-   :Variable: 
+   :Variable:
 
    Don't print a stack trace on failure.
 
 .. option:: --sort-buffer-constraint ARG
 
    :Default: 0
-   :Variable: 
+   :Variable:
 
    A global constraint for sort-buffer-size for all clients, cannot be set lower
    than --sort-buffer-size.  Setting to 0 means unlimited.
 
 .. option:: --sort-buffer-size SIZE
-   
+
    :Default: 2097144
    :Variable: ``sort_buffer_size``
 
@@ -507,7 +507,7 @@ Kernel Options
 .. option:: --symbolic-links, -s
 
    :Default:
-   :Variable: 
+   :Variable:
 
    Enable symbolic link support.
 
@@ -596,7 +596,7 @@ Variables
 
    :Scope: Global
    :Dynamic: No
-   :Option: 
+   :Option:
 
    If statements are auto-committed.
 
@@ -662,7 +662,7 @@ Variables
 
    :Scope: Global
    :Dynamic: No
-   :Option: 
+   :Option:
 
    Error count.
 
@@ -672,7 +672,7 @@ Variables
 
    :Scope: Global
    :Dynamic: No
-   :Option: 
+   :Option:
 
    If foreign key checks are enabled.
 
@@ -690,7 +690,7 @@ Variables
 
    :Scope: Global
    :Dynamic: No
-   :Option: 
+   :Option:
 
    Hostname of the server.
 
@@ -700,7 +700,7 @@ Variables
 
    :Scope: Global
    :Dynamic: No
-   :Option: 
+   :Option:
 
    Unknown.
 
@@ -718,7 +718,7 @@ Variables
 
    :Scope: Global
    :Dynamic: No
-   :Option: 
+   :Option:
 
    Last auto-increment insert ID value.
 
@@ -728,7 +728,7 @@ Variables
 
    :Scope: Global
    :Dynamic: No
-   :Option: 
+   :Option:
 
    Unknown.
 
@@ -852,7 +852,7 @@ Variables
 
    :Scope: Global
    :Dynamic: No
-   :Option: 
+   :Option:
 
    Unknown.
 
@@ -934,7 +934,7 @@ Variables
 
    :Scope: Global
    :Dynamic: No
-   :Option: 
+   :Option:
 
    Server UUID.
 
@@ -952,7 +952,7 @@ Variables
 
    :Scope: Global
    :Dynamic: No
-   :Option: 
+   :Option:
 
    Unknown.
 
@@ -962,7 +962,7 @@ Variables
 
    :Scope: Global
    :Dynamic: No
-   :Option: 
+   :Option:
 
    Unknown.
 
@@ -972,7 +972,7 @@ Variables
 
    :Scope: Global
    :Dynamic: No
-   :Option: 
+   :Option:
 
    Unknown.
 
@@ -982,7 +982,7 @@ Variables
 
    :Scope: Global
    :Dynamic: No
-   :Option: 
+   :Option:
 
    Unknown.
 
@@ -992,7 +992,7 @@ Variables
 
    :Scope: Global
    :Dynamic: No
-   :Option: 
+   :Option:
 
    Unknown.
 
@@ -1050,7 +1050,7 @@ Variables
 
    :Scope: Global
    :Dynamic: No
-   :Option: 
+   :Option:
 
    Current UNIX timestamp.
 
@@ -1083,7 +1083,7 @@ Variables
 * ``tx_isolation``
 
    :Scope: Global
-   :Dynamic: No 
+   :Dynamic: No
    :Option: :option:`--transaction-isolation`
 
 .. _drizzled_unique_checks:
@@ -1092,7 +1092,7 @@ Variables
 
    :Scope: Global
    :Dynamic: No
-   :Option: 
+   :Option:
 
    Check UNIQUE indexes for uniqueness.
 
@@ -1102,7 +1102,7 @@ Variables
 
    :Scope: Global
    :Dynamic: No
-   :Option: 
+   :Option:
 
    Version control (Bazaar) branch.
 
@@ -1112,7 +1112,7 @@ Variables
 
    :Scope: Global
    :Dynamic: No
-   :Option: 
+   :Option:
 
    Version control (Bazaar) release id.
 
@@ -1122,7 +1122,7 @@ Variables
 
    :Scope: Global
    :Dynamic: No
-   :Option: 
+   :Option:
 
    Version control (Bazaar) revision id.
 
@@ -1132,7 +1132,7 @@ Variables
 
    :Scope: Global
    :Dynamic: No
-   :Option: 
+   :Option:
 
    Version control (Bazaar) revision number.
 
@@ -1152,7 +1152,7 @@ Variables
 
    :Scope: Global
    :Dynamic: No
-   :Option: 
+   :Option:
 
    Version comment.
 
@@ -1162,7 +1162,7 @@ Variables
 
    :Scope: Global
    :Dynamic: No
-   :Option: 
+   :Option:
 
    Version compile for machine type.
 
@@ -1172,7 +1172,7 @@ Variables
 
    :Scope: Global
    :Dynamic: No
-   :Option: 
+   :Option:
 
    Version compile for OS.
 
@@ -1182,7 +1182,7 @@ Variables
 
    :Scope: Global
    :Dynamic: No
-   :Option: 
+   :Option:
 
    Version compile for OS vendor.
 
@@ -1192,6 +1192,6 @@ Variables
 
    :Scope: Global
    :Dynamic: No
-   :Option: 
+   :Option:
 
    Unknown.
