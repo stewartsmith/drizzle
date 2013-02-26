@@ -4,13 +4,16 @@ Installing on Ubuntu
 The preferred way of installing Drizzle on Ubuntu is to use the provided deb
 packages. 
 
-Ubuntu 11.04 Natty Narwhal and newer comes with Drizzle .deb files in the 
+Ubuntu 11.04 Natty Narwhal and newer like Ubuntu 12.04 comes with Drizzle .deb files in the 
 standard Ubuntu repositories. You can install Drizzle without any further 
 configuration.
 
+You need to execute simple installation command: ::
+
+     sudo apt-get install drizzle
+
 Using DEBs
 ----------
-
 For Ubuntu 10.04 LTS Lucid Lynx and Ubuntu 10.10 Maverick Meerkat there is a 
 PPA with Drizzle 7 binaries at
 https://launchpad.net/~drizzle-developers/+archive/ppa
