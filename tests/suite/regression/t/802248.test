@@ -1,0 +1,9 @@
+create table test (a int) engine=innodb row_format=compaCT;
+show create table test;
+drop table test;
+ CREATE TABLE `test` (
+  `a` INT DEFAULT NULL
+) ENGINE=InnoDB ROW_FORMAT='compaCT' COLLATE = utf8_general_ci;
+DROP TABLE test;
+--error ER_UNKNOWN_ENGINE_OPTION
+create table test (a int) engine=innodb row_format='totally incorrect value';

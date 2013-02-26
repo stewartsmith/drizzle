@@ -1,0 +1,13 @@
+create table test (a int) engine=innodb row_format=compaCT;
+show create table test;
+Table	Create Table
+test	CREATE TABLE `test` (
+  `a` INT DEFAULT NULL
+) ENGINE=InnoDB ROW_FORMAT='compaCT' COLLATE = utf8_general_ci
+drop table test;
+CREATE TABLE `test` (
+`a` INT DEFAULT NULL
+) ENGINE=InnoDB ROW_FORMAT='compaCT' COLLATE = utf8_general_ci;
+DROP TABLE test;
+create table test (a int) engine=innodb row_format='totally incorrect value';
+ERROR HY000: Unknown table engine option key/pair ROW_FORMAT = totally incorrect value.
