@@ -54,7 +54,7 @@ DRIZZLE_DECLARE_PLUGIN
   DRIZZLE_VERSION_ID,
   "simple_user_policy",
   "1.1",
-  "Monty Taylor",
+  "Monty Taylor, Stewart Smith",
   N_("Authorization matching username to schema object name"),
   PLUGIN_LICENSE_GPL,
   simple_user_policy::init,
