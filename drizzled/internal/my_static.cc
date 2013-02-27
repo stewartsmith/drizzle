@@ -32,8 +32,6 @@ namespace drizzled
 namespace internal
 {
 
-bool timed_mutexes= 0;
-
 	/* from my_init */
 char *	home_dir=0;
 const char      *my_progname=0;

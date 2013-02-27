@@ -167,6 +167,10 @@ Therefore, this thread is guaranteed to catch the os_set_event()
 signalled unconditionally at the release of the lock.
 Q.E.D. */
 
+#if  defined(UNIV_DEBUG) && !defined(UNIV_HOTBACKUP)
+bool	timed_mutexes;
+#endif /* UNIV_DEBUG && !UNIV_HOTBACKUP */
+
 /* Number of spin waits on mutexes: for performance monitoring */
 
 /** The number of iterations in the mutex_spin_wait() spin loop.

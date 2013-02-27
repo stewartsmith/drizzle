@@ -93,13 +93,6 @@ explain extended select last_insert_id(345);
 select @@IDENTITY,last_insert_id(), @@identity;
 explain extended select @@IDENTITY,last_insert_id(), @@identity;
 
-set global timed_mutexes=ON;
-show variables like 'timed_mutexes';
-select * from data_dictionary.session_variables where variable_name like 'timed_mutexes';
-set global timed_mutexes=0;
-show variables like 'timed_mutexes';
-select * from data_dictionary.session_variables where variable_name like 'timed_mutexes';
-
 set storage_engine=MYISAM, storage_engine="MEMORY";
 show local variables like 'storage_engine';
 select * from data_dictionary.session_variables where variable_name like 'storage_engine';
