@@ -660,11 +660,17 @@ Variables
 
 * ``error_count``
 
-   :Scope: Global
+   :Scope: Session
    :Dynamic: No
    :Option:
 
-   Error count.
+   This variable contains a count of the number of errors from the previous
+   statement executed in the current session. It is reset with each query,
+   which includes any `SHOW VARIABLES` query, so only a
+   `SELECT @@error_count` will get the previous warning count.
+
+   Similar to the :ref:`error_count <drizzled_warning_count>` variable, but
+   for errors.
 
 .. _drizzled_foreign_key_checks:
 
@@ -1190,8 +1196,14 @@ Variables
 
 * ``warning_count``
 
-   :Scope: Global
+   :Scope: Session
    :Dynamic: No
    :Option:
 
-   Unknown.
+   This variable contains a count of the number of warnings from the previous
+   statement executed in the current session. It is reset with each query,
+   which includes any `SHOW VARIABLES` query, so only a
+   `SELECT @@warning_count` will get the previous warning count.
+
+   Similar to the :ref:`error_count <drizzled_error_count>` variable, but
+   for warnings.
