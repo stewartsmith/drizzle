@@ -82,7 +82,7 @@ Plugin Options
   
    For example::
 
-     --plugin_add=crc32,console,pbxt
+     --plugin-add=crc32,console,pbxt
 
 .. option:: --plugin-dir DIR
 
@@ -109,7 +109,7 @@ Plugin Options
 
    For example::
 
-     --plugin_remove=syslog,md5
+     --plugin-remove=syslog,md5
 
 .. _drizzled_replication_options:
 
