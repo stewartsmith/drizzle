@@ -517,6 +517,14 @@ command line options.
 
    Time of innodb thread sleeping before joining InnoDB queue (usec). Value 0 disable a sleep.
 
+.. option:: --innodb.timed-mutexes
+
+   :Default: false
+   :Variable: ``innodb_timed_mutexes``
+
+   Specify whether to time mutexes (only InnoDB mutexes are currently supported).
+   This variable is only present if InnoDB is compiled with UNIV_DEBUG.
+
 .. option:: --innodb.use-internal-malloc 
 
    :Default: false
