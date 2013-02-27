@@ -29,7 +29,7 @@
 #include <boost/scoped_ptr.hpp>
 
 #include <drizzled/gettext.h>
-#include <drizzled/unireg.h>
+#include <drizzled/drizzled_abort.h>
 #include <drizzled/errmsg_print.h>
 #include <drizzled/plugin/plugin.h>
 #include <drizzled/util/find_ptr.h>
@@ -102,7 +102,7 @@ public:
       error_message+= plugin->getTypeName();
       error_message+= ":";
       error_message+= plugin->getName();
-      unireg_actual_abort(__FILE__, __LINE__, __func__, error_message);
+      drizzled_actual_abort(__FILE__, __LINE__, __func__, error_message);
     }
 
     if (T::addPlugin(plugin))
@@ -112,12 +112,12 @@ public:
       error_message+= plugin->getTypeName();
       error_message+= ":";
       error_message+= plugin->getName();
-      unireg_actual_abort(__FILE__, __LINE__, __func__, error_message);
+      drizzled_actual_abort(__FILE__, __LINE__, __func__, error_message);
     }
 
     if (failed)
     {
-      unireg_abort << _("Fatal error: Failed initializing: ") << plugin->getTypeName() << ":" << plugin->getName();
+      drizzled_abort << _("Fatal error: Failed initializing: ") << plugin->getTypeName() << ":" << plugin->getName();
     }
     plugin_registry.insert(std::make_pair(std::make_pair(plugin_type, plugin_name), plugin));
   }

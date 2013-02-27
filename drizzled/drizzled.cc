@@ -77,7 +77,7 @@
 #include <drizzled/statistics_variables.h>
 #include <drizzled/table/cache.h>
 #include <drizzled/temporal_format.h> /* For init_temporal_formats() */
-#include <drizzled/unireg.h>
+#include <drizzled/drizzled_abort.h>
 #include <plugin/myisam/myisam.h>
 #include <drizzled/typelib.h>
 #include <drizzled/visibility.h>
@@ -437,7 +437,7 @@ static void create_pid_file()
     (void)close(file); /* We can ignore the error, since we are going to error anyway at this point */
   }
 
-  unireg_abort << "Can't start server, was unable to create PID file: " <<  pid_file.string();
+  drizzled_abort << "Can't start server, was unable to create PID file: " <<  pid_file.string();
 }
 
 #ifdef DEFINED_O_CLOEXEC
@@ -524,20 +524,20 @@ void close_connections()
   }
 }
 
-static bool unireg_startup_completed= false;
-void unireg_startup_finished()
+static bool drizzled_startup_completed= false;
+void drizzled_startup_finished()
 {
-  unireg_startup_completed= true;
+  drizzled_startup_completed= true;
 }
 
-void unireg_exit()
+void drizzled_exit()
 {
   internal::my_end();
-  assert(unireg_startup_completed == false);
+  assert(drizzled_startup_completed == false);
   exit(EXIT_SUCCESS);
 }
 
-void unireg_actual_abort(const char *file, int line, const char *func, const std::string& message)
+void drizzled_actual_abort(const char *file, int line, const char *func, const std::string& message)
 {
   std::stringstream temp;
   temp << _("Aborting:") << "\"" << message << "\"" << ". Abort was called from " << file << ":" << line << " in " << func << "()";
@@ -546,7 +546,7 @@ void unireg_actual_abort(const char *file, int line, const char *func, const std
   clean_up(vm.count("help") == 0);
   internal::my_end();
 
-  assert(unireg_startup_completed == false);
+  assert(drizzled_startup_completed == false);
   exit(EXIT_FAILURE);
 }
 
@@ -607,7 +607,7 @@ passwd *check_user(const char *user)
   }
   if (not user)
   {
-    unireg_abort << _("drizzled cannot be run as root, use --user to start drizzled up as another user");
+    drizzled_abort << _("drizzled cannot be run as root, use --user to start drizzled up as another user");
   }
 
   if (strcmp(user, "root") == 0)
@@ -635,7 +635,7 @@ passwd *check_user(const char *user)
 
   if (failed)
   {
-    unireg_abort << "Fatal error: Can't change to run as user '" << user << "' ;  Please check that the user exists!";
+    drizzled_abort << "Fatal error: Can't change to run as user '" << user << "' ;  Please check that the user exists!";
 
 #ifdef PR_SET_DUMPABLE
     if (getDebug().test(debug::CORE_ON_SIGNAL))
@@ -657,11 +657,11 @@ void set_user(const char *user, passwd *user_info_arg)
   initgroups(user, user_info_arg->pw_gid);
   if (setgid(user_info_arg->pw_gid) == -1)
   {
-    unireg_abort << _("Set process group ID failed ") << strerror(errno);
+    drizzled_abort << _("Set process group ID failed ") << strerror(errno);
   }
   if (setuid(user_info_arg->pw_uid) == -1)
   {
-    unireg_abort << _("Set process user ID failed") << strerror(errno);
+    drizzled_abort << _("Set process user ID failed") << strerror(errno);
   }
 }
 
@@ -672,7 +672,7 @@ static void set_root(const char *path)
 {
   if ((chroot(path) == -1) or chdir("/") == 0)
   {
-    unireg_abort << _("Process chroot failed");
+    drizzled_abort << _("Process chroot failed");
   }
 }
 
@@ -771,7 +771,7 @@ static void check_limits_aii(uint64_t in_auto_increment_increment)
   global_system_variables.auto_increment_increment= 1;
   if (in_auto_increment_increment < 1 || in_auto_increment_increment > UINT64_MAX)
   {
-    unireg_abort << _("Invalid Value for auto_increment_increment");
+    drizzled_abort << _("Invalid Value for auto_increment_increment");
   }
   global_system_variables.auto_increment_increment= in_auto_increment_increment;
 }
@@ -781,7 +781,7 @@ static void check_limits_aio(uint64_t in_auto_increment_offset)
   global_system_variables.auto_increment_offset= 1;
   if (in_auto_increment_offset < 1 || in_auto_increment_offset > UINT64_MAX)
   {
-    unireg_abort << _("Invalid Value for auto_increment_offset");
+    drizzled_abort << _("Invalid Value for auto_increment_offset");
   }
   global_system_variables.auto_increment_offset= in_auto_increment_offset;
 }
@@ -791,7 +791,7 @@ static void check_limits_completion_type(uint32_t in_completion_type)
   global_system_variables.completion_type= 0;
   if (in_completion_type > 2)
   {
-    unireg_abort << _("Invalid Value for completion_type");
+    drizzled_abort << _("Invalid Value for completion_type");
   }
   global_system_variables.completion_type= in_completion_type;
 }
@@ -802,7 +802,7 @@ static void check_limits_dpi(uint32_t in_div_precincrement)
   global_system_variables.div_precincrement= 4;
   if (in_div_precincrement > DECIMAL_MAX_SCALE)
   {
-    unireg_abort << _("Invalid Value for div-precision-increment");
+    drizzled_abort << _("Invalid Value for div-precision-increment");
   }
   global_system_variables.div_precincrement= in_div_precincrement;
 }
@@ -812,7 +812,7 @@ static void check_limits_gcml(uint64_t in_group_concat_max_len)
   global_system_variables.group_concat_max_len= 1024;
   if (in_group_concat_max_len > ULONG_MAX || in_group_concat_max_len < 4)
   {
-    unireg_abort << _("Invalid Value for group_concat_max_len");
+    drizzled_abort << _("Invalid Value for group_concat_max_len");
   }
   global_system_variables.group_concat_max_len= in_group_concat_max_len;
 }
@@ -822,7 +822,7 @@ static void check_limits_join_buffer_size(uint64_t in_join_buffer_size)
   global_system_variables.join_buff_size= (128*1024L);
   if (in_join_buffer_size < IO_SIZE*2 || in_join_buffer_size > ULONG_MAX)
   {
-    unireg_abort << _("Invalid Value for join_buffer_size");
+    drizzled_abort << _("Invalid Value for join_buffer_size");
   }
   in_join_buffer_size-= in_join_buffer_size % IO_SIZE;
   global_system_variables.join_buff_size= in_join_buffer_size;
@@ -833,7 +833,7 @@ static void check_limits_map(uint32_t in_max_allowed_packet)
   global_system_variables.max_allowed_packet= (64*1024*1024L);
   if (in_max_allowed_packet < 1024 || in_max_allowed_packet > 1024*1024L*1024L)
   {
-    unireg_abort << _("Invalid Value for max_allowed_packet");
+    drizzled_abort << _("Invalid Value for max_allowed_packet");
   }
   in_max_allowed_packet-= in_max_allowed_packet % 1024;
   global_system_variables.max_allowed_packet= in_max_allowed_packet;
@@ -844,7 +844,7 @@ static void check_limits_max_err_cnt(uint64_t in_max_error_count)
   global_system_variables.max_error_count= DEFAULT_ERROR_COUNT;
   if (in_max_error_count > 65535)
   {
-    unireg_abort << _("Invalid Value for max_error_count");
+    drizzled_abort << _("Invalid Value for max_error_count");
   }
   global_system_variables.max_error_count= in_max_error_count;
 }
@@ -854,7 +854,7 @@ static void check_limits_mhts(uint64_t in_max_heap_table_size)
   global_system_variables.max_heap_table_size= (16*1024*1024L);
   if (in_max_heap_table_size < 16384 || in_max_heap_table_size > MAX_MEM_TABLE_SIZE)
   {
-    unireg_abort << _("Invalid Value for max_heap_table_size");
+    drizzled_abort << _("Invalid Value for max_heap_table_size");
   }
   in_max_heap_table_size-= in_max_heap_table_size % 1024;
   global_system_variables.max_heap_table_size= in_max_heap_table_size;
@@ -865,7 +865,7 @@ static void check_limits_merl(uint64_t in_min_examined_row_limit)
   global_system_variables.min_examined_row_limit= 0;
   if (in_min_examined_row_limit > ULONG_MAX)
   {
-    unireg_abort << _("Invalid Value for min_examined_row_limit");
+    drizzled_abort << _("Invalid Value for min_examined_row_limit");
   }
   global_system_variables.min_examined_row_limit= in_min_examined_row_limit;
 }
@@ -875,7 +875,7 @@ static void check_limits_max_join_size(ha_rows in_max_join_size)
   global_system_variables.max_join_size= INT32_MAX;
   if ((uint64_t)in_max_join_size < 1 || (uint64_t)in_max_join_size > INT32_MAX)
   {
-    unireg_abort << _("Invalid Value for max_join_size");
+    drizzled_abort << _("Invalid Value for max_join_size");
   }
   global_system_variables.max_join_size= in_max_join_size;
 }
@@ -885,7 +885,7 @@ static void check_limits_mlfsd(int64_t in_max_length_for_sort_data)
   global_system_variables.max_length_for_sort_data= 1024;
   if (in_max_length_for_sort_data < 4 || in_max_length_for_sort_data > 8192*1024L)
   {
-    unireg_abort << _("Invalid Value for max_length_for_sort_data");
+    drizzled_abort << _("Invalid Value for max_length_for_sort_data");
   }
   global_system_variables.max_length_for_sort_data= in_max_length_for_sort_data;
 }
@@ -895,7 +895,7 @@ static void check_limits_msfk(uint64_t in_max_seeks_for_key)
   global_system_variables.max_seeks_for_key= ULONG_MAX;
   if (in_max_seeks_for_key < 1 || in_max_seeks_for_key > ULONG_MAX)
   {
-    unireg_abort << _("Invalid Value for max_seeks_for_key");
+    drizzled_abort << _("Invalid Value for max_seeks_for_key");
   }
   global_system_variables.max_seeks_for_key= in_max_seeks_for_key;
 }
@@ -905,7 +905,7 @@ static void check_limits_max_sort_length(size_t in_max_sort_length)
   global_system_variables.max_sort_length= 1024;
   if ((int64_t)in_max_sort_length < 4 || (int64_t)in_max_sort_length > 8192*1024L)
   {
-    unireg_abort << _("Invalid Value for max_sort_length");
+    drizzled_abort << _("Invalid Value for max_sort_length");
   }
   global_system_variables.max_sort_length= in_max_sort_length;
 }
@@ -915,7 +915,7 @@ static void check_limits_osd(uint32_t in_optimizer_search_depth)
   global_system_variables.optimizer_search_depth= 0;
   if (in_optimizer_search_depth > MAX_TABLES + 2)
   {
-    unireg_abort << _("Invalid Value for optimizer_search_depth");
+    drizzled_abort << _("Invalid Value for optimizer_search_depth");
   }
   global_system_variables.optimizer_search_depth= in_optimizer_search_depth;
 }
@@ -925,7 +925,7 @@ static void check_limits_pbs(uint64_t in_preload_buff_size)
   global_system_variables.preload_buff_size= (32*1024L);
   if (in_preload_buff_size < 1024 || in_preload_buff_size > 1024*1024*1024L)
   {
-    unireg_abort << _("Invalid Value for preload_buff_size");
+    drizzled_abort << _("Invalid Value for preload_buff_size");
   }
   global_system_variables.preload_buff_size= in_preload_buff_size;
 }
@@ -935,7 +935,7 @@ static void check_limits_qabs(uint32_t in_query_alloc_block_size)
   global_system_variables.query_alloc_block_size= QUERY_ALLOC_BLOCK_SIZE;
   if (in_query_alloc_block_size < 1024)
   {
-    unireg_abort << _("Invalid Value for query_alloc_block_size");
+    drizzled_abort << _("Invalid Value for query_alloc_block_size");
   }
   in_query_alloc_block_size-= in_query_alloc_block_size % 1024;
   global_system_variables.query_alloc_block_size= in_query_alloc_block_size;
@@ -946,7 +946,7 @@ static void check_limits_qps(uint32_t in_query_prealloc_size)
   global_system_variables.query_prealloc_size= QUERY_ALLOC_PREALLOC_SIZE;
   if (in_query_prealloc_size < QUERY_ALLOC_PREALLOC_SIZE)
   {
-    unireg_abort << _("Invalid Value for query_prealloc_size");
+    drizzled_abort << _("Invalid Value for query_prealloc_size");
   }
   in_query_prealloc_size-= in_query_prealloc_size % 1024;
   global_system_variables.query_prealloc_size= in_query_prealloc_size;
@@ -957,7 +957,7 @@ static void check_limits_rabs(size_t in_range_alloc_block_size)
   global_system_variables.range_alloc_block_size= RANGE_ALLOC_BLOCK_SIZE;
   if (in_range_alloc_block_size < RANGE_ALLOC_BLOCK_SIZE)
   {
-    unireg_abort << _("Invalid Value for range_alloc_block_size");
+    drizzled_abort << _("Invalid Value for range_alloc_block_size");
   }
   in_range_alloc_block_size-= in_range_alloc_block_size % 1024;
   global_system_variables.range_alloc_block_size= in_range_alloc_block_size;
@@ -968,7 +968,7 @@ static void check_limits_read_buffer_size(int32_t in_read_buff_size)
   global_system_variables.read_buff_size= (128*1024L);
   if (in_read_buff_size < IO_SIZE*2 || in_read_buff_size > INT32_MAX)
   {
-    unireg_abort << _("Invalid Value for read_buff_size");
+    drizzled_abort << _("Invalid Value for read_buff_size");
   }
   in_read_buff_size-= in_read_buff_size % IO_SIZE;
   global_system_variables.read_buff_size= in_read_buff_size;
@@ -979,7 +979,7 @@ static void check_limits_read_rnd_buffer_size(uint32_t in_read_rnd_buff_size)
   global_system_variables.read_rnd_buff_size= (256*1024L);
   if (in_read_rnd_buff_size < 64 || in_read_rnd_buff_size > UINT32_MAX)
   {
-    unireg_abort << _("Invalid Value for read_rnd_buff_size");
+    drizzled_abort << _("Invalid Value for read_rnd_buff_size");
   }
   global_system_variables.read_rnd_buff_size= in_read_rnd_buff_size;
 }
@@ -989,7 +989,7 @@ static void check_limits_sort_buffer_size(size_t in_sortbuff_size)
   global_system_variables.sortbuff_size= MAX_SORT_MEMORY;
   if ((uint32_t)in_sortbuff_size < MIN_SORT_MEMORY)
   {
-    unireg_abort << _("Invalid Value for sort_buff_size");
+    drizzled_abort << _("Invalid Value for sort_buff_size");
   }
   global_system_variables.sortbuff_size= in_sortbuff_size;
 }
@@ -999,7 +999,7 @@ static void check_limits_tdc(uint32_t in_table_def_size)
   table_def_size= 128;
   if (in_table_def_size < 1 || in_table_def_size > 512*1024L)
   {
-    unireg_abort << _("Invalid Value for table_def_size");
+    drizzled_abort << _("Invalid Value for table_def_size");
   }
   table_def_size= in_table_def_size;
 }
@@ -1009,7 +1009,7 @@ static void check_limits_toc(uint32_t in_table_cache_size)
   table_cache_size= TABLE_OPEN_CACHE_DEFAULT;
   if (in_table_cache_size < TABLE_OPEN_CACHE_MIN || in_table_cache_size > 512*1024L)
   {
-    unireg_abort << _("Invalid Value for table_cache_size");
+    drizzled_abort << _("Invalid Value for table_cache_size");
   }
   table_cache_size= in_table_cache_size;
 }
@@ -1019,7 +1019,7 @@ static void check_limits_tlwt(uint64_t in_table_lock_wait_timeout)
   table_lock_wait_timeout= 50;
   if (in_table_lock_wait_timeout < 1 || in_table_lock_wait_timeout > 1024*1024*1024)
   {
-    unireg_abort <<  _("Invalid Value for table_lock_wait_timeout");
+    drizzled_abort <<  _("Invalid Value for table_lock_wait_timeout");
   }
   table_lock_wait_timeout= in_table_lock_wait_timeout;
 }
@@ -1034,7 +1034,7 @@ static void check_limits_tmp_table_size(uint64_t in_tmp_table_size)
   global_system_variables.tmp_table_size= 16*1024*1024L;
   if (in_tmp_table_size < 1024 || in_tmp_table_size > MAX_MEM_TABLE_SIZE)
   {
-    unireg_abort << _("Invalid Value for table_lock_wait_timeout");
+    drizzled_abort << _("Invalid Value for table_lock_wait_timeout");
   }
   global_system_variables.tmp_table_size= in_tmp_table_size;
 }
@@ -1044,7 +1044,7 @@ static void check_limits_transaction_message_threshold(size_t in_transaction_mes
   transaction_message_threshold= 1024*1024;
   if ((int64_t) in_transaction_message_threshold < 128*1024 || (int64_t)in_transaction_message_threshold > 1024*1024)
   {
-    unireg_abort << _("Invalid Value for transaction_message_threshold valid values are between 131072 - 1048576 bytes");
+    drizzled_abort << _("Invalid Value for transaction_message_threshold valid values are between 131072 - 1048576 bytes");
   }
   transaction_message_threshold= in_transaction_message_threshold;
 }
@@ -1092,7 +1092,7 @@ static void compose_defaults_file_list(const vector<string>& in_options)
     }
     else
     {
-      unireg_abort << "Defaults file '" << it << "' not found";
+      drizzled_abort << "Defaults file '" << it << "' not found";
     }
   }
 }
@@ -1347,7 +1347,7 @@ bool init_variables_before_daemonizing(int argc, char **argv)
   }
   catch (std::exception&)
   {
-    unireg_abort << _("Duplicate entry for command line option");
+    drizzled_abort << _("Duplicate entry for command line option");
   }
 
   /* TODO: here is where we should add a process_env_vars */
@@ -1359,13 +1359,13 @@ bool init_variables_before_daemonizing(int argc, char **argv)
   }
   catch (po::validation_error &err)
   {
-    unireg_abort  << err.what() << ". " << "Use --help to get a list of available options. ";
+    drizzled_abort  << err.what() << ". " << "Use --help to get a list of available options. ";
   }
 
   if (vm.count("version"))
   {
     print_version();
-    unireg_exit();
+    drizzled_exit();
   }
 
   if (!vm["no-defaults"].as<bool>())
@@ -1400,13 +1400,13 @@ bool init_variables_before_daemonizing(int argc, char **argv)
   }
   catch (po::validation_error &err)
   {
-   unireg_abort  << err.what() << ". " << "Use --help to get a list of available options. ";
+   drizzled_abort  << err.what() << ". " << "Use --help to get a list of available options. ";
   }
 
   return true;
 }
 
-// Return failure if we can't pass this, unireg_abort() will then be called
+// Return failure if we can't pass this, drizzled_abort() will then be called
 // by the caller.
 bool init_variables_after_daemonizing(module::Registry &plugins)
 {
@@ -1420,7 +1420,7 @@ bool init_variables_after_daemonizing(module::Registry &plugins)
 
   if (plugin_init(plugins, plugin_options))
   {
-    unireg_abort << _("Failed to initialize plugins");
+    drizzled_abort << _("Failed to initialize plugins");
   }
 
   full_options.add(plugin_options);
@@ -1446,15 +1446,15 @@ bool init_variables_after_daemonizing(module::Registry &plugins)
   }
   catch (po::validation_error &err)
   {
-    unireg_abort  << err.what() << ". " << "Use --help to get a list of available options. ";
+    drizzled_abort  << err.what() << ". " << "Use --help to get a list of available options. ";
   }
   catch (po::invalid_command_line_syntax &err)
   {
-    unireg_abort  << err.what() << ". " << "Use --help to get a list of available options. ";
+    drizzled_abort  << err.what() << ". " << "Use --help to get a list of available options. ";
   }
   catch (po::unknown_option &err)
   {
-    unireg_abort  << err.what() << ". " << "Use --help to get a list of available options. ";
+    drizzled_abort  << err.what() << ". " << "Use --help to get a list of available options. ";
   }
 
   try
@@ -1463,7 +1463,7 @@ bool init_variables_after_daemonizing(module::Registry &plugins)
   }
   catch (po::validation_error &err)
   {
-    unireg_abort  << err.what() << ". " << "Use --help to get a list of available options. ";
+    drizzled_abort  << err.what() << ". " << "Use --help to get a list of available options. ";
   }
 
   get_options();
@@ -1546,7 +1546,7 @@ void init_server_components(module::Registry &plugins)
 
   /*
     We need to call each of these following functions to ensure that
-    all things are initialized so that unireg_abort() doesn't fail
+    all things are initialized so that drizzled_abort() doesn't fail
   */
 
   // Resize the definition Cache at startup
@@ -1561,12 +1561,12 @@ void init_server_components(module::Registry &plugins)
 
   if (plugin_finalize(plugins))
   {
-    unireg_abort << "plugin_finalize() failed";
+    drizzled_abort << "plugin_finalize() failed";
   }
 
   if (plugin::Scheduler::setPlugin(opt_scheduler))
   {
-    unireg_abort << _("No scheduler found");
+    drizzled_abort << _("No scheduler found");
   }
 
   /*
@@ -1584,7 +1584,7 @@ void init_server_components(module::Registry &plugins)
     plugin::StorageEngine *engine= plugin::StorageEngine::findByName(default_storage_engine_str);
     if (engine == NULL)
     {
-      unireg_abort << _("Unknown/unsupported storage engine: ") << default_storage_engine_str;
+      drizzled_abort << _("Unknown/unsupported storage engine: ") << default_storage_engine_str;
     }
     global_system_variables.storage_engine= engine;
   }
@@ -1592,7 +1592,7 @@ void init_server_components(module::Registry &plugins)
   if (plugin::XaResourceManager::recoverAllXids())
   {
     /* This function alredy generates error messages */
-    unireg_abort << "plugin::XaResourceManager::recoverAllXids() failed";
+    drizzled_abort << "plugin::XaResourceManager::recoverAllXids() failed";
   }
 
   init_update_queries();
@@ -1949,7 +1949,7 @@ void usage()
 {
   if ((default_charset_info= get_charset_by_csname(default_character_set_name, MY_CS_PRIMARY)) == NULL)
   {
-    unireg_abort << "Failed to load default_charset_info:" << default_character_set_name;
+    drizzled_abort << "Failed to load default_charset_info:" << default_character_set_name;
   }
 
   if (default_collation_name == NULL)
@@ -1975,7 +1975,7 @@ void usage()
   all_options.add(plugin_options);
   cout << all_options << endl;
 
-  unireg_exit();
+  drizzled_exit();
 }
 
 /**
@@ -2087,7 +2087,7 @@ static void get_options()
     if ((vm["sort-heap-threshold"].as<uint64_t>() > 0) and
       (vm["sort-heap-threshold"].as<uint64_t>() < global_system_variables.sortbuff_size))
     {
-      unireg_abort << _("sort-heap-threshold cannot be less than sort-buffer-size");
+      drizzled_abort << _("sort-heap-threshold cannot be less than sort-buffer-size");
     }
 
     global_sort_buffer.setMaxSize(vm["sort-heap-threshold"].as<uint64_t>());
@@ -2098,7 +2098,7 @@ static void get_options()
     if ((vm["join-heap-threshold"].as<uint64_t>() > 0) and
       (vm["join-heap-threshold"].as<uint64_t>() < global_system_variables.join_buff_size))
     {
-      unireg_abort << _("join-heap-threshold cannot be less than join-buffer-size");
+      drizzled_abort << _("join-heap-threshold cannot be less than join-buffer-size");
     }
 
     global_join_buffer.setMaxSize(vm["join-heap-threshold"].as<uint64_t>());
@@ -2109,7 +2109,7 @@ static void get_options()
     if ((vm["read-rnd-threshold"].as<uint64_t>() > 0) and
       (vm["read-rnd-threshold"].as<uint64_t>() < global_system_variables.read_rnd_buff_size))
     {
-      unireg_abort << _("read-rnd-threshold cannot be less than read-rnd-buffer-size");
+      drizzled_abort << _("read-rnd-threshold cannot be less than read-rnd-buffer-size");
     }
 
     global_read_rnd_buffer.setMaxSize(vm["read-rnd-threshold"].as<uint64_t>());
@@ -2120,7 +2120,7 @@ static void get_options()
     if ((vm["read-buffer-threshold"].as<uint64_t>() > 0) and
       (vm["read-buffer-threshold"].as<uint64_t>() < global_system_variables.read_buff_size))
     {
-      unireg_abort << _("read-buffer-threshold cannot be less than read-buffer-size");
+      drizzled_abort << _("read-buffer-threshold cannot be less than read-buffer-size");
     }
 
     global_read_buffer.setMaxSize(vm["read-buffer-threshold"].as<uint64_t>());
@@ -2154,12 +2154,12 @@ static void get_options()
     const charset_info_st * const default_collation= get_charset_by_name(vm["collation-server"].as<string>().c_str());
     if (not default_collation)
     {
-      unireg_abort << "Unknown collation: " << default_collation_name;
+      drizzled_abort << "Unknown collation: " << default_collation_name;
     }
 
     if (not my_charset_same(default_charset_info, default_collation))
     {
-      unireg_abort << "COLLATION '" << default_collation_name << "' is not valid for CHARACTER SET '" << default_charset_info->csname << "'";
+      drizzled_abort << "COLLATION '" << default_collation_name << "' is not valid for CHARACTER SET '" << default_charset_info->csname << "'";
     }
     default_charset_info= default_collation;
   }
@@ -2252,14 +2252,14 @@ static void fix_paths()
   assert(getuid() != 0 and geteuid() != 0);
   if (getuid() == 0 or geteuid() == 0)
   {
-    unireg_abort << "Drizzle cannot be run as root, please see the Security piece of the manual for more information.";
+    drizzled_abort << "Drizzle cannot be run as root, please see the Security piece of the manual for more information.";
   }
 
   if (mkdir(drizzle_tmpdir.c_str(), 0777) == -1)
   {
     if (errno != EEXIST)
     {
-      unireg_abort << "There was an error creating the '"
+      drizzled_abort << "There was an error creating the '"
         << fs::path(drizzle_tmpdir).leaf()
         << "' part of the path '"
         << drizzle_tmpdir
@@ -2269,7 +2269,7 @@ static void fix_paths()
 
   if (stat(drizzle_tmpdir.c_str(), &buf) || not S_ISDIR(buf.st_mode))
   {
-    unireg_abort << "There was an error opening the path '" << drizzle_tmpdir << "', please check the path exists and is writable.";
+    drizzled_abort << "There was an error opening the path '" << drizzle_tmpdir << "', please check the path exists and is writable.";
   }
 }
 
