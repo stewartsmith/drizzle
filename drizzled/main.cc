@@ -63,7 +63,7 @@
 #include <drizzled/session/cache.h>
 #include <drizzled/signal_handler.h>
 #include <drizzled/transaction_services.h>
-#include <drizzled/unireg.h>
+#include <drizzled/drizzled_abort.h>
 #include <drizzled/util/backtrace.h>
 #include <drizzled/current_session.h>
 #include <drizzled/daemon.h>
@@ -272,7 +272,7 @@ int main(int argc, char **argv)
   /* init_common_variables must get basic settings such as data_home_dir and plugin_load_list. */
   if (init_variables_before_daemonizing(argc, argv) == false)
   {
-    unireg_abort << "init_variables_before_daemonizing() failed";				// Will do exit
+    drizzled_abort << "init_variables_before_daemonizing() failed";				// Will do exit
   }
 
   if (opt_daemon and was_help_requested() == false)
@@ -284,18 +284,18 @@ int main(int argc, char **argv)
 
     if (daemonize())
     {
-      unireg_abort << "--daemon failed";
+      drizzled_abort << "--daemon failed";
     }
   }
 
   if (init_variables_after_daemonizing(modules) == false)
   {
-    unireg_abort << "init_variables_after_daemonizing() failed";				// Will do exit
+    drizzled_abort << "init_variables_after_daemonizing() failed";				// Will do exit
   }
 
   /*
     init signals & alarm
-    After this we can't quit by a simple unireg_abort
+    After this we can't quit by a simple drizzled_abort
   */
 
   init_signals();
@@ -307,7 +307,7 @@ int main(int argc, char **argv)
   {
     if (chdir(getDataHome().string().c_str()))
     {
-      unireg_abort << "Data directory " << getDataHome().string() << " does not exist";
+      drizzled_abort << "Data directory " << getDataHome().string() << " does not exist";
     }
 
     ifstream old_uuid_file ("server.uuid");
@@ -338,13 +338,13 @@ int main(int argc, char **argv)
       case EACCES:
         {
           char cwd[1024];
-          unireg_abort << "Could not create local catalog, permission denied in directory:" << getcwd(cwd, sizeof(cwd));
+          drizzled_abort << "Could not create local catalog, permission denied in directory:" << getcwd(cwd, sizeof(cwd));
         }
 
       default:
         {
           char cwd[1024];
-          unireg_abort << "Could not create local catalog, in directory:" << getcwd(cwd, sizeof(cwd)) << " system error was:" << strerror(errno);
+          drizzled_abort << "Could not create local catalog, in directory:" << getcwd(cwd, sizeof(cwd)) << " system error was:" << strerror(errno);
         }
       }
     }
@@ -370,7 +370,7 @@ int main(int argc, char **argv)
     cout << _("In File: ") << *::boost::get_error_info<boost::throw_file>(ex) << endl;
     cout << _("On Line: ") << *::boost::get_error_info<boost::throw_line>(ex) << endl;
 #endif
-    unireg_abort << "init_server_components() failed";
+    drizzled_abort << "init_server_components() failed";
   }
 
 
@@ -383,13 +383,13 @@ int main(int argc, char **argv)
    *
    * @todo
    *
-   * not checking return since unireg_abort() hangs
+   * not checking return since drizzled_abort() hangs
    */
   (void) ReplicationServices::evaluateRegisteredPlugins();
 
   if (plugin::Listen::setup())
   {
-    unireg_abort << "Failed plugin::Listen::setup()";
+    drizzled_abort << "Failed plugin::Listen::setup()";
   }
 
   assert(plugin::num_trx_monitored_objects > 0);

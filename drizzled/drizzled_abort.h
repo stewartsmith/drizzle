@@ -2,6 +2,8 @@
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
  *  Copyright (C) 2008 Sun Microsystems, Inc.
+ *  Copyright (C) 2011 Brian Aker
+ *  Copyright (C) 2013 Stewart Smith
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -17,9 +19,6 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
-
-/*  Extra functions used by unireg library */
-
 #pragma once
 
 #include <drizzled/visibility.h>
@@ -28,16 +27,16 @@
 namespace drizzled
 {
 
-void unireg_exit() __attribute__((noreturn));
-DRIZZLED_API void unireg_actual_abort(const char *file, int line, const char *func, const std::string& message) __attribute__((noreturn));
-void unireg_startup_finished();
+void drizzled_exit() __attribute__((noreturn));
+DRIZZLED_API void drizzled_actual_abort(const char *file, int line, const char *func, const std::string& message) __attribute__((noreturn));
+void drizzled_startup_finished();
 
 namespace stream {
 
 namespace detail {
 
 template<class Ch, class Tr, class A>
-  class _unireg {
+  class _drizzled_abort_log {
   private:
 
   public:
@@ -46,7 +45,7 @@ template<class Ch, class Tr, class A>
   public:
     void operator()(const stream_buffer &s, const char *filename, int line, const char *func)
     {
-      unireg_actual_abort(filename, line, func, s.str());
+      drizzled_actual_abort(filename, line, func, s.str());
     }
   };
 
@@ -90,9 +89,9 @@ template<template <class Ch, class Tr, class A> class OutputPolicy, class Ch = c
   };
 } // namespace detail
 
-class _unireg : public detail::log<detail::_unireg> {
+class _drizzled_abort_log : public detail::log<detail::_drizzled_abort_log> {
 public:
-  _unireg(const char *filename, int line_number, const char *func)
+  _drizzled_abort_log(const char *filename, int line_number, const char *func)
   {
     set_filename(filename, line_number, func);
   }
@@ -100,6 +99,6 @@ public:
 
 } // namespace stream
 
-#define unireg_abort stream::_unireg(__FILE__, __LINE__, __func__)
+#define drizzled_abort stream::_drizzled_abort_log(__FILE__, __LINE__, __func__)
 
 } /* namespace drizzled */

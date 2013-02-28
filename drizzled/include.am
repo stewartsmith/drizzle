@@ -83,6 +83,7 @@ nobase_dist_pkginclude_HEADERS+= \
 			      drizzled/discrete_interval.h \
 			      drizzled/display.h \
 			      drizzled/drizzled.h \
+			      drizzled/drizzled_abort.h \
 			      drizzled/dtcollation.h \
 			      drizzled/dynamic_array.h \
 			      drizzled/enum.h \
@@ -512,7 +513,6 @@ nobase_dist_pkginclude_HEADERS+= \
 			      drizzled/type/ipv6.h \
 			      drizzled/typelib.h \
 			      drizzled/unique.h \
-			      drizzled/unireg.h \
 			      drizzled/user_var_entry.h \
 			      drizzled/utf8/checked.h \
 			      drizzled/utf8/core.h \
