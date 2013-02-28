@@ -114,10 +114,13 @@ Replication Options
 
 .. option:: --replicate-query
 
-   :Default:
+   :Default: false
    :Variable: ``replicate_query``
 
-   Include the SQL query in replicated protobuf messages.
+   Include the SQL query in replicated protobuf messages. This can be useful
+   for tracking back what SQL query caused what row operations to occur
+   at the expense of increased size of the replication log (possibly even
+   doubling it for some operations).
 
 .. option:: --transaction-message-threshold
 
@@ -125,6 +128,13 @@ Replication Options
    :Variable: ``transaction_message_threshold``
 
    Max message size written to transaction log, valid values 131072 - 1048576 bytes.
+
+   If a transaction produres more than ``transaction-message-threshold`` bytes
+   of data for replication, the transaction is segmented in the replication
+   stream. if ``transaction-message-threshold`` is met and in the event of
+   ROLLBACK, the slave will have to do slightly more work as it may have
+   already started applying the transaction and will also have to execute
+   ROLLBACK.
 
 .. _drizzled_kernel_options:
 
