@@ -1187,8 +1187,6 @@ bool init_variables_before_daemonizing(int argc, char **argv)
   _("Path to the database root."))
   ("default-storage-engine", po::value<string>(),
   _("Set the default storage engine for tables."))
-  ("default-time-zone", po::value<string>(),
-  _("Set the default time zone."))
   ("exit-info,T", po::value<long>(),
   _("Used for debugging;  Use at your own risk!"))
   ("gdb", po::value<bool>(&opt_debugging)->default_value(false)->zero_tokens(),
