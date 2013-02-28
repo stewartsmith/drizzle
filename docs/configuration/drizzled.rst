@@ -23,10 +23,6 @@ General Options
 
    Display this help and exit.
 
-.. option:: --help-extended
-
-   Display this help and exit after initializing plugins.
-
 .. option:: --user, -u ARG
 
    :Default:
