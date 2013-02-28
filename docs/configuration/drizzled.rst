@@ -223,13 +223,6 @@ Kernel Options
 
    Set the default storage engine for tables.
 
-.. option:: --default-time-zone ARG
-
-   :Default:
-   :Variable:
-
-   Set the default time zone.
-
 .. option:: --disable-optimizer-prune
 
    :Default:
