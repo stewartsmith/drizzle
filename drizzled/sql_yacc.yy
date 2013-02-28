@@ -1155,6 +1155,7 @@ row_format_or_text:
           {
             $$.assign(YYSession->mem.strdup($1.data(), $1.length), $1.length);
           }
+        | TEXT_STRING_sys { $$=$1;}
         ;
 
 opt_select_from:
