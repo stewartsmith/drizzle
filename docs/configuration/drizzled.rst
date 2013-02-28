@@ -540,13 +540,6 @@ Kernel Options
 
    The stack size for each thread. 0 means use OS default.
 
-.. option:: --timed-mutexes
-
-   :Default:
-   :Variable: ``timed_mutexes``
-
-   Specify whether to time mutexes (only InnoDB mutexes are currently supported).
-
 .. option:: --tmp-table-size SIZE
 
    :Default: 16M

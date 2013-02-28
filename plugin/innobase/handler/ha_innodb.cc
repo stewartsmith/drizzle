@@ -2715,6 +2715,11 @@ innobase_change_buffering_inited_ok:
                                                                    innobase_rollback_segments,
                                                                    innodb_rollback_segments_update));
 
+#if  defined(UNIV_DEBUG) && !defined(UNIV_HOTBACKUP)
+  context.registerVariable(new sys_var_bool_ptr("timed-mutexes", &timed_mutexes));
+#endif /* UNIV_DEBUG && !UNIV_HOTBACKUP */
+
+
   return(FALSE);
 
 error:
@@ -9627,6 +9632,12 @@ static void init_options(drizzled::module::option_context &context)
   context("rollback-segments",
           po::value<rollback_segments_constraint>(&innobase_rollback_segments)->default_value(128),
           "Number of UNDO logs to use");
+#if  defined(UNIV_DEBUG) && !defined(UNIV_HOTBACKUP)
+  context(("timed-mutexes",
+	   po::value<bool>(&timed_mutexes)->default_value(false)->zero_tokens(),
+  _("Specify whether to time mutexes (only InnoDB mutexes are currently "
+    "supported)"));
+#endif /* UNIV_DEBUG && !UNIV_HOTBACKUP */
 
 }
 

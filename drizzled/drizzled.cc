@@ -1213,9 +1213,6 @@ bool init_variables_before_daemonizing(int argc, char **argv)
   _("Don't print a stack trace on failure."))
   ("symbolic-links,s", po::value<bool>(&internal::my_use_symdir)->default_value(IF_PURIFY(false,true))->zero_tokens(),
   _("Enable symbolic link support."))
-  ("timed-mutexes", po::value<bool>(&internal::timed_mutexes)->default_value(false)->zero_tokens(),
-  _("Specify whether to time mutexes (only InnoDB mutexes are currently "
-     "supported)"))
   ("tmpdir,t", po::value<string>(),
   _("Path for temporary files."))
   ("transaction-isolation", po::value<string>(),
@@ -1655,7 +1652,6 @@ enum options_drizzled
   OPT_OPTIMIZER_PRUNE_LEVEL,
   OPT_AUTO_INCREMENT, OPT_AUTO_INCREMENT_OFFSET,
   OPT_ENABLE_LARGE_PAGES,
-  OPT_TIMED_MUTEXES,
   OPT_TABLE_LOCK_WAIT_TIMEOUT,
   OPT_PLUGIN_ADD,
   OPT_PLUGIN_REMOVE,
@@ -1749,11 +1745,6 @@ struct option my_long_options[] =
      option if compiled with valgrind support.
    */
    IF_PURIFY(0,1), 0, 0, 0, 0, 0},
-  {"timed_mutexes", OPT_TIMED_MUTEXES,
-   N_("Specify whether to time mutexes (only InnoDB mutexes are currently "
-      "supported)"),
-   (char**) &internal::timed_mutexes, NULL, 0, GET_BOOL, NO_ARG, 0,
-    0, 0, 0, 0, 0},
   {"transaction-isolation", OPT_TX_ISOLATION,
    N_("Default transaction isolation level."),
    0, 0, 0, GET_STR, REQUIRED_ARG, 0,

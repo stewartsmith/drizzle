@@ -116,8 +116,6 @@ extern bool my_disable_symlinks;
 extern const char wild_many, wild_one, wild_prefix;
 extern const char *charsets_dir;
 
-extern bool timed_mutexes;
-
 enum cache_type
 {
   TYPE_NOT_SET= 0,

@@ -74,13 +74,7 @@ using namespace std;
 
 namespace drizzled {
 
-namespace internal
-{
-	extern bool timed_mutexes;
-}
-
 extern plugin::StorageEngine *myisam_engine;
-extern bool timed_mutexes;
 
 extern struct option my_long_options[];
 extern const charset_info_st *character_set_filesystem;
@@ -194,7 +188,6 @@ static sys_var_session_enum	sys_tx_isolation("tx_isolation",
                                              check_tx_isolation);
 static sys_var_session_uint64_t	sys_tmp_table_size("tmp_table_size",
 					   &drizzle_system_variables::tmp_table_size);
-static sys_var_bool_ptr  sys_timed_mutexes("timed_mutexes", &internal::timed_mutexes);
 static sys_var_const_str  sys_version("version", version().c_str());
 
 static sys_var_const_str sys_version_comment("version_comment", COMPILATION_COMMENT);
@@ -1374,7 +1367,6 @@ int sys_var_init()
     add_sys_var_to_list(&sys_table_def_size, my_long_options);
     add_sys_var_to_list(&sys_table_lock_wait_timeout, my_long_options);
     add_sys_var_to_list(&sys_thread_stack_size, my_long_options);
-    add_sys_var_to_list(&sys_timed_mutexes, my_long_options);
     add_sys_var_to_list(&sys_timestamp, my_long_options);
     add_sys_var_to_list(&sys_tmp_table_size, my_long_options);
     add_sys_var_to_list(&sys_tmpdir, my_long_options);
