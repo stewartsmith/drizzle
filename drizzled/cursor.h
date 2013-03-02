@@ -603,8 +603,6 @@ private:
   virtual void drop_table();
 };
 
-extern const char *ha_row_type[];
-
 /* basic stuff */
 void ha_init_errors(void);
 
