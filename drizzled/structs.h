@@ -52,26 +52,6 @@ public:
   str_ref comment;
 };
 
-
-class RegInfo 
-{
-public:		/* Extra info about reg */
-  JoinTable *join_tab;	/* Used by SELECT() */
-  enum thr_lock_type lock_type;		/* How database is used */
-  bool not_exists_optimize;
-  bool impossible_range;
-  RegInfo()
-    : join_tab(NULL), lock_type(TL_UNLOCK),
-      not_exists_optimize(false), impossible_range(false) {}
-  void reset()
-  {
-    join_tab= NULL;
-    lock_type= TL_UNLOCK;
-    not_exists_optimize= false;
-    impossible_range= false;
-  }
-};
-
 } /* namespace drizzled */
 
 	/* Bits in form->status */

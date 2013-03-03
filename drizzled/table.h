@@ -36,11 +36,30 @@
 
 namespace drizzled {
 
+class RegInfo
+{
+public:		/* Extra info about reg */
+  JoinTable *join_tab;	/* Used by SELECT() */
+  enum thr_lock_type lock_type;		/* How database is used */
+  bool not_exists_optimize;
+  bool impossible_range;
+  RegInfo()
+    : join_tab(NULL), lock_type(TL_UNLOCK),
+      not_exists_optimize(false), impossible_range(false) {}
+  void reset()
+  {
+    join_tab= NULL;
+    lock_type= TL_UNLOCK;
+    not_exists_optimize= false;
+    impossible_range= false;
+  }
+};
+
 /**
- * Class representing a set of records, either in a temporary, 
+ * Class representing a set of records, either in a temporary,
  * normal, or derived table.
  */
-class DRIZZLED_API Table 
+class DRIZZLED_API Table
 {
   Field **field; /**< Pointer to fields collection */
 
