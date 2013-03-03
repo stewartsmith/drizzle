@@ -142,6 +142,7 @@
 #include <drizzled/temporal.h> /* Needed in get_mm_leaf() for timestamp -> datetime comparisons */
 #include <drizzled/sql_lex.h>
 #include <drizzled/system_variables.h>
+#include <drizzled/key_part_info.h>
 
 using namespace std;
 

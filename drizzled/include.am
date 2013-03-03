@@ -289,6 +289,7 @@ nobase_dist_pkginclude_HEADERS+= \
 			      drizzled/join_table.h \
 			      drizzled/key.h \
 			      drizzled/key_map.h \
+			      drizzled/key_part_info.h \
 			      drizzled/key_part_spec.h \
 			      drizzled/kill.h \
 			      drizzled/korr.h \

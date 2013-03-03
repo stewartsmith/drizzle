@@ -59,6 +59,7 @@
 #include <drizzled/statistics_variables.h>
 #include <drizzled/system_variables.h>
 #include <drizzled/open_tables_state.h>
+#include <drizzled/key_part_info.h>
 
 using namespace std;
 

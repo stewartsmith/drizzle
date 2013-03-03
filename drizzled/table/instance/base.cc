@@ -87,6 +87,7 @@
 #include <drizzled/key.h>
 #include <drizzled/open_tables_state.h>
 #include <drizzled/catalog/local.h>
+#include <drizzled/key_part_info.h>
 
 using namespace std;
 

@@ -68,6 +68,7 @@
 #include <drizzled/select_result.h>
 #include <drizzled/key.h>
 #include <drizzled/my_hash.h>
+#include <drizzled/key_part_info.h>
 
 using namespace std;
 

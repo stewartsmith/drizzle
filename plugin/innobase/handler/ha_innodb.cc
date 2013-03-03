@@ -74,6 +74,7 @@ St, Fifth Floor, Boston, MA 02110-1301 USA
 #include <drizzled/session/times.h>
 #include <drizzled/session/transactions.h>
 #include <drizzled/typelib.h>
+#include <drizzled/key_part_info.h>
 
 #include <boost/algorithm/string.hpp>
 #include <boost/program_options.hpp>

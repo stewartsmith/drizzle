@@ -38,6 +38,8 @@
 
 namespace drizzled {
 
+class KeyPartInfo;
+
 #define HA_MAX_ALTER_FLAGS 40
 
 typedef std::bitset<HA_MAX_ALTER_FLAGS> HA_ALTER_FLAGS;

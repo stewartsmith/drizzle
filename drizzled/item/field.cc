@@ -31,6 +31,7 @@
 #include <drizzled/plugin/client.h>
 #include <drizzled/item/subselect.h>
 #include <drizzled/sql_lex.h>
+#include <drizzled/key_part_info.h>
 
 #include <boost/dynamic_bitset.hpp>
 

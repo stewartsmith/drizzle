@@ -31,6 +31,7 @@
 #include <drizzled/key.h>
 #include <drizzled/table.h>
 #include <drizzled/system_variables.h>
+#include <drizzled/key_part_info.h>
 
 #include <vector>
 

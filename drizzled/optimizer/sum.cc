@@ -61,6 +61,7 @@
 #include <drizzled/table_list.h>
 #include <drizzled/key.h>
 #include <drizzled/error.h>
+#include <drizzled/key_part_info.h>
 
 namespace drizzled
 {

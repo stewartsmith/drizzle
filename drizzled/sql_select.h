@@ -219,6 +219,8 @@ int join_read_prev(ReadRecord *info);
 int join_read_always_key_or_null(JoinTable *tab);
 int join_read_next_same_or_null(ReadRecord *info);
 
+class KeyPartInfo;
+
 void calc_used_field_length(Session *, JoinTable *join_tab);
 StoredKey *get_store_key(Session *session, 
                          optimizer::KeyUse *keyuse,

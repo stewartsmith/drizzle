@@ -52,6 +52,7 @@
 #include <drizzled/table/cache.h>
 #include <drizzled/create_field.h>
 #include <drizzled/catalog/instance.h>
+#include <drizzled/key_part_info.h>
 
 using namespace std;
 

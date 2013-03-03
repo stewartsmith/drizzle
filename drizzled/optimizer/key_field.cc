@@ -28,6 +28,7 @@
 #include <drizzled/optimizer/key_use.h>
 #include <drizzled/sql_lex.h>
 #include <drizzled/item/subselect.h>
+#include <drizzled/key_part_info.h>
 
 #include <vector>
 

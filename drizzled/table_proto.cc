@@ -24,6 +24,7 @@
 #include <drizzled/internal/my_sys.h>
 #include <drizzled/typelib.h>
 #include <drizzled/util/test.h>
+#include <drizzled/key_part_info.h>
 
 /* For proto */
 #include <string>

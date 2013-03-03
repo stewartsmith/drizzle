@@ -26,6 +26,9 @@
 #include <vector>
 
 namespace drizzled {
+
+class KeyPartInfo;
+
 namespace optimizer {
 
 /**
