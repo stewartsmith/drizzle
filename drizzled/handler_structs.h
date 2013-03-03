@@ -85,12 +85,12 @@ typedef struct st_ha_alter_information
 struct KEY_CREATE_INFO
 {
   KEY_CREATE_INFO() :
-    algorithm(HA_KEY_ALG_UNDEF),
+    algorithm(drizzled::message::Table::Index::UNKNOWN_INDEX),
     block_size(0)
   {
   }
 
-  ha_key_alg algorithm;
+  drizzled::message::Table::Index::IndexType algorithm;
   uint32_t block_size;
   str_ref comment;
 };

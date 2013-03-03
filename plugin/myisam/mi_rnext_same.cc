@@ -14,6 +14,7 @@
    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA */
 
 #include "myisam_priv.h"
+#include <drizzled/message/table.h>
 
 using namespace drizzled;
 
@@ -39,7 +40,7 @@ int mi_rnext_same(MI_INFO *info, unsigned char *buf)
 
   switch (keyinfo->key_alg)
   {
-    case HA_KEY_ALG_BTREE:
+    case message::Table::Index::BTREE:
     default:
       if (!(info->update & HA_STATE_RNEXT_SAME))
       {

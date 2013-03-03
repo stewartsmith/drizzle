@@ -105,7 +105,7 @@ public:
   uint32_t max_supported_keys()          const { return MAX_KEY; }
   uint32_t max_supported_key_part_length() const { return MAX_KEY_LENGTH; }
 
-  uint32_t index_flags(enum  ha_key_alg ) const
+  uint32_t index_flags(drizzled::message::Table::Index::IndexType) const
   {
     return ( HA_ONLY_WHOLE_INDEX | HA_KEY_SCAN_NOT_ROR);
   }

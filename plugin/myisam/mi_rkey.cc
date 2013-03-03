@@ -16,6 +16,7 @@
 /* Read record based on a key */
 
 #include "myisam_priv.h"
+#include <drizzled/message/table.h>
 
 using namespace drizzled;
 
@@ -74,7 +75,7 @@ int mi_rkey(MI_INFO *info, unsigned char *buf, int inx, const unsigned char *key
     use_key_length=USE_WHOLE_KEY;
 
   switch (info->s->keyinfo[inx].key_alg) {
-  case HA_KEY_ALG_BTREE:
+  case message::Table::Index::BTREE:
   default:
     myisam_search_flag= myisam_read_vec[search_flag];
     if (!_mi_search(info, keyinfo, key_buff, use_key_length,

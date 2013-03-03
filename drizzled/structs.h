@@ -24,6 +24,7 @@
 #include <drizzled/definitions.h>
 #include <drizzled/lex_string.h>
 #include <drizzled/thr_lock.h>
+#include <drizzled/message/table.pb.h>
 
 namespace drizzled {
 
@@ -58,11 +59,11 @@ public:
 };
 
 
-class KeyInfo 
+class KeyInfo
 {
 public:
   unsigned int	key_length;		/* Tot length of key */
-  enum  ha_key_alg algorithm;
+  drizzled::message::Table::Index::IndexType algorithm;
   unsigned long flags;			/* dupp key and pack flags */
   unsigned int key_parts;		/* How many key_parts */
   uint32_t  extra_length;

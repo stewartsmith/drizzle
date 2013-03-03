@@ -590,7 +590,7 @@ public:
   }
 
   /* just copied from innobase... */
-  uint32_t index_flags(enum  ha_key_alg) const
+  uint32_t index_flags(drizzled::message::Table::Index::IndexType) const
   {
     return (HA_READ_NEXT |
             HA_READ_PREV |

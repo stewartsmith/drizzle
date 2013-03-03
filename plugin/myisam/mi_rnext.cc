@@ -14,6 +14,7 @@
    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA */
 
 #include "myisam_priv.h"
+#include <drizzled/message/table.h>
 
 using namespace drizzled;
 
@@ -41,7 +42,7 @@ int mi_rnext(MI_INFO *info, unsigned char *buf, int inx)
   if (!flag)
   {
     switch(info->s->keyinfo[inx].key_alg){
-    case HA_KEY_ALG_BTREE:
+    case message::Table::Index::BTREE:
     default:
       error=_mi_search_first(info,info->s->keyinfo+inx,
 			   info->s->state.key_root[inx]);
@@ -51,7 +52,7 @@ int mi_rnext(MI_INFO *info, unsigned char *buf, int inx)
   else
   {
     switch (info->s->keyinfo[inx].key_alg) {
-    case HA_KEY_ALG_BTREE:
+    case message::Table::Index::BTREE:
     default:
       if (!changed)
 	error= _mi_search_next(info,info->s->keyinfo+inx,info->lastkey,
