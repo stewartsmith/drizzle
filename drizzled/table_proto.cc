@@ -25,6 +25,7 @@
 #include <drizzled/typelib.h>
 #include <drizzled/util/test.h>
 #include <drizzled/key_part_info.h>
+#include <drizzled/key_info.h>
 
 /* For proto */
 #include <string>

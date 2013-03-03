@@ -39,6 +39,7 @@
 #include <drizzled/key_map.h>
 #include <drizzled/field.h>
 #include <drizzled/util/find_ptr.h>
+#include <drizzled/key_info.h>
 
 namespace drizzled {
 

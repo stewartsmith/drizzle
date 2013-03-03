@@ -30,10 +30,11 @@
 # endif
 #endif
 
+#include <drizzled/common_fwd.h>
 #include <drizzled/base.h>
 #include <drizzled/definitions.h>
-#include <drizzled/structs.h>
 #include <drizzled/util/data_ref.h>
+#include <drizzled/message/table.h>
 
 namespace drizzled {
 
