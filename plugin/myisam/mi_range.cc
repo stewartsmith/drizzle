@@ -19,6 +19,7 @@
  */
 
 #include "myisam_priv.h"
+#include <drizzled/message/table.h>
 
 using namespace drizzled;
 
@@ -58,7 +59,7 @@ ha_rows mi_records_in_range(MI_INFO *info, int inx,
   info->update&= (HA_STATE_CHANGED+HA_STATE_ROW_CHANGED);
 
   switch(info->s->keyinfo[inx].key_alg){
-  case HA_KEY_ALG_BTREE:
+  case message::Table::Index::BTREE:
   default:
     start_pos= (min_key ?  _mi_record_pos(info, min_key->key,
                                           min_key->keypart_map, min_key->flag)

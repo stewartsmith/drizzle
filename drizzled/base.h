@@ -78,14 +78,6 @@ enum ha_rkey_function {
   HA_READ_MBR_EQUAL
 };
 
-	/* Key algorithm types */
-
-enum ha_key_alg {
-  HA_KEY_ALG_UNDEF=	0,		/* Not specified (old file) */
-  HA_KEY_ALG_BTREE=	1,		/* B-tree, default one          */
-  HA_KEY_ALG_HASH=	3		/* HASH keys (HEAP tables) */
-};
-
 	/* The following is parameter to ha_extra() */
 
 enum ha_extra_function {

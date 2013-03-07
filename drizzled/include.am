@@ -288,7 +288,9 @@ nobase_dist_pkginclude_HEADERS+= \
 			      drizzled/join_cache.h \
 			      drizzled/join_table.h \
 			      drizzled/key.h \
+			      drizzled/key_info.h \
 			      drizzled/key_map.h \
+			      drizzled/key_part_info.h \
 			      drizzled/key_part_spec.h \
 			      drizzled/kill.h \
 			      drizzled/korr.h \
@@ -476,7 +478,6 @@ nobase_dist_pkginclude_HEADERS+= \
 			      drizzled/statistics_variables.h \
 			      drizzled/status_helper.h \
 			      drizzled/stored_key.h \
-			      drizzled/structs.h \
 			      drizzled/symbol_hash.h \
 			      drizzled/sys_var.h \
 			      drizzled/system_variables.h \

@@ -142,6 +142,7 @@
 #include <drizzled/temporal.h> /* Needed in get_mm_leaf() for timestamp -> datetime comparisons */
 #include <drizzled/sql_lex.h>
 #include <drizzled/system_variables.h>
+#include <drizzled/key_part_info.h>
 
 using namespace std;
 
@@ -3802,8 +3803,9 @@ ha_rows check_quick_select(Session *session,
     }
   }
   /* Figure out if the key scan is ROR (returns rows in ROWID order) or not */
-  enum ha_key_alg key_alg= param->table->key_info[seq.real_keyno].algorithm;
-  if ((key_alg != HA_KEY_ALG_BTREE) && (key_alg!= HA_KEY_ALG_UNDEF))
+  message::Table::Index::IndexType key_alg= param->table->key_info[seq.real_keyno].algorithm;
+  if ((key_alg != message::Table::Index::BTREE)
+      && (key_alg!= message::Table::Index::UNKNOWN_INDEX))
   {
     /*
       All scans are non-ROR scans for those index types.

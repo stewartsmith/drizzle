@@ -38,6 +38,8 @@
 
 namespace drizzled {
 
+class KeyPartInfo;
+
 #define HA_MAX_ALTER_FLAGS 40
 
 typedef std::bitset<HA_MAX_ALTER_FLAGS> HA_ALTER_FLAGS;
@@ -602,8 +604,6 @@ private:
   */
   virtual void drop_table();
 };
-
-extern const char *ha_row_type[];
 
 /* basic stuff */
 void ha_init_errors(void);

@@ -22,6 +22,7 @@
 #include <drizzled/field/blob.h>
 #include <drizzled/util/test.h>
 #include <drizzled/plugin/storage_engine.h>
+#include <drizzled/key_part_info.h>
 
 #include <boost/dynamic_bitset.hpp>
 

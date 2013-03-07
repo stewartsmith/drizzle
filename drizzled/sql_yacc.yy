@@ -148,7 +148,7 @@ using namespace drizzled;
   drizzled::sys_var_with_base variable;
   drizzled::sql_var_t var_type;
   drizzled::Key::Keytype key_type;
-  drizzled::ha_key_alg key_alg;
+  drizzled::message::Table::Index::IndexType key_alg;
   drizzled::ha_rkey_function ha_rkey_mode;
   drizzled::enum_tx_isolation tx_isolation;
   drizzled::Cast_target cast_type;
@@ -1780,8 +1780,8 @@ key_opt:
         ;
 
 btree_or_rtree:
-          BTREE_SYM { $$= HA_KEY_ALG_BTREE; }
-        | HASH_SYM  { $$= HA_KEY_ALG_HASH; }
+          BTREE_SYM { $$= drizzled::message::Table::Index::BTREE; }
+        | HASH_SYM  { $$= drizzled::message::Table::Index::HASH; }
         ;
 
 key_list:

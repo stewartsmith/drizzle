@@ -74,6 +74,7 @@ St, Fifth Floor, Boston, MA 02110-1301 USA
 #include <drizzled/session/times.h>
 #include <drizzled/session/transactions.h>
 #include <drizzled/typelib.h>
+#include <drizzled/key_part_info.h>
 
 #include <boost/algorithm/string.hpp>
 #include <boost/program_options.hpp>
@@ -553,7 +554,7 @@ public:
   UNIV_INTERN uint32_t max_supported_key_part_length() const;
 
 
-  UNIV_INTERN uint32_t index_flags(enum  ha_key_alg) const
+  UNIV_INTERN uint32_t index_flags(drizzled::message::Table::Index::IndexType) const
   {
     return (HA_READ_NEXT |
             HA_READ_PREV |

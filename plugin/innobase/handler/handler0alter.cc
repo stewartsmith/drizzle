@@ -28,6 +28,7 @@ Smart ALTER TABLE
 #include <drizzled/table.h>
 #include <drizzled/field/varstring.h>
 #include <drizzled/internal/my_sys.h>
+#include <drizzled/key_part_info.h>
 
 #include "log0log.h"
 #include "row0merge.h"

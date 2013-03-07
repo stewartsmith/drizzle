@@ -47,6 +47,7 @@
 #include <drizzled/select_union.h>
 #include <drizzled/sql_lex.h>
 #include <drizzled/system_variables.h>
+#include <drizzled/key_part_info.h>
 
 namespace drizzled {
 

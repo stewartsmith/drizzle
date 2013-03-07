@@ -30,6 +30,7 @@
 #include <drizzled/statistics_variables.h>
 #include <drizzled/table.h>
 #include <drizzled/create_field.h>
+#include <drizzled/key_part_info.h>
 
 namespace drizzled {
 namespace table {

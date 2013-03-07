@@ -24,6 +24,8 @@
 #include <drizzled/internal/my_sys.h>
 #include <drizzled/typelib.h>
 #include <drizzled/util/test.h>
+#include <drizzled/key_part_info.h>
+#include <drizzled/key_info.h>
 
 /* For proto */
 #include <string>
@@ -410,22 +412,10 @@ bool fill_table_proto(const identifier::Table& identifier,
     idx->set_key_length(key_info[i].key_length);
     idx->set_is_primary(is_primary_key(key_info[i].name));
 
-    switch(key_info[i].algorithm)
-    {
-    case HA_KEY_ALG_HASH:
-      idx->set_type(message::Table::Index::HASH);
-      break;
-
-    case HA_KEY_ALG_BTREE:
-      idx->set_type(message::Table::Index::BTREE);
-      break;
-
-    case HA_KEY_ALG_UNDEF:
-      {
-        idx->set_type(create_info->db_type->default_index_type());
-        break;
-      }
-    }
+    if (key_info[i].algorithm == message::Table::Index::UNKNOWN_INDEX)
+      idx->set_type(create_info->db_type->default_index_type());
+    else
+      idx->set_type(key_info[i].algorithm);
 
     if (key_info[i].flags & HA_NOSAME)
       idx->set_is_unique(true);

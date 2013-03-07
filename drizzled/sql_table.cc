@@ -46,6 +46,7 @@
 #include <drizzled/open_tables_state.h>
 #include <drizzled/table/cache.h>
 #include <drizzled/create_field.h>
+#include <drizzled/key_part_info.h>
 
 #include <algorithm>
 #include <sstream>

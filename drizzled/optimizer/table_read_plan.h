@@ -24,6 +24,9 @@
 #include <algorithm>
 
 namespace drizzled {
+
+class KeyPartInfo;
+
 namespace optimizer {
 
 /*

@@ -44,11 +44,6 @@ namespace drizzled {
 
 KEY_CREATE_INFO default_key_create_info;
 
-const char *ha_row_type[] = 
-{
-  "", "FIXED", "DYNAMIC", "COMPRESSED", "REDUNDANT", "COMPACT", "PAGE", "?","?","?"
-};
-
 /**
   Register Cursor error messages for use with my_error().
 */

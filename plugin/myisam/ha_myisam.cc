@@ -38,6 +38,7 @@
 #include <drizzled/key.h>
 #include <drizzled/statistics_variables.h>
 #include <drizzled/system_variables.h>
+#include <drizzled/key_part_info.h>
 
 #include <boost/algorithm/string.hpp>
 #include <boost/scoped_ptr.hpp>
@@ -121,7 +122,7 @@ public:
   uint32_t max_supported_key_length()    const { return MI_MAX_KEY_LENGTH; }
   uint32_t max_supported_key_part_length() const { return MI_MAX_KEY_LENGTH; }
 
-  uint32_t index_flags(enum  ha_key_alg) const
+  uint32_t index_flags(drizzled::message::Table::Index::IndexType) const
   {
     return (HA_READ_NEXT |
             HA_READ_PREV |
@@ -223,7 +224,7 @@ static int table2myisam(Table *table_arg, MI_KEYDEF **keydef_out,
   {
     KeyInfo *pos= &table_arg->key_info[i];
     keydef[i].flag= ((uint16_t) pos->flags & (HA_NOSAME));
-    keydef[i].key_alg= HA_KEY_ALG_BTREE;
+    keydef[i].key_alg= message::Table::Index::BTREE;
     keydef[i].block_length= pos->block_size;
     keydef[i].seg= keyseg;
     keydef[i].keysegs= pos->key_parts;
@@ -589,7 +590,7 @@ int ha_myisam::doOpen(const drizzled::identifier::Table &identifier, int mode, u
   if (!(file= mi_open(identifier, mode, test_if_locked)))
     return (errno ? errno : -1);
 
-  if (!getTable()->getShare()->getType()) /* No need to perform a check for tmp table */
+  if (getTable()->getShare()->getType() == message::Table::STANDARD)
   {
     if ((errno= table2myisam(getTable(), &keyinfo, &recinfo, &recs)))
     {

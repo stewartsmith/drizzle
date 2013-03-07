@@ -87,6 +87,7 @@
 #include <drizzled/key.h>
 #include <drizzled/open_tables_state.h>
 #include <drizzled/catalog/local.h>
+#include <drizzled/key_part_info.h>
 
 using namespace std;
 
@@ -625,23 +626,7 @@ bool TableShare::parse_table_proto(Session& session, const message::Table &table
       }
     }
 
-    switch (indx.type())
-    {
-    case message::Table::Index::UNKNOWN_INDEX:
-      keyinfo->algorithm= HA_KEY_ALG_UNDEF;
-      break;
-    case message::Table::Index::BTREE:
-      keyinfo->algorithm= HA_KEY_ALG_BTREE;
-      break;
-    case message::Table::Index::HASH:
-      keyinfo->algorithm= HA_KEY_ALG_HASH;
-      break;
-
-    default:
-      /* TODO: suitable warning ? */
-      keyinfo->algorithm= HA_KEY_ALG_UNDEF;
-      break;
-    }
+    keyinfo->algorithm= indx.type();
 
     keyinfo->key_length= indx.key_length();
 
@@ -1315,7 +1300,7 @@ bool TableShare::parse_table_proto(Session& session, const message::Table &table
         if (local_field->key_length() == key_part->length &&
             !(local_field->flags & BLOB_FLAG))
         {
-          enum ha_key_alg algo= key_info[key].algorithm;
+          message::Table::Index::IndexType algo= key_info[key].algorithm;
           if (db_type()->index_flags(algo) & HA_KEYREAD_ONLY)
           {
             keys_for_keyread.set(key);

@@ -32,6 +32,8 @@
 
 namespace drizzled {
 
+class KeyPartInfo;
+
 class Key : public memory::SqlAlloc 
 {
 public:

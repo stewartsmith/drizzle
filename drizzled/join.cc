@@ -69,6 +69,7 @@
 #include <drizzled/statistics_variables.h>
 #include <drizzled/system_variables.h>
 #include <algorithm>
+#include <drizzled/key_part_info.h>
 
 using namespace std;
 

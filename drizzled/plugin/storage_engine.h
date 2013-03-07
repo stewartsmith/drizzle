@@ -229,7 +229,7 @@ public:
   }
 
   // @todo match check_flag interface
-  virtual uint32_t index_flags(enum  ha_key_alg) const { return 0; }
+  virtual uint32_t index_flags(drizzled::message::Table::Index::IndexType) const { return 0; }
   virtual void startStatement(Session *session)
   {
     doStartStatement(session);

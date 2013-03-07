@@ -59,6 +59,7 @@
 #include <drizzled/statistics_variables.h>
 #include <drizzled/system_variables.h>
 #include <drizzled/open_tables_state.h>
+#include <drizzled/key_part_info.h>
 
 using namespace std;
 
@@ -1162,7 +1163,7 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
     keyinfo->usable_key_parts=keyinfo->key_parts= param->group_parts;
     keyinfo->key_length= 0;
     keyinfo->rec_per_key= 0;
-    keyinfo->algorithm= HA_KEY_ALG_UNDEF;
+    keyinfo->algorithm= message::Table::Index::UNKNOWN_INDEX;
     keyinfo->name= (char*) "group_key";
     Order *cur_group= group;
     for (; cur_group ; cur_group= cur_group->next, key_part_info++)
@@ -1240,7 +1241,7 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
     keyinfo->flags=HA_NOSAME | HA_NULL_ARE_EQUAL;
     keyinfo->key_length=(uint16_t) reclength;
     keyinfo->name= (char*) "distinct_key";
-    keyinfo->algorithm= HA_KEY_ALG_UNDEF;
+    keyinfo->algorithm= message::Table::Index::UNKNOWN_INDEX;
     keyinfo->rec_per_key= 0;
 
     /*
