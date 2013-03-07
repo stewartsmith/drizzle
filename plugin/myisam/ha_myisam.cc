@@ -590,7 +590,7 @@ int ha_myisam::doOpen(const drizzled::identifier::Table &identifier, int mode, u
   if (!(file= mi_open(identifier, mode, test_if_locked)))
     return (errno ? errno : -1);
 
-  if (!getTable()->getShare()->getType()) /* No need to perform a check for tmp table */
+  if (getTable()->getShare()->getType() == message::Table::STANDARD)
   {
     if ((errno= table2myisam(getTable(), &keyinfo, &recinfo, &recs)))
     {
