@@ -1,0 +1,8 @@
+use test;
+show tables like 'lsm%';
+SHOW CREATE TABLE lsmtree;
+SHOW INDEX FROM lsmtree;
+SELECT INDEX_NAME,INDEX_TYPE,INDEX_COMMENT FROM DATA_DICTIONARY.INDEXES WHERE TABLE_SCHEMA='test' AND TABLE_NAME='lsmtree';
+# We don't really create a table, we're checking parser and proto creation
+# so we don't need to drop it afterwards.
+CREATE TABLE lsmtree_create (a int, index(a) USING LSMTREE) ENGINE=TABLEPROTOTESTER;

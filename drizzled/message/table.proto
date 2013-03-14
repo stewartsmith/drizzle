@@ -149,6 +149,7 @@ message Table {
       RTREE = 2;
       HASH  = 3;
       FULLTEXT = 4;
+      LSMTREE = 5;
     }
 
     message IndexPart {
