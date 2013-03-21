@@ -277,11 +277,11 @@ run_configure ()
   # If we are executing on OSX use CLANG, otherwise only use it if we find it in the ENV
   case $HOST_OS in
     *-darwin-*)
-      CC=clang CXX=clang++ $top_srcdir/configure $CONFIGURE_ARG || die "Cannot execute CC=clang CXX=clang++ configure $CONFIGURE_ARG $PREFIX_ARG"
+      CC=clang CXX=clang++ $top_srcdir/configure $CONFIGURE_ARG || die "Cannot execute CC=clang CXX=clang++ $top_srcdir/configure $CONFIGURE_ARG $PREFIX_ARG"
       ;;
     rhel-5*)
       command_exists gcc44 || die "Could not locate gcc44"
-      CC=gcc44 CXX=gcc44 $top_srcdir/configure $CONFIGURE_ARG $PREFIX_ARG || die "Cannot execute CC=gcc44 CXX=gcc44 configure $CONFIGURE_ARG $PREFIX_ARG"
+      CC=gcc44 CXX=gcc44 $top_srcdir/configure $CONFIGURE_ARG $PREFIX_ARG || die "Cannot execute CC=gcc44 CXX=gcc44 $top_srcdir/configure $CONFIGURE_ARG $PREFIX_ARG"
       ;;
     *)
       $top_srcdir/configure $CONFIGURE_ARG $PREFIX_ARG || die "Cannot execute configure $CONFIGURE_ARG $PREFIX_ARG"
@@ -1254,6 +1254,10 @@ main ()
   local AUTORECONF_REBUILD=false
 
   local -r top_srcdir=`pwd`
+
+  if [ -z "$top_srcdir" ]; then
+    top_srcdir='.';
+  fi
 
   # Variables for determine_target_platform () and rebuild_host_os ()
   #   UNAME_MACHINE_ARCH= uname -m

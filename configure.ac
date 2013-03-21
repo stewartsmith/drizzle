@@ -109,9 +109,9 @@ PANDORA_PROTOBUF_REQUIRE_VERSION([2.1.0])
 PANDORA_REQUIRE_PROTOC
 
 AC_DEFUN([DRIZZLE_UUID],[
+          AC_REQUIRE([AX_UUID_GENERATE_TIME])dnl
           AC_REQUIRE([AX_UUID_GENERATE_TIME_SAFE])dnl
           AS_IF([ test "$ax_libuuid" = yes ],,[AC_MSG_ERROR([Drizzle requires uuid/uuid.h to build.])])
-          AS_IF([ test "$ax_cv_uuid_generate_time_safe" = yes ],,[AC_MSG_ERROR([Drizzle requires a uuid/uuid.h with uuid_generate_time_safe() to build.])])
           ])
 DRIZZLE_UUID
 
