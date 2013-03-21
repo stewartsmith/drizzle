@@ -116,7 +116,20 @@ int64_t Uuid::val_int() const
 void Uuid::generate()
 {
   uuid_t uu;
+#ifdef HAVE_UUID_GENERATE_TIME_SAFE
   uuid_generate_time(uu);
+#elif HAVE_UUID_GENERATE_TIME_SAFE
+  int limit= 5;
+  while (--limit)
+  {
+    if (uuid_generate_time_safe(uu) == 0)
+    {
+      break; // We got a good uuid
+    }
+  }
+#else
+# error "Drizzle requires either uuid_generate_time() or uuid_generate_time_safe()"
+#endif
   memcpy(ptr, uu, sizeof(uuid_t));
   is_set= true;
 }
