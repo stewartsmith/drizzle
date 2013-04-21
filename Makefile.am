@@ -60,10 +60,11 @@ dist_pkgdata_DATA=
 
 VERSION=$(PANDORA_RELEASE_VERSION)
 
-SUBDIRS = .
+SUBDIRS=
 if BUILD_PO
-SUBDIRS += po
+SUBDIRS+= po
 endif
+SUBDIRS+= .
 
 SUBDIRS+= tests
 
