@@ -61,12 +61,8 @@ dist_pkgdata_DATA=
 VERSION=$(PANDORA_RELEASE_VERSION)
 
 SUBDIRS=
-if BUILD_PO
 SUBDIRS+= po
-endif
 SUBDIRS+= .
-
-SUBDIRS+= tests
 
 DIST_SUBDIRS = ${SUBDIRS}
 
@@ -88,6 +84,7 @@ EXTRA_DIST= \
 	    po/Makefile.in.in \
 	    ${top_srcdir}/m4/pandora*m4
 
+EXTRA_DIST+= po/Makevars
 
 CLEANFILES=		${BUILT_SOURCES}
 DISTCLEANFILES=		ac_available_languages_fragment \
