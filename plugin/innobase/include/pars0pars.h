@@ -93,9 +93,6 @@ extern ulint		pars_star_denoter;
 #define PARS_OUTPUT	1
 #define PARS_NOT_PARAM	2
 
-int
-yyparse(void);
-
 /*************************************************************//**
 Parses an SQL string returning the query graph.
 @return	own: the query graph */

@@ -28,6 +28,8 @@ on 1/27/1998 */
 
 #include "pars0pars.h"
 
+#include "plugin/innobase/include/yyparse.h"
+
 #ifdef UNIV_NONINL
 #include "pars0pars.ic"
 #endif

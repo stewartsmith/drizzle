@@ -14,6 +14,7 @@
 #  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 ACLOCAL_AMFLAGS = -I m4
+AM_YFLAGS= -d --verbose
 
 # includes append to these:
 # Pandora build system takes input from plugin.ini files that are appended to these

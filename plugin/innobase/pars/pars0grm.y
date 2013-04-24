@@ -22,9 +22,11 @@ SQL parser: input file for the GNU Bison parser generator
 Created 12/14/1997 Heikki Tuuri
 *******************************************************/
 
-%{
-
+%code top {
 #pragma GCC diagnostic ignored "-Wredundant-decls"
+}
+
+%{
 
 /* The value of the semantic attribute is a pointer to a query tree node
 que_node_t */
