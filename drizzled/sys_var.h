@@ -1101,6 +1101,4 @@ void add_sys_var_to_list(sys_var*, option*);
 void add_sys_var_to_list(sys_var*);
 sys_var* find_sys_var(const std::string&);
 
-extern sys_var_str sys_var_general_log_path, sys_var_slow_log_path;
-
 } /* namespace drizzled */
