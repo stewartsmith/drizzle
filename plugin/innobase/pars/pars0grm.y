@@ -43,12 +43,17 @@ que_node_t */
 #define YYENABLE_NLS 0
 #define YYLTYPE_IS_TRIVIAL 0
 
+void innodb_error(char const*)
+{
+}
+
 /* #define __STDC__ */
 
 extern "C" int yylex(void);
 %}
 
 %expect 27
+%name-prefix="innodb_"
 
 %token PARS_INT_LIT
 %token PARS_FLOAT_LIT
