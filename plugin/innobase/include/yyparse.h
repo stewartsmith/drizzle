@@ -17,4 +17,7 @@ St, Fifth Floor, Boston, MA 02110-1301 USA
 *****************************************************************************/
 
 #pragma once
-int yyparse(void);
+
+extern "C" {
+  int yyparse(void);
+}
