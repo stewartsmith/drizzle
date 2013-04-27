@@ -14,6 +14,7 @@
 #  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 ACLOCAL_AMFLAGS = -I m4
+AM_YFLAGS= -d --verbose
 
 # includes append to these:
 # Pandora build system takes input from plugin.ini files that are appended to these
@@ -60,12 +61,9 @@ dist_pkgdata_DATA=
 
 VERSION=$(PANDORA_RELEASE_VERSION)
 
-SUBDIRS = .
-if BUILD_PO
-SUBDIRS += po
-endif
-
-SUBDIRS+= tests
+SUBDIRS=
+SUBDIRS+= po
+SUBDIRS+= .
 
 DIST_SUBDIRS = ${SUBDIRS}
 
@@ -87,6 +85,7 @@ EXTRA_DIST= \
 	    po/Makefile.in.in \
 	    ${top_srcdir}/m4/pandora*m4
 
+EXTRA_DIST+= po/Makevars
 
 CLEANFILES=		${BUILT_SOURCES}
 DISTCLEANFILES=		ac_available_languages_fragment \

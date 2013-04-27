@@ -22,7 +22,12 @@ SQL parser: input file for the GNU Bison parser generator
 Created 12/14/1997 Heikki Tuuri
 *******************************************************/
 
+%code top {
+#pragma GCC diagnostic ignored "-Wredundant-decls"
+}
+
 %{
+
 /* The value of the semantic attribute is a pointer to a query tree node
 que_node_t */
 
@@ -38,12 +43,17 @@ que_node_t */
 #define YYENABLE_NLS 0
 #define YYLTYPE_IS_TRIVIAL 0
 
+void innodb_error(char const*)
+{
+}
+
 /* #define __STDC__ */
 
 extern "C" int yylex(void);
 %}
 
 %expect 27
+%name-prefix="innodb_"
 
 %token PARS_INT_LIT
 %token PARS_FLOAT_LIT

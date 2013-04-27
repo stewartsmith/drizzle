@@ -232,8 +232,8 @@ public:
       if (int error= pthread_kill(thread.native_handle(), signal))
       {
         char buffer[1024]; // No reason for number;
-        strerror_r(error, buffer, sizeof(buffer));
-        std::cerr << "pthread_kill() error on shutdown of signal thread (" << buffer << ")\n";
+        char* buffer_ptr= strerror_r(error, buffer, sizeof(buffer));
+        std::cerr << "pthread_kill() error on shutdown of signal thread (" << buffer_ptr << ")\n";
         break;
       }
       else

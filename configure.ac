@@ -147,8 +147,12 @@ AX_PTHREAD([
 # Specialty checks
 
 # Checks for programs.
+AC_CHECK_PROGS([DOXYGEN],[doxygen])
+AC_CHECK_PROGS([LEX],['flex'],[:])
+AC_CHECK_PROGS([YACC],['bison'],[:])
 
 # Checks for libraries.
+LT_LIB_M
 
 # Checks for header files.
 AC_CHECK_HEADERS([sys/socket.h])
@@ -188,7 +192,6 @@ AC_DEFINE_UNQUOTED([SIZEOF_LONG_LONG],[$ac_cv_sizeof_long_long],[Size of long lo
 AC_CHECK_FUNC([setsockopt],[],[AC_CHECK_LIB(socket, setsockopt)])
 AC_CHECK_FUNC([bind],[],[AC_CHECK_LIB(bind, bind)])
 
-AC_CHECK_PROGS([DOXYGEN],[doxygen])
 AX_AM_JOBSERVER([yes])
 
 #########################################################################
@@ -219,17 +222,20 @@ AH_BOTTOM([
            #endif
            ])
 
-AC_CONFIG_FILES(Makefile dnl
- tests/Makefile dnl
- drizzled/plugin/version.h dnl
- support-files/rpm/SPECS/drizzle.spec dnl
- libdrizzle-1.0/version.h dnl
- support-files/drizzle.pc dnl
- support-files/libdrizzle.pc dnl
- support-files/libdrizzle-1.0.pc dnl
- support-files/smf/install.sh dnl
- support-files/smf/drizzle.xml dnl
- support-files/smf/drizzle)
+AM_GNU_GETTEXT_VERSION([0.18.1])
+AM_GNU_GETTEXT([external])
+
+AC_CONFIG_FILES([Makefile 
+                po/Makefile.in 
+                drizzled/plugin/version.h 
+                support-files/rpm/SPECS/drizzle.spec 
+                libdrizzle-1.0/version.h 
+                support-files/drizzle.pc 
+                support-files/libdrizzle.pc 
+                support-files/libdrizzle-1.0.pc 
+                support-files/smf/install.sh 
+                support-files/smf/drizzle.xml 
+                support-files/smf/drizzle])
 
 scheduling_plugins_available="
   pool_of_threads 

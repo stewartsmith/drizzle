@@ -46,6 +46,8 @@ Created 1/20/1994 Heikki Tuuri
 # include <stdbool.h>
 #endif
 
+#pragma GCC diagnostic ignored "-Wunused-function"
+
 #ifdef UNIV_HOTBACKUP
 #include "hb_univ.i"
 #endif /* UNIV_HOTBACKUP */

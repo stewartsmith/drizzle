@@ -957,8 +957,6 @@ drizzled_libmemory_la_SOURCES= \
 			       drizzled/memory/root.cc \
 			       drizzled/memory/sql_alloc.cc
 
-AM_YFLAGS = -p DRIZZLE -d --verbose
-
 if BUILD_GCC_PCH
 PCHHEADERS= config.h.gch
 else

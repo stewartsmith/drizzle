@@ -28,6 +28,8 @@ on 1/27/1998 */
 
 #include "pars0pars.h"
 
+#include "plugin/innobase/include/yyparse.h"
+
 #ifdef UNIV_NONINL
 #include "pars0pars.ic"
 #endif
@@ -1876,7 +1878,7 @@ pars_sql(
 	pars_sym_tab_global->next_char_pos = 0;
 	pars_sym_tab_global->info = info;
 
-	yyparse();
+	innodb_parse();
 
 	sym_node = UT_LIST_GET_FIRST(pars_sym_tab_global->sym_list);
 

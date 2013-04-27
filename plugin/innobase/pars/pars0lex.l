@@ -91,10 +91,13 @@ BOUND_ID	\$[a-z_A-Z0-9]+
 %x comment
 %x quoted
 %x id
+
+%option prefix="innodb_"
+
 %%
 
 {DIGIT}+	{
-			yylval = sym_tab_add_int_lit(pars_sym_tab_global,
+			innodb_lval = sym_tab_add_int_lit(pars_sym_tab_global,
 								atoi(yytext));
 			return(PARS_INT_LIT);
 }
@@ -108,14 +111,14 @@ BOUND_ID	\$[a-z_A-Z0-9]+
 {BOUND_LIT}	{
 			ulint	type;
 
-			yylval = sym_tab_add_bound_lit(pars_sym_tab_global,
+			innodb_lval = sym_tab_add_bound_lit(pars_sym_tab_global,
 				yytext + 1, &type);
 
 			return((int) type);
 }
 
 {BOUND_ID}	{
-			yylval = sym_tab_add_bound_id(pars_sym_tab_global,
+			innodb_lval = sym_tab_add_bound_id(pars_sym_tab_global,
 				yytext + 1);
 
 			return(PARS_ID_TOKEN);
@@ -152,7 +155,7 @@ In the state 'quoted', only two actions are possible (defined below). */
 
 			if (yyleng % 2) {
 				BEGIN(INITIAL);
-				yylval = sym_tab_add_str_lit(
+				innodb_lval = sym_tab_add_str_lit(
 					pars_sym_tab_global,
 					(byte*) stringbuf, stringbuf_len);
 				return(PARS_STR_LIT);
@@ -190,7 +193,7 @@ In the state 'id', only two actions are possible (defined below). */
 
 			if (yyleng % 2) {
 				BEGIN(INITIAL);
-				yylval = sym_tab_add_id(
+				innodb_lval = sym_tab_add_id(
 					pars_sym_tab_global,
 					(byte*) stringbuf, stringbuf_len);
 
@@ -199,14 +202,14 @@ In the state 'id', only two actions are possible (defined below). */
 }
 
 "NULL"		{
-			yylval = sym_tab_add_null_lit(pars_sym_tab_global);
+			innodb_lval = sym_tab_add_null_lit(pars_sym_tab_global);
 
 			return(PARS_NULL_LIT);
 }
 
 "SQL"		{
 			/* Implicit cursor name */
-			yylval = sym_tab_add_str_lit(pars_sym_tab_global,
+			innodb_lval = sym_tab_add_str_lit(pars_sym_tab_global,
 							(byte*) yytext, yyleng);
 			return(PARS_SQL_TOKEN);
 }
@@ -528,7 +531,7 @@ In the state 'id', only two actions are possible (defined below). */
 }
 
 {ID}		{
-			yylval = sym_tab_add_id(pars_sym_tab_global,
+			innodb_lval = sym_tab_add_id(pars_sym_tab_global,
 							(byte*)yytext,
 							strlen(yytext));
 			return(PARS_ID_TOKEN);
