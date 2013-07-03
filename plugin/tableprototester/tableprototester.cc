@@ -113,6 +113,7 @@ void TableProtoTesterEngine::doGetTableIdentifiers(drizzled::CachedDirectory&,
     set_of_identifiers.push_back(identifier::Table(schema_identifier, "t1"));
     set_of_identifiers.push_back(identifier::Table(schema_identifier, "too_many_enum_values"));
     set_of_identifiers.push_back(identifier::Table(schema_identifier, "invalid_table_collation"));
+    set_of_identifiers.push_back(identifier::Table(schema_identifier, "lsmtree"));
   }
 }
 
@@ -123,6 +124,8 @@ bool TableProtoTesterEngine::doDoesTableExist(Session&, const drizzled::identifi
   if (not identifier.getPath().compare("local/test/too_many_enum_values"))
     return true;
   if (not identifier.getPath().compare("local/test/invalid_table_collation"))
+    return true;
+  if (not identifier.getPath().compare("local/test/lsmtree"))
     return true;
 
   return false;
@@ -145,9 +148,19 @@ int TableProtoTesterCursor::close(void)
 
 int TableProtoTesterEngine::doCreateTable(Session&,
                                           Table&,
-                                          const drizzled::identifier::Table&,
-                                          const drizzled::message::Table&)
+                                          const drizzled::identifier::Table& identifier,
+                                          const drizzled::message::Table& create_proto)
 {
+  if (not identifier.getPath().compare("local/test/lsmtree_create"))
+  {
+    if (create_proto.indexes_size() < 1)
+      return -1;
+    if (create_proto.indexes(0).type() != message::Table::Index::LSMTREE)
+      return -2;
+
+    return 0;
+  }
+
   return EEXIST;
 }
 
@@ -235,6 +248,64 @@ static void fill_table_invalid_table_collation(message::Table &table)
 
 }
 
+static void fill_lsmtree(message::Table &table)
+{
+  message::Table::Field *field;
+  message::Table::TableOptions *tableopts;
+
+  table.set_name("lsmtree");
+  table.set_schema("test");
+  table.set_type(message::Table::STANDARD);
+  message::Engine *engine= table.mutable_engine();
+  engine->set_name("TABLEPROTOTESTER");
+  table.set_creation_timestamp(0);
+  table.set_update_timestamp(0);
+
+  tableopts= table.mutable_options();
+  tableopts->set_comment("LSM Tree test");
+  tableopts->set_collation_id(my_charset_bin.number);
+  tableopts->set_collation(my_charset_bin.name);
+
+  {
+    field= table.add_field();
+    field->set_name("a");
+    field->set_type(message::Table::Field::INTEGER);
+  }
+  {
+    field= table.add_field();
+    field->set_name("b");
+    field->set_type(message::Table::Field::INTEGER);
+  }
+  {
+    field= table.add_field();
+    field->set_name("c");
+    field->set_type(message::Table::Field::INTEGER);
+  }
+
+  {
+    message::Table::Index *index= table.add_indexes();
+    index->set_name("PRIMARY");
+    index->set_is_primary(true);
+    index->set_is_unique(true);
+    index->set_type(message::Table::Index::BTREE);
+    index->set_key_length(sizeof(uint32_t));
+    message::Table::Index::IndexPart *part= index->add_index_part();
+    part->set_fieldnr(0);
+    part->set_compare_length(sizeof(uint32_t));
+  }
+
+  {
+    message::Table::Index *index= table.add_indexes();
+    index->set_name("mylsm");
+    index->set_type(message::Table::Index::LSMTREE);
+    index->set_key_length(sizeof(uint32_t));
+    message::Table::Index::IndexPart *part= index->add_index_part();
+    part->set_fieldnr(1);
+    part->set_compare_length(sizeof(uint32_t));
+  }
+
+}
+
 int TableProtoTesterEngine::doGetTableDefinition(Session&,
                                                  const drizzled::identifier::Table &identifier,
                                                  drizzled::message::Table &table_proto)
@@ -254,11 +325,22 @@ int TableProtoTesterEngine::doGetTableDefinition(Session&,
     fill_table_invalid_table_collation(table_proto);
     return EEXIST;
   }
+  else if (not identifier.getPath().compare("local/test/lsmtree"))
+  {
+    fill_lsmtree(table_proto);
+    return EEXIST;
+  }
   return ENOENT;
 }
 
-const char *TableProtoTesterCursor::index_type(uint32_t)
+const char *TableProtoTesterCursor::index_type(uint32_t idx)
 {
+  if (strcmp(getShare()->getTableName(), "lsmtree") == 0)
+  {
+    if (idx == 1)
+      return "LSMTREE";
+  }
+
   return("BTREE");
 }
 

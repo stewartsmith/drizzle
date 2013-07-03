@@ -68,6 +68,7 @@ static const std::string BTREE("BTREE");
 static const std::string RTREE("RTREE");
 static const std::string HASH("HASH");
 static const std::string FULLTEXT("FULLTEXT");
+static const std::string LSMTREE("LSMTREE");
 
 static const std::string MATCH_FULL("FULL");
 static const std::string MATCH_PARTIAL("PARTIAL");
@@ -227,6 +228,8 @@ const std::string &type(drizzled::message::Table::Index::IndexType type)
     return HASH;
   case message::Table::Index::FULLTEXT:
     return FULLTEXT;
+  case message::Table::Index::LSMTREE:
+    return LSMTREE;
   }
 
   assert(0);

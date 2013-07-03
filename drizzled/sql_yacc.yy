@@ -390,6 +390,7 @@ bool my_yyoverflow(short **a, union ParserType **b, unsigned long *yystacksize);
 %token  LOGS_SYM
 %token  LONG_NUM
 %token  LONG_SYM
+%token  LSMTREE_SYM
 %token  MATCH                         /* SQL-2003-R */
 %token  MAX_SYM                       /* SQL-2003-N */
 %token  MAX_VALUE_SYM                 /* SQL-2003-N */
@@ -703,7 +704,7 @@ bool my_yyoverflow(short **a, union ParserType **b, unsigned long *yystacksize);
         key_type opt_unique constraint_key_type
 
 %type <key_alg>
-        btree_or_rtree
+        index_algorithm
 
 %type <string_list>
         using_list
@@ -1768,7 +1769,7 @@ key_opts:
         ;
 
 key_using_alg:
-          USING btree_or_rtree     { ((statement::CreateTable *)Lex.statement)->key_create_info.algorithm= $2; }
+          USING index_algorithm     { ((statement::CreateTable *)Lex.statement)->key_create_info.algorithm= $2; }
         ;
 
 key_opt:
@@ -1779,9 +1780,10 @@ key_opt:
           { ((statement::CreateTable *)Lex.statement)->key_create_info.comment= $2; }
         ;
 
-btree_or_rtree:
+index_algorithm:
           BTREE_SYM { $$= drizzled::message::Table::Index::BTREE; }
         | HASH_SYM  { $$= drizzled::message::Table::Index::HASH; }
+        | LSMTREE_SYM  { $$= drizzled::message::Table::Index::LSMTREE; }
         ;
 
 key_list:
@@ -5315,6 +5317,7 @@ keyword_sp:
         | LOCAL_SYM                {}
         | LOCKS_SYM                {}
         | LOGS_SYM                 {}
+        | LSMTREE_SYM              {}
         | MAX_VALUE_SYM            {}
         | MEDIUM_SYM               {}
         | MERGE_SYM                {}

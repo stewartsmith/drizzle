@@ -1,0 +1,22 @@
+use test;
+show tables like 'lsm%';
+Tables_in_test (lsm%)
+lsmtree
+SHOW CREATE TABLE lsmtree;
+Table	Create Table
+lsmtree	CREATE TABLE `lsmtree` (
+  `a` INT,
+  `b` INT,
+  `c` INT,
+  PRIMARY KEY (`a`) USING BTREE,
+  KEY `mylsm` (`b`) USING LSMTREE
+) ENGINE=TABLEPROTOTESTER COMMENT='LSM Tree test' COLLATE = binary
+SHOW INDEX FROM lsmtree;
+Table	Unique	Key_name	Seq_in_index	Column_name
+lsmtree	YES	PRIMARY	1	a
+lsmtree	NO	mylsm	1	b
+SELECT INDEX_NAME,INDEX_TYPE,INDEX_COMMENT FROM DATA_DICTIONARY.INDEXES WHERE TABLE_SCHEMA='test' AND TABLE_NAME='lsmtree';
+INDEX_NAME	INDEX_TYPE	INDEX_COMMENT
+PRIMARY	BTREE	NULL
+mylsm	LSMTREE	NULL
+CREATE TABLE lsmtree_create (a int, index(a) USING LSMTREE) ENGINE=TABLEPROTOTESTER;

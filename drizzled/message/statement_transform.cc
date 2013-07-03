@@ -1254,6 +1254,9 @@ transformIndexDefinitionToSql(const Table::Index &index,
   case Table::Index::FULLTEXT:
     destination.append(" USING FULLTEXT");
     break;
+  case Table::Index::LSMTREE:
+    destination.append(" USING LSMTREE");
+    break;
   }
 
   if (index.has_comment())
