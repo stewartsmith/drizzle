@@ -287,3 +287,21 @@ SET GLOBAL json_server_allow_drop_table="OFF";
 SET GLOBAL json_server_table="";
 SET GLOBAL json_server_schema="test";
 drop schema json;
+{
+   "sql_state" : "00000"
+}
+{
+   "error_message" : "Can't create schema 'json'; schema exists",
+   "error_no" : 1007,
+   "error_type" : "SQL ERROR",
+   "sql_state" : "HY000"
+}
+{
+   "sql_state" : "00000"
+}
+{
+   "error_message" : "Can't drop schema 'json'; schema doesn't exist",
+   "error_no" : 1008,
+   "error_type" : "SQL ERROR",
+   "sql_state" : "HY000"
+}

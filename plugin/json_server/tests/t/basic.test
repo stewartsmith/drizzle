@@ -1,0 +1,96 @@
+create table t1 (a int primary key auto_increment, b varchar(100));
+--replace_result $JSON_SERVER_PORT PORT
+--eval select http_post("http://localhost:$JSON_SERVER_PORT/sql", 'select * from t1;');
+insert into t1 (b) values ("from MySQL protocol");
+--replace_result $JSON_SERVER_PORT PORT
+--eval select http_post('http://localhost:$JSON_SERVER_PORT/sql', 'select * from t1;');
+--replace_result $JSON_SERVER_PORT PORT
+--eval select http_post('http://localhost:$JSON_SERVER_PORT/sql', 'insert into t1 (b) values (\'from http\');');
+SELECT * from t1;
+drop table t1;
+
+create schema json;
+
+use json;
+
+--exec curl -H "Content-Type: application/json" -H "Accept: application/json" -X POST -d '{"query":{"_id":1,"document":{"firstname":"Henrik","lastname":"Ingo","age": 35}}}' 'http://localhost:$JSON_SERVER_PORT/json?schema=json&table=people'
+
+--exec curl 'http://localhost:$JSON_SERVER_PORT/json?schema=json&table=people&_id=1'
+
+--exec curl 'http://localhost:$JSON_SERVER_PORT/json?schema=json&table=people&query=%7B%22query%22%3A%7B%22_id%22%3A1%7D%7D'
+
+--exec curl -H "Content-Type: application/json" -H "Accept: application/json" -X POST -d '{"query":{"_id":1,"document":{"firstname":"Henrik","lastname":"Ingo","age": 36}}}' 'http://localhost:$JSON_SERVER_PORT/json?schema=json&table=people'
+
+--exec curl 'http://localhost:$JSON_SERVER_PORT/json?schema=json&table=people&_id=1'
+
+--exec curl -X POST 'http://localhost:$JSON_SERVER_PORT/json?schema=json&table=people&_id=2'
+
+--exec curl -H "Content-Type: application/json" -H "Accept: application/json" -X POST -d '{"query":{"_id":1,"document":{"firstname":"Henrik","lastname":"Ingo","age": 37}}}' 'http://localhost:$JSON_SERVER_PORT/json'
+
+--exec curl 'http://localhost:$JSON_SERVER_PORT/json?schema=json'
+
+--exec curl -H "Content-Type: application/json" -H "Accept: application/json" -X POST -d '{"query":{"document":{"firstname":"Mohit","lastname":"Srivastava","age": 21}}}' 'http://localhost:$JSON_SERVER_PORT/json?schema=json&table=people'
+
+--exec curl 'http://localhost:$JSON_SERVER_PORT/json?schema=json&table=people'
+
+--exec curl 'http://localhost:$JSON_SERVER_PORT/json?schema=json&table=people&query=%7B%22query%22%3A%7B%7D%7D'
+
+--exec curl 'http://localhost:$JSON_SERVER_PORT/json?schema=json&table=people&query=%7B%22query%22%3A%7B%22_id%22%3A%22%22%7D%7D'
+
+SET GLOBAL json_server_schema="json";
+
+--exec curl 'http://localhost:$JSON_SERVER_PORT/json?table=people'
+
+SET GLOBAL json_server_table="people";
+
+--exec curl 'http://localhost:$JSON_SERVER_PORT/json'
+
+--exec curl -H "Content-Type: application/json" -H "Accept: application/json" -X POST -d '{"query":{"_id":1 "document":{"firstname":"Henrik","lastname":"Ingo","age": 37}}}' 'http://localhost:$JSON_SERVER_PORT/json?schema=json&table=people'
+
+--exec curl -H "Content-Type: application/json" -H "Accept: application/json" -X POST -d '{"query":{"_id":1,"document":"It is for testing"}}' 'http://localhost:$JSON_SERVER_PORT/json?schema=json&table=people'
+
+--exec curl -H "Content-Type: application/json" -H "Accept: application/json" -X POST -d '{"query":{"_id":1,"document":98765}}' 'http://localhost:$JSON_SERVER_PORT/json?schema=json&table=people'
+
+--exec curl -H "Content-Type: application/json" -H "Accept: application/json" -X POST -d '{"query":{"_id":1,"document":{"firstname":"Henrik","lastname":"Ingo","age": 35},"metadata":{"interest":"opensource","nick":"hingo","dob":"16-feb-1977"}}}' 'http://localhost:$JSON_SERVER_PORT/json?schema=json&table=aboutpeople'
+
+--exec curl 'http://localhost:$JSON_SERVER_PORT/json?schema=json&table=aboutpeople'
+
+--exec curl -X DELETE 'http://localhost:$JSON_SERVER_PORT/json?schema=json&table=people&_id=1'
+
+--exec curl 'http://localhost:$JSON_SERVER_PORT/json?schema=json&table=people'
+
+--exec curl -X DELETE 'http://localhost:$JSON_SERVER_PORT/json?schema=json&table=people&query=%7B%22query%22%3A%7B%22_id%22%3A2%7D%7D'
+
+--exec curl 'http://localhost:$JSON_SERVER_PORT/json?schema=json&table=people'
+
+--exec curl -X DELETE 'http://localhost:$JSON_SERVER_PORT/json'
+
+--exec curl -X DELETE 'http://localhost:$JSON_SERVER_PORT/json?schema=json&table=people'
+
+--exec curl -X DELETE 'http://localhost:$JSON_SERVER_PORT/json?schema=json&table=people&query=%7B%22query%22%3A%7B%7D%7D'
+
+--exec curl -X DELETE 'http://localhost:$JSON_SERVER_PORT/json?schema=json&table=people&query=%7B%22query%22%3A%7B%22_id%22%3A%22%22%7D%7D'
+
+SET GLOBAL json_server_allow_drop_table="ON";
+
+--exec curl -X DELETE 'http://localhost:$JSON_SERVER_PORT/json?schema=json&table=people&query=%7B%22query%22%3A%7B%7D%7D'
+
+--exec curl 'http://localhost:$JSON_SERVER_PORT/json?schema=json&table=people'
+
+--exec curl -X DELETE 'http://localhost:$JSON_SERVER_PORT/json?schema=json&table=aboutpeople&query=%7B%22query%22%3A%7B%22_id%22%3A%22%22%7D%7D'
+
+SET GLOBAL json_server_allow_drop_table="OFF";
+SET GLOBAL json_server_table="";
+SET GLOBAL json_server_schema="test";
+
+drop schema json;
+
+--exec curl -H "Content-Type: application/json" -H "Accept: application/json" -X POST -d '{"query":{"name":"json"}}' 'http://localhost:$JSON_SERVER_PORT/json/ddl/schema/create'
+
+--exec curl -H "Content-Type: application/json" -H "Accept: application/json" -X POST -d '{"query":{"name":"json"}}' 'http://localhost:$JSON_SERVER_PORT/json/ddl/schema/create'
+
+--exec curl -H "Content-Type: application/json" -H "Accept: application/json" -X POST -d '{"query":{"name":"json"}}' 'http://localhost:$JSON_SERVER_PORT/json/ddl/schema/drop'
+
+--exec curl -H "Content-Type: application/json" -H "Accept: application/json" -X POST -d '{"query":{"name":"json"}}' 'http://localhost:$JSON_SERVER_PORT/json/ddl/schema/drop'
+
+
