@@ -381,8 +381,6 @@ static const char* ha_innobase_exts[] = {
   NULL
 };
 
-#define DEFAULT_FILE_EXTENSION ".dfe" // Deep Fried Elephant
-
 static INNOBASE_SHARE *get_share(const char *table_name);
 static void free_share(INNOBASE_SHARE *share);
 
@@ -398,7 +396,7 @@ public:
                             HTON_TABLE_SCAN_ON_INDEX |
                             HTON_HAS_FOREIGN_KEYS)
   {
-    table_definition_ext= plugin::DEFAULT_DEFINITION_FILE_EXT;
+    table_definition_ext= plugin::defaultTableDefinitionFileExt();
     addAlias("INNOBASE");
   }
 
@@ -626,7 +624,7 @@ void InnobaseEngine::doGetTableIdentifiers(drizzled::CachedDirectory &directory,
 
     const char *ext= strchr(filename->c_str(), '.');
 
-    if (ext == NULL || system_charset_info->strcasecmp(ext, DEFAULT_FILE_EXTENSION) ||
+    if (ext == NULL || system_charset_info->strcasecmp(ext, plugin::defaultTableDefinitionFileExt().c_str()) ||
         (filename->compare(0, strlen(TMP_FILE_PREFIX), TMP_FILE_PREFIX) == 0))
     { }
     else
@@ -653,7 +651,7 @@ void InnobaseEngine::doGetTableIdentifiers(drizzled::CachedDirectory &directory,
 bool InnobaseEngine::doDoesTableExist(Session &session, const identifier::Table &identifier)
 {
   string proto_path(identifier.getPath());
-  proto_path.append(DEFAULT_FILE_EXTENSION);
+  proto_path.append(plugin::defaultTableDefinitionFileExt());
 
   if (session.getMessageCache().doesTableMessageExist(identifier))
     return true;
@@ -677,7 +675,7 @@ int InnobaseEngine::doGetTableDefinition(Session &session,
                                          message::Table &table_proto)
 {
   string proto_path(identifier.getPath());
-  proto_path.append(DEFAULT_FILE_EXTENSION);
+  proto_path.append(plugin::defaultTableDefinitionFileExt());
 
   // First we check the temporary tables.
   if (session.getMessageCache().getTableMessage(identifier, table_proto))
@@ -6808,7 +6806,7 @@ InnobaseEngine::doDropTable(
       {
         string path(identifier.getPath());
 
-        path.append(DEFAULT_FILE_EXTENSION);
+        path.append(plugin::defaultTableDefinitionFileExt());
 
         (void)internal::my_delete(path.c_str(), MYF(0));
       }
@@ -6817,7 +6815,7 @@ InnobaseEngine::doDropTable(
     {
       string path(identifier.getPath());
 
-      path.append(DEFAULT_FILE_EXTENSION);
+      path.append(plugin::defaultTableDefinitionFileExt());
 
       (void)internal::my_delete(path.c_str(), MYF(0));
     }
