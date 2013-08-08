@@ -206,6 +206,8 @@ extern qsort2_cmp get_ptr_compare(size_t);
 DRIZZLED_API void my_store_ptr(unsigned char *buff, size_t pack_length, my_off_t pos);
 DRIZZLED_API my_off_t my_get_ptr(unsigned char *ptr, size_t pack_length);
 int create_temp_file(char *to, const char *dir, const char *pfx, myf MyFlags);
+int get_my_umask();
+int get_my_umask_dir();
 
 } /* namespace internal */
 } /* namespace drizzled */

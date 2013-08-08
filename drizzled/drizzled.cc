@@ -1099,7 +1099,7 @@ static void compose_defaults_file_list(const vector<string>& in_options)
 
 bool init_variables_before_daemonizing(int argc, char **argv)
 {
-  umask(((~internal::my_umask) & 0666));
+  umask(((~internal::get_my_umask()) & 0666));
   decimal_zero.set_zero(); // set decimal_zero constant;
   tzset();			// Set tzname
 

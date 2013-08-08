@@ -2366,7 +2366,7 @@ innobase_init(
     goto error;
   }
 
-  os_innodb_umask = (ulint)internal::my_umask;
+  os_innodb_umask = (ulint)internal::get_my_umask();
 
 
   /* Set InnoDB initialization parameters according to the values

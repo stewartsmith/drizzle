@@ -2355,7 +2355,7 @@ static void do_mkdir(st_command* command)
                      mkdir_args, sizeof(mkdir_args)/sizeof(struct command_arg),
                      ' ');
 
-  int error= mkdir(ds_dirname.c_str(), (0777 & internal::my_umask_dir)) != 0;
+  int error= mkdir(ds_dirname.c_str(), (0777 & internal::get_my_umask_dir())) != 0;
   handle_command_error(command, error);
 }
 
