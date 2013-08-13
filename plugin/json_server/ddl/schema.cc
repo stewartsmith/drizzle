@@ -1,7 +1,7 @@
 /* mode: c; c-basic-offset: 2; indent-tabs-mode: nil;
  * vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *   
- * Copyright (C) 2011 Stewart Smith, Henrik Ingo, Mohit Srivastava
+ * Copyright (C) 2011-2013 Stewart Smith, Henrik Ingo, Mohit Srivastava
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,7 +18,7 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 /**
- * @file Implements a class Schema to handle various operations related to schema.
+ * @file Implements a class Schema to handle various operations related to schema.Its just a copy of drizzled/schema.cc and its friends.
  */
 
  #include <config.h>

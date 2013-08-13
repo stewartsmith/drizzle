@@ -92,5 +92,3 @@ drop schema json;
 --exec curl -H "Content-Type: application/json" -H "Accept: application/json" -X POST -d '{"query":{"name":"json"}}' 'http://localhost:$JSON_SERVER_PORT/json/ddl/schema/drop'
 
 --exec curl -H "Content-Type: application/json" -H "Accept: application/json" -X POST -d '{"query":{"name":"json"}}' 'http://localhost:$JSON_SERVER_PORT/json/ddl/schema/drop'
-
-
