@@ -104,6 +104,10 @@ See the `Query Rewrite Blueprint <https://blueprints.launchpad.net/Drizzle/+spec
 Partitioning
 ------------
 
+Drizzle does not support table partitioning at this time. This is due to
+deficiencies in the architecture of MySQL partitioning. We think it should
+be implemented as a rewrite engine rather than a storage engine.
+
 INFORMATION_SCHEMA
 ------------------
 
@@ -134,7 +138,10 @@ We've stopped the confusion: -p means port and -P means password.
 No gotcha of using the unix socket when localhost is specified and then
 connecting you to the wrong database server.
 
-There is no Drizzle admin command.
+After a survey of commands from `mysqladmin` we determined that by adding
+an option to the normal drizzle command line client to shutdown the server
+we could negate the need for a `drizzleadmin` command and so there is none.
+You can achieve all the same results via SQL.
 
 Storage Engines
 ---------------
