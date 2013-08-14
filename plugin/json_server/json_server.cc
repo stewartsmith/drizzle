@@ -1,7 +1,7 @@
 /* - mode: c; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2011 Stewart Smith, Henrik Ingo, Mohit Srivastava
+ *  Copyright (C) 2011-2013 Stewart Smith, Henrik Ingo, Mohit Srivastava
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -46,10 +46,11 @@
 #include <event.h>
 #include <drizzled/execute.h>
 #include <drizzled/sql/result_set.h>
-
+#include <drizzled/diagnostics_area.h>
 #include <drizzled/plugin/listen.h>
 #include <drizzled/plugin/client.h>
 #include <drizzled/catalog/local.h>
+#include <drizzled/current_session.h>
 
 #include <drizzled/pthread_globals.h>
 #include <boost/bind.hpp>
@@ -60,6 +61,8 @@
 #include <plugin/json_server/db_access.h>
 #include <plugin/json_server/http_handler.h>
 #include <plugin/json_server/http_server.h>
+#include <plugin/json_server/ddl/schema.h>
+#include <plugin/json_server/json_handler.h>
 
 namespace po= boost::program_options;
 using namespace drizzled;
@@ -95,6 +98,8 @@ extern "C" void process_api01_version_req(struct evhttp_request *req, void* );
 extern "C" void process_version_req(struct evhttp_request *req, void* );
 extern "C" void process_sql_req(struct evhttp_request *req, void* );
 extern "C" void process_json_req(struct evhttp_request *req, void* );
+extern "C" void process_json_ddl_schema_create_req(struct evhttp_request *req, void* );
+extern "C" void process_json_ddl_schema_drop_req(struct evhttp_request *req, void* );
 extern "C" void process_request(struct evhttp_request *req, void* )
 {
   struct evbuffer *buf = evbuffer_new();
@@ -357,6 +362,104 @@ extern "C" void process_json_req(struct evhttp_request *req, void* )
   delete(handler);
 }
 
+/**
+ * Transform a HTTP Request for create schema and returns results based on the input json.
+ *
+ * @param req a HTTP request parameter,
+ *
+ */ 
+
+extern "C" void process_json_ddl_schema_create_req(struct evhttp_request *req, void* )
+{
+ drizzled::Session::shared_ptr _session= drizzled::Session::make_shared(drizzled::plugin::Listen::getNullClient(),
+                                               drizzled::catalog::local());
+ drizzled::identifier::user::mptr user_id= identifier::User::make_shared();
+ _session->main_da().reset_diagnostics_area();
+ setCurrentSession(_session.get());
+
+ std::string query;
+ std::string db_name;
+ std::string output;
+ Json::Value json_out;
+ Json::Value json_in;
+ const char *http_response_text="OK";
+ int http_response_code=HTTP_OK;
+
+ JsonErrorArea _json_error;
+ JsonHandler* _json_handler = new JsonHandler();
+
+ _json_handler->generate_input_json(req,_json_error);
+ if(!_json_error.is_jsonerror())
+ {
+   json_in = _json_handler->get_input_json();
+   db_name=json_in["query"]["name"].asString();
+   Schema *_schema = new Schema(_session.get(),db_name);
+   _schema->createSchema();
+   if(_session->main_da().is_error())
+   {
+     _json_error.set_error(JsonErrorArea::ER_SQL,_session->main_da().sql_errno(),_session->main_da().message());
+   }
+ }
+ _json_handler->generate_output_query(_json_error);
+ output = _json_handler->get_output_query();
+ struct evbuffer *buf = evbuffer_new();
+ if(buf == NULL)
+ {
+   return;            
+ }
+ evbuffer_add(buf, output.c_str(), output.length());
+ evhttp_send_reply( req, http_response_code, http_response_text, buf);
+}
+
+/**
+* Transform a HTTP Request for create schema and returns results based on the input json.
+* 
+* @param req a HTTP request parameter.
+*/
+extern "C" void process_json_ddl_schema_drop_req(struct evhttp_request *req, void* )
+{
+  drizzled::Session::shared_ptr _session= drizzled::Session::make_shared(drizzled::plugin::Listen::getNullClient(),
+                                                      drizzled::catalog::local());
+  drizzled::identifier::user::mptr user_id= identifier::User::make_shared();
+  _session->main_da().reset_diagnostics_area();
+  setCurrentSession(_session.get());
+         
+  std::string query;
+  std::string db_name;
+  std::string output;
+  Json::Value json_out;
+  Json::Value json_in;
+  const char *http_response_text="OK";
+  int http_response_code=HTTP_OK;
+                       
+  JsonErrorArea _json_error;
+  JsonHandler* _json_handler = new JsonHandler();
+
+  _json_handler->generate_input_json(req,_json_error);
+  if(!_json_error.is_jsonerror())
+  {
+    json_in = _json_handler->get_input_json();
+
+    db_name=json_in["query"]["name"].asString();
+    Schema *_schema = new Schema(_session.get(),db_name);
+    _schema->dropSchema();
+    if(_session->main_da().is_error())
+    {
+      _json_error.set_error(JsonErrorArea::ER_SQL,_session->main_da().sql_errno(),_session->main_da().message());
+    }
+  }
+  _json_handler->generate_output_query(_json_error);
+  output = _json_handler->get_output_query();
+  struct evbuffer *buf = evbuffer_new();
+  if(buf == NULL)
+  {
+    return;
+  }
+  evbuffer_add(buf, output.c_str(), output.length());
+  evhttp_send_reply( req, http_response_code, http_response_text, buf);
+}
+
+
 static void shutdown_event(int fd, short, void *arg)
 {
   struct event_base *base= (struct event_base *)arg;
@@ -466,6 +569,8 @@ public:
       evhttp_set_cb(httpd, "/version", process_version_req, NULL);
       evhttp_set_cb(httpd, "/sql", process_sql_req, NULL);
       evhttp_set_cb(httpd, "/json", process_json_req, NULL);
+      evhttp_set_cb(httpd,"/json/ddl/schema/create", process_json_ddl_schema_create_req, NULL);
+      evhttp_set_cb(httpd,"/json/ddl/schema/drop", process_json_ddl_schema_drop_req, NULL);
         
 
         event_set(&wakeup_event, wakeup_fd[0], EV_READ | EV_PERSIST, shutdown_event, base);
