@@ -75,6 +75,11 @@ EngineVector &StorageEngine::getSchemaEngines()
   return g_schema_engines;
 }
 
+const std::string defaultTableDefinitionFileExt()
+{
+  return DEFAULT_DEFINITION_FILE_EXT;
+}
+
 StorageEngine::StorageEngine(const std::string &name_arg,
                              const std::bitset<HTON_BIT_SIZE> &flags_arg) :
   Plugin(name_arg, "StorageEngine"),
@@ -150,7 +155,7 @@ bool StorageEngine::addPlugin(StorageEngine *engine)
 
   if (engine->getTableDefinitionFileExtension().length())
   {
-    assert(engine->getTableDefinitionFileExtension().length() == DEFAULT_DEFINITION_FILE_EXT.length());
+    assert(engine->getTableDefinitionFileExtension().length() == plugin::defaultTableDefinitionFileExt().length());
     set_of_table_definition_ext.insert(engine->getTableDefinitionFileExtension());
   }
 
@@ -539,7 +544,7 @@ void StorageEngine::removeLostTemporaryTables(Session &session, const char *dire
 
     /* We remove the file extension. */
     length= entry->filename.length();
-    entry->filename.resize(length - DEFAULT_DEFINITION_FILE_EXT.length());
+    entry->filename.resize(length - plugin::defaultTableDefinitionFileExt().length());
 
     path+= directory;
     path+= FN_LIBCHAR;
@@ -842,7 +847,7 @@ int StorageEngine::deleteDefinitionFromPath(const identifier::Table &identifier)
 {
   std::string path(identifier.getPath());
 
-  path.append(DEFAULT_DEFINITION_FILE_EXT);
+  path.append(plugin::defaultTableDefinitionFileExt());
 
   return internal::my_delete(path.c_str(), MYF(0));
 }
@@ -853,8 +858,8 @@ int StorageEngine::renameDefinitionFromPath(const identifier::Table &dest, const
   std::string src_path(src.getPath());
   std::string dest_path(dest.getPath());
 
-  src_path.append(DEFAULT_DEFINITION_FILE_EXT);
-  dest_path.append(DEFAULT_DEFINITION_FILE_EXT);
+  src_path.append(plugin::defaultTableDefinitionFileExt());
+  dest_path.append(plugin::defaultTableDefinitionFileExt());
 
   bool was_read= StorageEngine::readTableFile(src_path.c_str(), table_message);
 
@@ -881,7 +886,7 @@ int StorageEngine::writeDefinitionFromPath(const identifier::Table &identifier, 
   char definition_file_tmp[FN_REFLEN];
   std::string file_name(identifier.getPath());
 
-  file_name.append(DEFAULT_DEFINITION_FILE_EXT);
+  file_name.append(plugin::defaultTableDefinitionFileExt());
 
   snprintf(definition_file_tmp, sizeof(definition_file_tmp), "%sXXXXXX", file_name.c_str());
 

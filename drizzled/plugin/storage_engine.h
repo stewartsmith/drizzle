@@ -109,8 +109,8 @@ typedef std::vector<StorageEngine *> EngineVector;
 typedef std::set<std::string> TableNameList;
 
 extern const std::string UNKNOWN_STRING;
-extern DRIZZLED_API const std::string DEFAULT_DEFINITION_FILE_EXT;
 
+const std::string defaultTableDefinitionFileExt();
 
 /*
   StorageEngine is a singleton structure - one instance per storage engine -

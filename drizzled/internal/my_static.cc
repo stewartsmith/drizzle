@@ -37,8 +37,10 @@ char *	home_dir=0;
 const char      *my_progname=0;
 char curr_dir[FN_REFLEN]= {0},
      home_dir_buff[FN_REFLEN]= {0};
-DRIZZLED_API int my_umask=0664;
+int my_umask=0664;
+int get_my_umask() { return my_umask; }
 int my_umask_dir=0777;
+int get_my_umask_dir() { return my_umask_dir; }
 
 	/* From mf_brkhant */
 volatile int		_my_signals=0;
