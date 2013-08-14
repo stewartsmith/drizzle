@@ -75,7 +75,6 @@ EXTRA_DIST= \
 	    COPYING.Boost \
 	    COPYING.BSD \
 	    DRIZZLE.FAQ \
-	    EXCEPTIONS-CLIENT \
 	    config/autorun.sh \
 	    config/config.rpath \
 	    config/drizzle.ver \
