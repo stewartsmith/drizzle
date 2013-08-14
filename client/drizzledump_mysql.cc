@@ -269,8 +269,9 @@ bool DrizzleDumpTableMySQL::populateIndexes()
   if (verbose)
     std::cerr << _("-- Retrieving indexes for ") << tableName << "..." << std::endl;
 
-  query="SHOW INDEXES FROM ";
+  query="SHOW INDEXES FROM `";
   query.append(tableName);
+  query.append("`");
 
   result= dcon->query(query);
 
